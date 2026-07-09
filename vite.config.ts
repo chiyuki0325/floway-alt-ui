@@ -7,4 +7,33 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    proxy: {
+      "/auth": {
+        target: "https://***REMOVED***",
+        changeOrigin: true,
+        secure: true,
+      },
+      "/api": {
+        target: "https://***REMOVED***",
+        changeOrigin: true,
+        secure: true,
+      },
+      "/v1": {
+        target: "https://***REMOVED***",
+        changeOrigin: true,
+        secure: true,
+      },
+      "/anthropic": {
+        target: "https://***REMOVED***",
+        changeOrigin: true,
+        secure: true,
+      },
+      "/gemini": {
+        target: "https://***REMOVED***",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
 });

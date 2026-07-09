@@ -1,13 +1,67 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { redirect } from "react-router";
+import { useTranslation } from "react-i18next";
+
+import { login as loginWithPassword } from "../api/auth";
+import { setSessionToken, getSessionToken } from "../auth/session";
+import { LoginForm, type LoginActionData } from "../components/login-form";
+
+export async function clientLoader() {
+  if (getSessionToken()) throw redirect("/dashboard/settings");
+  return null;
+}
+
+clientLoader.hydrate = true as const;
+
+export async function clientAction({
+  request,
+}: Route.ClientActionArgs): Promise<LoginActionData | Response> {
+  const formData = await request.formData();
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!password) {
+    return {
+      ok: false,
+      values: { username },
+      error: "validation.passwordRequired",
+    };
+  }
+
+  const result = await loginWithPassword({ username, password });
+  if (result.error) {
+    return {
+      ok: false,
+      values: { username },
+      error: result.error.message || "auth.login.genericError",
+    };
+  }
+
+  setSessionToken(result.data.token);
+  throw redirect("/dashboard/settings");
+}
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Sign in | Floway" },
+    { name: "description", content: "Sign in to the Floway control plane." },
   ];
 }
 
+export function HydrateFallback() {
+  const { t } = useTranslation();
+
+  return (
+    <main className="floway-page-shell floway-page-shell--centered">
+      <div className="floway-loading">{t("common.loading")}</div>
+    </main>
+  );
+}
+
 export default function Home() {
-  return <Welcome />;
+  return (
+    <main className="floway-page-shell floway-page-shell--centered">
+      <LoginForm />
+    </main>
+  );
 }

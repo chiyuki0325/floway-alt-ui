@@ -8,9 +8,11 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { BrowserLanguageSync } from "./components/browser-language-sync";
 import { GradientBackground } from "./components/gradient-background";
 import { fluentComponents } from "./fluent";
 import { flowayTheme } from "./theme";
+import "./i18n";
 import "./app.css";
 
 const { FluentProvider } = fluentComponents;
@@ -28,6 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <FluentProvider theme={flowayTheme}>
+          <BrowserLanguageSync />
           <GradientBackground>{children}</GradientBackground>
         </FluentProvider>
         <ScrollRestoration />

@@ -10,13 +10,14 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@fluentui/react-components": "^9.74.3",
-    "@fluentui/react-icons": "^2.0.332",
     "@floway-dev/protocols": "workspace:*",
     "@floway-dev/provider": "workspace:*",
+    "@fluentui/react-components": "^9.74.3",
+    "@fluentui/react-icons": "^2.0.332",
     "@hookform/resolvers": "^5.4.0",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
+    "i18next": "^26.3.5",
     "isbot": "^5.1.36",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

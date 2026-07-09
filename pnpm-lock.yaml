@@ -29,6 +29,9 @@ importers:
       '@react-router/serve':
         specifier: 8.0.0
         version: 8.0.0(react-router@8.0.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@5.9.3)
+      i18next:
+        specifier: ^26.3.5
+        version: 26.3.5(typescript@5.9.3)
       isbot:
         specifier: ^5.1.36
         version: 5.2.0
