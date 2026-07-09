@@ -88,6 +88,12 @@ Floway 控制台是运维/配置型工具，界面应当紧凑、清晰、适合
 - 优先使用 Fluent UI React Components 里的 Button、Input、Field、Select、
   Checkbox、Switch、Dialog、Menu、Tab、Table 等基础组件承载可访问性、焦点管理和
   交互状态。只有项目确实需要 Fluent UI 未覆盖的形态时，再写轻量自定义组件。
+- 表单状态优先使用 React Hook Form 管理，校验 schema 优先使用 Zod，并把错误展示接到
+  Fluent UI 的 Field/Message 等语义组件上。不要为普通表单手写一套分散的
+  `useState` 校验状态。
+- 本仓库配置了 project-scope `fluentui` MCP server：Codex 使用 `.codex/config.toml`，
+  Claude Code 使用 `.mcp.json`。涉及 Fluent UI 组件 API、组合方式或无障碍行为时，
+  优先查询该 MCP 的 v9 文档。
 - 控件语义要明确：表单用标准输入控件，二元状态用 checkbox/switch，枚举用 select
   或 tabs/segmented control，危险操作要有确认。
 - 不嵌套卡片；表格、列表、编辑面板保持信息密度。
