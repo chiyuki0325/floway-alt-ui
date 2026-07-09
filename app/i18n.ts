@@ -31,6 +31,56 @@ export const resources = {
         },
       },
       dashboard: {
+        groups: {
+          console: "Console",
+          providers: "Providers",
+          services: "Services",
+          monitor: "Monitor",
+          admin: "Management",
+        },
+        nav: {
+          label: "Dashboard navigation",
+          playground: "Playground",
+          upstreams: "Upstreams",
+          search: "Search",
+          proxy: "Proxy",
+          apiKeys: "API Keys",
+          apiDocs: "API Docs",
+          requests: "Requests",
+          usage: "Usage",
+          performance: "Performance",
+          users: "Users",
+          backupRestore: "Backup / Restore",
+          settings: "Settings",
+        },
+        pages: {
+          playground:
+            "Run model conversations and inspect request behavior from the control plane.",
+          upstreams:
+            "Review provider upstreams and connection settings. Operators can view this area in read-only mode.",
+          search:
+            "Search provider capabilities and imported model metadata across global upstreams.",
+          proxy:
+            "Manage proxy routing, transport, and gateway-level proxy configuration.",
+          apiKeys:
+            "Create and manage API keys used by clients that call Floway.",
+          apiDocs:
+            "Read API references and integration guidance for the Floway gateway.",
+          requests:
+            "Inspect request records, status, routing results, and error details.",
+          usage:
+            "Track token usage and traffic volume across users, keys, models, and upstreams.",
+          performance:
+            "Monitor latency, throughput, and upstream performance signals.",
+          users:
+            "Manage console users, permissions, telemetry access, and upstream scopes.",
+          backupRestore:
+            "Export or restore gateway configuration and control plane data.",
+          readonly: "Signed in as an operator. This area is read-only.",
+          adminOnly: "Administrator access required.",
+          adminOnlyDescription:
+            "This route is reserved for admin users and is hidden from the sidebar for operators.",
+        },
         settings: {
           title: "Settings",
           heading: "Floway settings",
@@ -75,6 +125,45 @@ export const resources = {
         },
       },
       dashboard: {
+        groups: {
+          console: "控制台",
+          providers: "接入",
+          services: "服务",
+          monitor: "监控",
+          admin: "管理",
+        },
+        nav: {
+          label: "Dashboard 导航",
+          playground: "对话",
+          upstreams: "上游",
+          search: "搜索",
+          proxy: "代理",
+          apiKeys: "API 密钥",
+          apiDocs: "API 文档",
+          requests: "请求记录",
+          usage: "使用量",
+          performance: "性能",
+          users: "用户",
+          backupRestore: "备份/恢复",
+          settings: "设置",
+        },
+        pages: {
+          playground: "在控制台中运行模型对话，并检查请求行为。",
+          upstreams: "查看 provider 上游和连接配置。普通用户在这里以只读方式访问。",
+          search: "在全局上游中搜索 provider 能力和已导入的模型元数据。",
+          proxy: "管理代理路由、传输方式和 gateway 级代理配置。",
+          apiKeys: "创建和管理客户端调用 Floway 时使用的 API key。",
+          apiDocs: "阅读 Floway gateway 的 API 参考和接入说明。",
+          requests: "查看请求记录、状态、路由结果和错误详情。",
+          usage: "按用户、密钥、模型和上游查看 token 用量与流量。",
+          performance: "观察延迟、吞吐和上游性能信号。",
+          users: "管理控制台用户、权限、观测访问和上游范围。",
+          backupRestore: "导出或恢复 gateway 配置和控制平面数据。",
+          readonly: "当前是普通用户身份，此区域为只读。",
+          adminOnly: "需要管理员权限。",
+          adminOnlyDescription:
+            "该路由仅管理员可用，并且会对普通用户从侧边栏隐藏。",
+        },
         settings: {
           title: "设置",
           heading: "Floway 设置",

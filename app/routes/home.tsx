@@ -5,9 +5,10 @@ import { useTranslation } from "react-i18next";
 import { login as loginWithPassword } from "../api/auth";
 import { setSessionToken, getSessionToken } from "../auth/session";
 import { LoginForm, type LoginActionData } from "../components/login-form";
+import { useAuthStore } from "../stores/auth-store";
 
 export async function clientLoader() {
-  if (getSessionToken()) throw redirect("/dashboard/settings");
+  if (getSessionToken()) throw redirect("/dashboard/playground");
   return null;
 }
 
@@ -38,7 +39,8 @@ export async function clientAction({
   }
 
   setSessionToken(result.data.token);
-  throw redirect("/dashboard/settings");
+  useAuthStore.getState().primeFromLogin(result.data);
+  throw redirect("/dashboard/playground");
 }
 
 export function meta({}: Route.MetaArgs) {

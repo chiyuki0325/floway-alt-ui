@@ -42,7 +42,9 @@ export const authFetch = async (
   if (token) headers.set(flowaySessionHeader, token);
 
   const response = await fetch(input, { ...init, headers });
-  if (response.status === 401) clearSessionToken();
+  if (response.status === 401) {
+    clearSessionToken();
+  }
   return response;
 };
 

@@ -1,0 +1,54 @@
+.page {
+  display: grid;
+  gap: 18px;
+  max-width: 960px;
+  min-width: 0;
+}
+
+.header {
+  display: grid;
+  gap: 6px;
+}
+
+.header p,
+.body p {
+  color: #616161;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.header p {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  color: #242424;
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  padding: 22px 24px;
+}
+
+.body {
+  display: grid;
+  gap: 10px;
+  max-width: 680px;
+}
+
+.status {
+  color: #0f6cbd;
+  font-weight: 600;
+}

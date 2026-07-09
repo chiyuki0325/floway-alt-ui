@@ -7,6 +7,9 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  ssr: {
+    noExternal: ["@fluentui/react-icons"],
+  },
   server: {
     proxy: {
       "/auth": {
