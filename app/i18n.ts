@@ -97,6 +97,10 @@ export const resources = {
           telemetryAllowed: "Global telemetry access enabled",
           telemetryScoped: "Telemetry is scoped to this user",
         },
+        apiDocs: {
+          endpointsTitle: "API Endpoints",
+          docsLink: "Docs",
+        },
       },
       validation: {
         passwordRequired: "Enter a password to continue.",
@@ -183,6 +187,10 @@ export const resources = {
           operator: "操作员",
           telemetryAllowed: "已启用全局观测权限",
           telemetryScoped: "观测范围限定为当前用户",
+        },
+        apiDocs: {
+          endpointsTitle: "API 端点",
+          docsLink: "文档",
         },
       },
       validation: {
