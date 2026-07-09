@@ -18,6 +18,7 @@ export const resources = {
         english: "English",
         chinese: "中文",
         loading: "Loading...",
+        cancel: "Cancel",
       },
       auth: {
         adminKeyHint:
@@ -33,6 +34,15 @@ export const resources = {
           submitting: "Signing in...",
           genericError: "Unable to sign in. Check the gateway and try again.",
         },
+      },
+      provider: {
+        custom: "Custom",
+        azure: "Azure",
+        copilot: "Copilot",
+        codex: "Codex",
+        "claude-code": "Claude Code",
+        ollama: "Ollama",
+        unknown: "Unknown",
       },
       dashboard: {
         title: "Dashboard",
@@ -101,6 +111,115 @@ export const resources = {
           endpointsTitle: "API Endpoints",
           docsLink: "Docs",
         },
+        apiKeys: {
+          loading: "Refreshing keys",
+          empty: "No API keys yet. Create one to call Floway.",
+          actions: {
+            create: "Create API Key",
+            save: "Save changes",
+            saving: "Saving...",
+            copy: "Copy",
+            edit: "Edit key",
+            rotate: "Rotate key",
+            delete: "Delete key",
+          },
+          copy: {
+            copied: "Copied",
+            failed: "Copy failed",
+          },
+          table: {
+            title: "API Keys",
+            name: "Name",
+            key: "Key",
+            upstreams: "Upstreams",
+            created: "Created",
+            lastUsed: "Last Used",
+            actions: "Actions",
+            never: "Never",
+            usedOn: "Used on {{date}}",
+          },
+          format: {
+            openai: "OpenAI",
+            custom: "Custom",
+          },
+          dialog: {
+            createTitle: "Create API Key",
+            editTitle: "Edit API Key",
+          },
+          form: {
+            name: "Name",
+            format: "API key format",
+            customKey: "Custom API key",
+            customKeyPlaceholder: "Paste custom API key",
+            retention: "Request dump retention",
+            retentionHint:
+              "When enabled, model-invoking requests through this key are captured for the configured window.",
+            retentionCustom: "Custom retention",
+            retentionPlaceholder: "e.g. 30m, 2h, 3d, 1800",
+          },
+          validation: {
+            nameRequired: "Name is required.",
+            upstreamRequired:
+              "Select at least one upstream, or turn off the override.",
+            customKeyRequired: "Custom API key is required.",
+            retentionInvalid:
+              "Retention must be seconds or a value like 30m, 2h, or 3d.",
+          },
+          upstreams: {
+            title: "Override available upstreams ({{count}})",
+            inheritDescription:
+              "When off, this key inherits every upstream available to your account.",
+            enabled: "Enabled",
+            order: "Order",
+            name: "Name",
+            kind: "Kind",
+            moveUp: "Move up",
+            moveDown: "Move down",
+            all: "All",
+            none: "None",
+            summary: "{{first}} +{{count}}",
+            inheritsTitle: "Inherits the global upstream order",
+          },
+          retention: {
+            off: "Off",
+            "1h": "1 hour",
+            "6h": "6 hours",
+            "24h": "24 hours",
+            "7d": "7 days",
+            custom: "Custom",
+            warningDisable:
+              "Saving will immediately delete captured requests for this key.",
+            warningShrink:
+              "Saving will immediately delete captured requests older than the new window.",
+          },
+          configuration: {
+            title: "Configuration",
+            selected: "Snippets use {{name}}.",
+            claudeCode: "Claude Code",
+            codex: "Codex",
+            model: "Model",
+            sonnet: "Sonnet",
+            haiku: "Haiku",
+            onlyClaudeModels: "Only show Claude models",
+            onlyGpt5Models: "Only show GPT-5 models",
+            claudeHint: "Add to your shell profile.",
+            codexConfigHint: "Merge into ~/.codex/config.toml.",
+            codexAuthHint: "Run in a shell to write ~/.codex/auth.json.",
+          },
+          rotate: {
+            generatedTitle: "Rotate API Key",
+            generatedMessage:
+              "Rotate key {{name}}? The old key stops working immediately.",
+            title: "Rotate Custom API Key",
+            message:
+              "Enter the replacement key for {{name}}. The old key stops working immediately.",
+          },
+          delete: {
+            title: "Delete API Key",
+            message:
+              "Delete key {{name}}? This cannot be undone and the key stops working immediately.",
+          },
+        },
         usage: {
           loading: "Loading usage...",
           refreshing: "Refreshing usage",
@@ -168,6 +287,7 @@ export const resources = {
         english: "English",
         chinese: "中文",
         loading: "加载中...",
+        cancel: "取消",
       },
       auth: {
         adminKeyHint:
@@ -183,6 +303,15 @@ export const resources = {
           submitting: "正在登录...",
           genericError: "无法登录。请检查 gateway 后重试。",
         },
+      },
+      provider: {
+        custom: "自定义",
+        azure: "Azure",
+        copilot: "Copilot",
+        codex: "Codex",
+        "claude-code": "Claude Code",
+        ollama: "Ollama",
+        unknown: "未知",
       },
       dashboard: {
         title: "Dashboard",
@@ -238,6 +367,110 @@ export const resources = {
         apiDocs: {
           endpointsTitle: "API 端点",
           docsLink: "文档",
+        },
+        apiKeys: {
+          loading: "正在刷新密钥",
+          empty: "还没有 API key。创建一个后即可调用 Floway。",
+          actions: {
+            create: "创建 API Key",
+            save: "保存更改",
+            saving: "正在保存...",
+            copy: "复制",
+            edit: "编辑 key",
+            rotate: "轮换 key",
+            delete: "删除 key",
+          },
+          copy: {
+            copied: "已复制",
+            failed: "复制失败",
+          },
+          table: {
+            title: "API Keys",
+            name: "名称",
+            key: "Key",
+            upstreams: "上游",
+            created: "创建时间",
+            lastUsed: "最近使用",
+            actions: "操作",
+            never: "从未使用",
+            usedOn: "使用于 {{date}}",
+          },
+          format: {
+            openai: "OpenAI",
+            custom: "自定义",
+          },
+          dialog: {
+            createTitle: "创建 API Key",
+            editTitle: "编辑 API Key",
+          },
+          form: {
+            name: "名称",
+            format: "API key 格式",
+            customKey: "自定义 API key",
+            customKeyPlaceholder: "粘贴自定义 API key",
+            retention: "记录请求转储",
+            retentionHint:
+              "启用后，通过该 key 发起的模型请求会在配置窗口内被记录。",
+            retentionCustom: "自定义保留时间",
+            retentionPlaceholder: "例如 30m, 2h, 3d, 1800",
+          },
+          validation: {
+            nameRequired: "名称不能为空。",
+            upstreamRequired: "至少选择一个上游，或关闭覆盖设置。",
+            customKeyRequired: "必须填写自定义 API key。",
+            retentionInvalid:
+              "保留时间必须是秒数，或类似 30m、2h、3d 的值。",
+          },
+          upstreams: {
+            title: "覆盖可用上游（{{count}}）",
+            inheritDescription:
+              "关闭时，该 key 继承当前账号可用的全部上游。",
+            enabled: "启用",
+            order: "顺序",
+            name: "名称",
+            kind: "类型",
+            moveUp: "上移",
+            moveDown: "下移",
+            all: "全部",
+            none: "无",
+            summary: "{{first}} +{{count}}",
+            inheritsTitle: "继承全局上游顺序",
+          },
+          retention: {
+            off: "关闭",
+            "1h": "1 小时",
+            "6h": "6 小时",
+            "24h": "24 小时",
+            "7d": "7 天",
+            custom: "自定义",
+            warningDisable: "保存后会立即删除该 key 的已捕获请求。",
+            warningShrink: "保存后会立即删除超过新窗口的已捕获请求。",
+          },
+          configuration: {
+            title: "配置",
+            selected: "下方片段使用 {{name}}。",
+            claudeCode: "Claude Code",
+            codex: "Codex",
+            model: "模型",
+            sonnet: "Sonnet",
+            haiku: "Haiku",
+            onlyClaudeModels: "只显示 Claude 模型",
+            onlyGpt5Models: "只显示 GPT-5 系列模型",
+            claudeHint: "添加到你的 shell profile。",
+            codexConfigHint: "合并到 ~/.codex/config.toml。",
+            codexAuthHint: "在 shell 中运行以写入 ~/.codex/auth.json。",
+          },
+          rotate: {
+            generatedTitle: "轮换 API Key",
+            generatedMessage: "轮换 key {{name}}？旧 key 会立即停止工作。",
+            title: "轮换自定义 API Key",
+            message:
+              "输入 {{name}} 的替换 key。轮换后旧 key 会立即停止工作。",
+          },
+          delete: {
+            title: "删除 API Key",
+            message: "删除 key {{name}}？此操作无法撤销，key 会立即停止工作。",
+          },
         },
         usage: {
           loading: "正在加载使用量...",
