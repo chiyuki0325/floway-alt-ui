@@ -12,11 +12,13 @@
   "dependencies": {
     "@floway-dev/protocols": "workspace:*",
     "@floway-dev/provider": "workspace:*",
+    "@fluentui/react-charts": "^9.3.21",
     "@fluentui/react-components": "^9.74.3",
     "@fluentui/react-icons": "^2.0.332",
     "@hookform/resolvers": "^5.4.0",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
+    "d3-shape": "^3.2.0",
     "i18next": "^26.3.5",
     "isbot": "^5.1.36",
     "react": "^19.2.7",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@react-router/dev": "8.0.0",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/d3-shape": "^3.1.8",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
