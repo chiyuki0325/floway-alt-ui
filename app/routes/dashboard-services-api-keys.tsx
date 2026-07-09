@@ -27,6 +27,7 @@ import { z } from "zod";
 import type { ApiKey, ControlPlaneModel, UpstreamProviderKind } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
+import { ConfirmDialog } from "../components/confirm-dialog";
 import { ProviderBadge, providerLabel } from "../components/provider-badge";
 import { fluentComponents } from "../fluent";
 import type { DashboardOutletContext } from "./dashboard";
@@ -1113,42 +1114,6 @@ function RotateCustomKeyDialog({
               {saving
                 ? t("dashboard.apiKeys.actions.saving")
                 : t("dashboard.apiKeys.actions.rotate")}
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
-    </Dialog>
-  );
-}
-
-function ConfirmDialog({
-  actionLabel,
-  message,
-  onConfirm,
-  onOpenChange,
-  open,
-  title,
-}: {
-  actionLabel: string;
-  message: string;
-  onConfirm: () => void;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  title: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Dialog open={open} onOpenChange={(_, data) => onOpenChange(data.open)}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogContent>
-            <p className={styles.dialogText}>{message}</p>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
-            <Button appearance="primary" onClick={onConfirm}>
-              {actionLabel}
             </Button>
           </DialogActions>
         </DialogBody>
