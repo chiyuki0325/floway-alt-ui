@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { BrowserLanguageSync } from "./components/browser-language-sync";
+import { DocumentTitleSync } from "./components/document-title-sync";
 import { GradientBackground } from "./components/gradient-background";
 import { fluentComponents } from "./fluent";
 import { flowayTheme } from "./theme";
@@ -41,7 +42,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <DocumentTitleSync />
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

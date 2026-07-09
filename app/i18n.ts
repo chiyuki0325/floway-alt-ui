@@ -9,6 +9,10 @@ export type SupportedLanguage = (typeof supportedLanguages)[number];
 export const resources = {
   en: {
     translation: {
+      app: {
+        title: "Floway",
+        documentTitle: "{{title}} | Floway",
+      },
       common: {
         language: "Language",
         english: "English",
@@ -31,6 +35,7 @@ export const resources = {
         },
       },
       dashboard: {
+        title: "Dashboard",
         groups: {
           console: "Console",
           providers: "Providers",
@@ -103,6 +108,10 @@ export const resources = {
   },
   zh: {
     translation: {
+      app: {
+        title: "Floway",
+        documentTitle: "{{title}} | Floway",
+      },
       common: {
         language: "语言",
         english: "English",
@@ -125,6 +134,7 @@ export const resources = {
         },
       },
       dashboard: {
+        title: "Dashboard",
         groups: {
           console: "控制台",
           providers: "接入",
