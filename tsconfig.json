@@ -1,8 +1,8 @@
 {
   "include": [
-    "**/*",
-    "**/.server/**/*",
-    "**/.client/**/*",
+    "app/**/*",
+    "react-router.config.ts",
+    "vite.config.ts",
     ".react-router/types/**/*"
   ],
   "compilerOptions": {
@@ -11,6 +11,7 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {

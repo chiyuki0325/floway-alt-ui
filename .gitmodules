@@ -1,0 +1,3 @@
+[submodule "vendor/floway"]
+	path = vendor/floway
+	url = https://github.com/chiyuki0325/Floway
