@@ -8,20 +8,14 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { GradientBackground } from "./components/gradient-background";
+import { fluentComponents } from "./fluent";
+import { flowayTheme } from "./theme";
 import "./app.css";
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+const { FluentProvider } = fluentComponents;
+
+export const links: Route.LinksFunction = () => [];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -33,7 +27,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <FluentProvider theme={flowayTheme}>
+          <GradientBackground>{children}</GradientBackground>
+        </FluentProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
