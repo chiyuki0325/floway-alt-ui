@@ -314,7 +314,12 @@ export default function DashboardProvidersSearch() {
             {PROVIDER_OPTIONS.map((opt) => (
               <Option key={opt.value} value={opt.value} text={t(opt.labelKey)}>
                 {opt.iconUrl && (
-                  <img alt="" src={opt.iconUrl} className="block flex-none h-[16px] w-[16px]" />
+                  <img
+                    alt=""
+                    src={opt.iconUrl}
+                    className="block flex-none h-[16px] w-[16px]"
+                    style={{ filter: "light-dark(none, invert(1))" }}
+                  />
                 )}
                 <span>{t(opt.labelKey)}</span>
               </Option>
