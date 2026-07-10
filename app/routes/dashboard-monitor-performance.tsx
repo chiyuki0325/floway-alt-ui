@@ -16,6 +16,7 @@ import type {
 } from "@fluentui/react-charts";
 
 import type { Route } from "./+types/dashboard-monitor-performance";
+import { localeForLanguage } from "../i18n";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { PageLoadingPanel } from "../components/page-loading-panel";
@@ -156,9 +157,6 @@ const local4hBucketStart = (date: Date): Date => {
   aligned.setHours(aligned.getHours() - (aligned.getHours() % 4));
   return aligned;
 };
-
-const localeForLanguage = (language: string): string =>
-  language.toLowerCase().startsWith("zh") ? "zh-CN" : "en-US";
 
 const shortMonthDay = (date: Date, locale: string): string =>
   date.toLocaleDateString(locale, { month: "short", day: "numeric" });

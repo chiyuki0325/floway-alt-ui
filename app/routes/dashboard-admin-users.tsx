@@ -19,6 +19,7 @@ import { ConfirmDialog } from "../components/confirm-dialog";
 import { DialogShell } from "../components/dialog-shell";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
+import { localeForLanguage } from "../i18n";
 import { useAuthStore } from "../stores/auth-store";
 import type { DashboardOutletContext } from "./dashboard";
 import type { Route } from "./+types/dashboard-admin-users";
@@ -254,7 +255,7 @@ function UsersTable({
   const { i18n, t } = useTranslation();
   const s = useStyles();
   const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(i18n.resolvedLanguage === "zh" ? "zh-CN" : "en", {
+    () => new Intl.DateTimeFormat(localeForLanguage(i18n.resolvedLanguage), {
       dateStyle: "medium",
     }),
     [i18n.resolvedLanguage],
