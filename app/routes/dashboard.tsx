@@ -41,6 +41,7 @@ export default function Dashboard({}: Route.ComponentProps) {
   const { pathname } = useLocation();
   const upstreamEditor = /^\/dashboard\/providers\/upstreams\/(?:new\/[^/]+|[^/]+)$/.test(pathname);
   const requestsInspector = pathname === "/dashboard/monitor/requests";
+  const playground = pathname === "/dashboard/playground";
 
   useEffect(() => {
     void initialize();
@@ -69,7 +70,7 @@ export default function Dashboard({}: Route.ComponentProps) {
   return (
     <div className="grid grid-cols-[290px_minmax(0,1fr)] h-screen min-h-0">
       <Sidebar user={user} />
-      <main className={upstreamEditor || requestsInspector
+      <main className={upstreamEditor || requestsInspector || playground
         ? "min-h-0 overflow-hidden p-[22px_28px_28px]"
         : "min-h-0 overflow-y-auto p-[22px_28px_28px] [scrollbar-gutter:stable]"}>
         <Outlet context={{ user } satisfies DashboardOutletContext} />
