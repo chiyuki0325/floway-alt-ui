@@ -91,9 +91,9 @@ export default function DashboardMonitorRequests({ loaderData }: Route.Component
         <MessageBar intent="error"><MessageBarBody>{keysError}</MessageBarBody></MessageBar>
       ) : keys?.length === 0 ? (
         <Panel className="!p-[28px] grid place-items-center text-center">
-          <div className="grid gap-2 max-w-[480px]">
-            <Text weight="semibold">{t("dashboard.requests.noKeys")}</Text>
-            <Text size={300} className="text-fui-fg3">{t("dashboard.requests.noKeysDescription")}</Text>
+          <div className="grid justify-items-center gap-2 max-w-[480px]">
+            <Text weight="semibold" className="!text-center">{t("dashboard.requests.noKeys")}</Text>
+            <Text size={300} className="text-fui-fg3 !text-center">{t("dashboard.requests.noKeysDescription")}</Text>
             <Link to="/dashboard/services/api-keys" className="text-fui-fg2">{t("dashboard.requests.goToApiKeys")}</Link>
           </div>
         </Panel>
