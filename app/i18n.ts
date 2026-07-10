@@ -498,7 +498,7 @@ export const resources = {
           upstreams: "查看 provider 上游和连接配置。普通用户在这里以只读方式访问。",
           proxy: "管理代理路由、传输方式和 gateway 级代理配置。",
           apiKeys: "创建和管理客户端调用 Floway 时使用的 API key。",
-          apiDocs: "阅读 Floway gateway 的 API 参考和接入说明。",
+          apiDocs: "阅读 Floway 网关的 API 参考和接入说明。",
           requests: "查看请求记录、状态、路由结果和错误详情。",
           usage: "按用户、密钥、模型和上游查看 token 用量与流量。",
           performance: "观察延迟、吞吐和上游性能信号。",

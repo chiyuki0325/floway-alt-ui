@@ -99,6 +99,9 @@ export default function DashboardServicesApiDocs() {
         <Text size={700} weight="semibold">
           {t("dashboard.nav.apiDocs")}
         </Text>
+        <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+          {t("dashboard.pages.apiDocs")}
+        </Text>
       </header>
       <Panel className="grid gap-[14px] !p-[22px_24px] max-[680px]:!p-[18px]">
         <Text size={400} weight="semibold">
