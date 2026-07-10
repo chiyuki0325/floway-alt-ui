@@ -150,9 +150,29 @@ function normalizeMessagesStream(response: Response): Response {
   });
 }
 
+function normalizeResponsesBody(body: BodyInit | null | undefined): BodyInit | null | undefined {
+  if (typeof body !== "string") return body;
+  try {
+    const parsed = JSON.parse(body) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return body;
+    const obj = parsed as Record<string, unknown>;
+    if (!Array.isArray(obj.input)) return body;
+    obj.input = (obj.input as unknown[]).map((item: unknown) => {
+      if (item && typeof item === "object" && "role" in item && !("type" in item)) {
+        return { type: "message", ...(item as Record<string, unknown>) };
+      }
+      return item;
+    });
+    return JSON.stringify(obj);
+  } catch {
+    return body;
+  }
+}
+
 export function createWireFetch(custom: Record<string, unknown>, api?: PlaygroundApi): typeof fetch {
   return async (input, init) => {
-    const response = await fetch(input, { ...init, body: mergeWireBody(init?.body, custom) });
+    const normalized = api === "responses" ? normalizeResponsesBody(init?.body) : init?.body;
+    const response = await fetch(input, { ...init, body: mergeWireBody(normalized, custom) });
     return api === "messages" ? normalizeMessagesStream(response) : response;
   };
 }
