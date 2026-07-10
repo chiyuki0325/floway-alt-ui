@@ -101,7 +101,6 @@ const en = {
           api: "Protocol",
           model: "Model",
           modelPlaceholder: "Search models",
-          streaming: "Stream response",
           messagePlaceholder: "Write a message",
           imagePlaceholder: "https://example.com/image.png",
           empty: "Send a message to start a conversation.",

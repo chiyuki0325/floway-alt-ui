@@ -89,7 +89,6 @@ const jaJP = {
         "api": "プロトコル",
         "model": "モデル",
         "modelPlaceholder": "モデルを検索する",
-        "streaming": "ストリーミング応答",
         "messagePlaceholder": "メッセージを入力",
         "imagePlaceholder": "https://example.com/image.png",
         "empty": "メッセージを送信して会話を始めましょう。",

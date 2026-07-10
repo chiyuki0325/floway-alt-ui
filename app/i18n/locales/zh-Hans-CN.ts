@@ -92,7 +92,6 @@ const zhHansCN = {
           api: "协议",
           model: "模型",
           modelPlaceholder: "搜索模型",
-          streaming: "流式响应",
           messagePlaceholder: "输入消息",
           imagePlaceholder: "https://example.com/image.png",
           empty: "发送一条消息以开始对话。",

@@ -8,7 +8,7 @@ import {
 } from "@fluentui/react-icons";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText } from "ai";
+import { streamText } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirect } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -100,7 +100,6 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
   const [draft, setDraft] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [showImage, setShowImage] = useState(false);
-  const [streaming, setStreaming] = useState(true);
   const [sending, setSending] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [customDrafts, setCustomDrafts] = useState<Record<PlaygroundApi, string>>({
@@ -205,28 +204,21 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
         ...generationOptions(api, settings),
       };
 
-      if (streaming) {
-        const assistantId = randomId();
-        let assistantText = "";
-        const result = streamText(options);
-        for await (const part of result.fullStream) {
-          if (part.type === "error") throw part.error;
-          if (part.type !== "text-delta") continue;
-          assistantText += part.text;
-          setMessages((current) => {
-            const existing = current.findIndex((message) => message.id === assistantId);
-            if (existing < 0) return [...current, { id: assistantId, role: "assistant", text: assistantText }];
-            return current.map((message) => message.id === assistantId ? { ...message, text: assistantText } : message);
-          });
-        }
-        if (!assistantText && !controller.signal.aborted) {
-          setMessages((current) => [...current, { id: assistantId, role: "assistant", text: t("dashboard.playground.emptyResponse") }]);
-        }
-      } else {
-        const result = await generateText(options);
-        setMessages((current) => [...current, {
-          id: randomId(), role: "assistant", text: result.text || t("dashboard.playground.emptyResponse"),
-        }]);
+      const assistantId = randomId();
+      let assistantText = "";
+      const result = streamText(options);
+      for await (const part of result.fullStream) {
+        if (part.type === "error") throw part.error;
+        if (part.type !== "text-delta") continue;
+        assistantText += part.text;
+        setMessages((current) => {
+          const existing = current.findIndex((message) => message.id === assistantId);
+          if (existing < 0) return [...current, { id: assistantId, role: "assistant", text: assistantText }];
+          return current.map((message) => message.id === assistantId ? { ...message, text: assistantText } : message);
+        });
+      }
+      if (!assistantText && !controller.signal.aborted) {
+        setMessages((current) => [...current, { id: assistantId, role: "assistant", text: t("dashboard.playground.emptyResponse") }]);
       }
     } catch (error) {
       if (!(error instanceof Error && error.name === "AbortError") && !controller.signal.aborted) {
@@ -367,7 +359,6 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
               {matchingModels.map((model) => <Option key={model.id} value={model.id} text={model.display_name}><div className="min-w-0"><div className="truncate">{model.display_name}</div><div className={`text-fui-fg2 text-fui-base200 truncate ${s.code}`}>{model.id}</div></div></Option>)}
             </Combobox>
           </Field>
-          <Switch checked={streaming} label={t("dashboard.playground.streaming")} onChange={(_, data) => { stop(); setStreaming(data.checked); }} />
         </SettingsSection>
 
         <SettingsSection title={t("dashboard.playground.settings.generation")}>

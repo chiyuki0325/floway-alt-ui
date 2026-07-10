@@ -92,7 +92,6 @@ const zhHantTW = {
           api: "協議",
           model: "模型",
           modelPlaceholder: "搜尋模型",
-          streaming: "流式回應",
           messagePlaceholder: "輸入訊息",
           imagePlaceholder: "https://example.com/image.png",
           empty: "傳送一條訊息以開始對話。",
