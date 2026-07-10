@@ -1,6 +1,7 @@
 import {
   Outlet,
   redirect,
+  useLocation,
   useNavigate,
   useOutletContext,
 } from "react-router";
@@ -37,6 +38,8 @@ export default function Dashboard({}: Route.ComponentProps) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const error = useAuthStore((state) => state.error);
+  const { pathname } = useLocation();
+  const upstreamEditor = /^\/dashboard\/providers\/upstreams\/(?:new\/[^/]+|[^/]+)$/.test(pathname);
 
   useEffect(() => {
     void initialize();
@@ -65,7 +68,9 @@ export default function Dashboard({}: Route.ComponentProps) {
   return (
     <div className="grid grid-cols-[290px_minmax(0,1fr)] h-screen min-h-0">
       <Sidebar user={user} />
-      <main className="min-h-0 overflow-y-auto p-[22px_28px_28px] [scrollbar-gutter:stable]">
+      <main className={upstreamEditor
+        ? "min-h-0 overflow-hidden p-[22px_28px_28px]"
+        : "min-h-0 overflow-y-auto p-[22px_28px_28px] [scrollbar-gutter:stable]"}>
         <Outlet context={{ user } satisfies DashboardOutletContext} />
       </main>
     </div>

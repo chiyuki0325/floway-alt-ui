@@ -1,0 +1,371 @@
+import {
+  AddRegular,
+  ArrowDownRegular,
+  ArrowLeftRegular,
+  ArrowUpRegular,
+  DeleteRegular,
+} from "@fluentui/react-icons";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import type { Flag } from "@floway-dev/provider/flags";
+import type {
+  BillingDimension,
+  ModelPricing,
+  UpstreamChatConfig,
+  UpstreamModelConfig,
+  UpstreamRecord,
+} from "../../api/types";
+import { fluentComponents } from "../../fluent";
+import { SegmentedControl } from "../segmented-control";
+import { publicModelId } from "./editor-data";
+import { FeatureFlagsEditor } from "./feature-flags";
+
+const {
+  Accordion,
+  AccordionHeader,
+  AccordionItem,
+  AccordionPanel,
+  Button,
+  Checkbox,
+  Field,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  Select,
+  Switch,
+  Text,
+  makeStyles,
+} = fluentComponents;
+
+const useStyles = makeStyles({
+  endpointLabel: {
+    fontFamily: "monospace !important",
+  },
+});
+
+export interface ModelDetailRow {
+  key: string;
+  source: "auto" | "manual";
+  config: UpstreamModelConfig;
+  manualIndex: number | null;
+  hasAuto: boolean;
+}
+
+type TierDraft = {
+  id: number;
+  name: string;
+  rates: Partial<Record<BillingDimension, number>>;
+};
+
+const reasoningPresets = ["none", "minimal", "low", "medium", "high", "xhigh", "max"];
+const pricingLabels: Record<BillingDimension, string> = {
+  input: "Input ($/MTok)",
+  input_cache_read: "Cache Read ($/MTok)",
+  input_cache_write: "Cache Write ($/MTok)",
+  input_cache_write_1h: "Cache Write (1h) ($/MTok)",
+  input_image: "Image Input ($/MTok)",
+  output: "Output ($/MTok)",
+  output_image: "Image Output ($/MTok)",
+};
+const pricingByKind: Record<UpstreamModelConfig["kind"], BillingDimension[]> = {
+  chat: ["input", "input_cache_read", "input_cache_write", "input_cache_write_1h", "output"],
+  embedding: ["input"],
+  image: ["input", "input_image", "output", "output_image"],
+};
+
+let tierId = 0;
+
+export function ModelDetail({
+  flags,
+  onBack,
+  onDelete,
+  onSourceChange,
+  onUpdate,
+  readOnly,
+  record,
+  row,
+  upstreamFlags,
+}: {
+  flags: Flag[];
+  onBack: () => void;
+  onDelete: () => void;
+  onSourceChange: (source: "auto" | "manual") => void;
+  onUpdate: (value: UpstreamModelConfig) => void;
+  readOnly: boolean;
+  record: UpstreamRecord;
+  row: ModelDetailRow;
+  upstreamFlags: UpstreamRecord["flag_overrides"];
+}) {
+  const { t } = useTranslation();
+  const styles = useStyles();
+  const editable = row.source === "manual" && !readOnly;
+  const patch = (next: Partial<UpstreamModelConfig>) => {
+    if (!editable) return;
+    const updated = { ...row.config, ...next };
+    for (const key of Object.keys(next) as (keyof UpstreamModelConfig)[]) {
+      if (next[key] === undefined) delete (updated as unknown as Record<string, unknown>)[key];
+    }
+    onUpdate(updated);
+  };
+  const [tiers, setTiers] = useState<TierDraft[]>(() => tiersFromPricing(row.config.cost));
+  const [savedFlagOverrides, setSavedFlagOverrides] = useState(row.config.flagOverrides ?? {});
+  useEffect(() => setTiers(tiersFromPricing(row.config.cost)), [row.key]);
+  useEffect(() => setSavedFlagOverrides(row.config.flagOverrides ?? {}), [row.key]);
+
+  const setKind = (kind: UpstreamModelConfig["kind"]) => patch({
+    kind,
+    endpoints: defaultEndpointsForKind(kind, row.config.endpoints),
+    ...(kind === "image" ? { limits: undefined, chat: undefined } : {}),
+  });
+
+  const updateLimit = (key: keyof NonNullable<UpstreamModelConfig["limits"]>, raw: string) => {
+    const limits = { ...(row.config.limits ?? {}) };
+    const value = optionalNumber(raw);
+    if (value === undefined) delete limits[key]; else limits[key] = value;
+    patch({ limits: Object.keys(limits).length ? limits : undefined });
+  };
+
+  const updateReasoning = (update: Partial<NonNullable<UpstreamChatConfig["reasoning"]>>) => {
+    const reasoning = cleanObject({ ...(row.config.chat?.reasoning ?? {}), ...update });
+    const chat = cleanChat({ ...(row.config.chat ?? {}), reasoning: Object.keys(reasoning).length ? reasoning : undefined });
+    patch({ chat });
+  };
+
+  const updatePrice = (dimension: BillingDimension, raw: string) => {
+    const cost = { ...(row.config.cost ?? {}) };
+    const value = optionalNumber(raw);
+    if (value === undefined) delete cost[dimension]; else cost[dimension] = value;
+    patch({ cost: pricingOrUndefined(cost) });
+  };
+
+  const writeTiers = (next: TierDraft[]) => {
+    setTiers(next);
+    const cost = { ...(row.config.cost ?? {}) };
+    delete cost.tiers;
+    const stored: NonNullable<ModelPricing["tiers"]> = {};
+    for (const draft of next) {
+      const name = draft.name.trim();
+      if (name && Object.values(draft.rates).some((rate) => typeof rate === "number")) stored[name] = draft.rates;
+    }
+    if (Object.keys(stored).length) cost.tiers = stored;
+    patch({ cost: pricingOrUndefined(cost) });
+  };
+
+  const validationError = modelValidationError(row.config, t);
+  const effort = row.config.chat?.reasoning?.effort;
+  const budget = row.config.chat?.reasoning?.budget_tokens;
+  const mandatory = row.config.chat?.reasoning?.mandatory === true;
+  const controlledReasoning = effort !== undefined || budget !== undefined || row.config.chat?.reasoning?.adaptive === true;
+
+  return (
+    <div className="grid gap-5 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <Button appearance="subtle" icon={<ArrowLeftRegular />} onClick={onBack}>
+          {t("dashboard.upstreamEditor.models.back")}
+        </Button>
+        <Text size={600} weight="semibold" truncate className="min-w-0">
+          {row.config.display_name ?? publicModelId(row.config)}
+        </Text>
+        <div className="ml-auto flex-none">
+          <SegmentedControl
+            ariaLabel={t("dashboard.upstreamEditor.models.source")}
+            items={[
+              { value: "auto", label: t("dashboard.upstreamEditor.models.auto"), disabled: readOnly || !row.hasAuto },
+              { value: "manual", label: t("dashboard.upstreamEditor.models.manual"), disabled: readOnly },
+            ]}
+            value={row.source}
+            onChange={(source) => onSourceChange(source as "auto" | "manual")}
+          />
+        </div>
+      </div>
+
+      {validationError && <MessageBar intent="error"><MessageBarBody>{validationError}</MessageBarBody></MessageBar>}
+
+      <EditorBlock title={t("dashboard.upstreamEditor.models.identity")}>
+        <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.displayName")}>
+            <Input className="!min-w-[0px] !w-full" placeholder={t("dashboard.upstreamEditor.models.displayNamePlaceholder")} readOnly={!editable} value={row.config.display_name ?? ""} onChange={(_, data) => patch({ display_name: data.value || undefined })} />
+          </Field>
+          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.kind")}>
+            <Select key={row.config.kind} disabled={!editable} defaultValue={row.config.kind} onChange={(_, data) => setKind(data.value as UpstreamModelConfig["kind"])}>
+              <option value="chat">Chat</option><option value="embedding">Embedding</option><option value="image">Image</option>
+            </Select>
+          </Field>
+          <Field className="!min-w-[0px]" label={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deployment") : t("dashboard.upstreamEditor.models.upstreamId")}>
+            <Input className="!min-w-[0px] !w-full" placeholder={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deploymentPlaceholder") : t("dashboard.upstreamEditor.models.upstreamIdPlaceholder")} readOnly={!editable || row.hasAuto} value={row.config.upstreamModelId} onChange={(_, data) => patch({ upstreamModelId: data.value })} />
+          </Field>
+          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.publicId")}>
+            <Input className="!min-w-[0px] !w-full" placeholder={row.config.upstreamModelId || t("dashboard.upstreamEditor.models.publicIdPlaceholder")} readOnly={!editable} value={row.config.publicModelId ?? ""} onChange={(_, data) => patch({ publicModelId: data.value || undefined })} />
+          </Field>
+        </div>
+      </EditorBlock>
+
+      {row.config.kind !== "embedding" && <EditorBlock title={t("dashboard.upstreamEditor.models.endpoints")}>
+        <div className="grid gap-1">
+          {modelEndpointOptions(row.config.kind).map(([key, label]) => <Checkbox
+            checked={key in row.config.endpoints}
+            disabled={!editable}
+            key={key}
+            label={{ children: label, className: styles.endpointLabel }}
+            onChange={(_, data) => {
+              const endpoints = { ...row.config.endpoints };
+              if (data.checked) endpoints[key] = {}; else delete endpoints[key];
+              patch({ endpoints });
+            }}
+          />)}
+        </div>
+      </EditorBlock>}
+
+      {row.config.kind !== "image" && <EditorBlock title={t("dashboard.upstreamEditor.models.capabilities")}>
+        <div className="grid grid-cols-3 gap-4 max-[760px]:grid-cols-1">
+          <NumberField label={t("dashboard.upstreamEditor.models.contextWindow")} placeholder="e.g. 1050000" readOnly={!editable} value={row.config.limits?.max_context_window_tokens} onChange={(raw) => updateLimit("max_context_window_tokens", raw)} />
+          <NumberField label={t("dashboard.upstreamEditor.models.promptTokens")} placeholder="e.g. 922000" readOnly={!editable} value={row.config.limits?.max_prompt_tokens} onChange={(raw) => updateLimit("max_prompt_tokens", raw)} />
+          <NumberField label={t("dashboard.upstreamEditor.models.outputTokens")} placeholder="e.g. 128000" readOnly={!editable} value={row.config.limits?.max_output_tokens} onChange={(raw) => updateLimit("max_output_tokens", raw)} />
+        </div>
+        {row.config.kind === "chat" && <>
+          <Switch
+            checked={row.config.chat?.modalities?.input.includes("image") === true}
+            disabled={!editable}
+            label={t("dashboard.upstreamEditor.models.imageInput")}
+            onChange={(_, data) => patch({ chat: cleanChat({ ...(row.config.chat ?? {}), modalities: data.checked ? { input: ["text", "image"], output: ["text"] } : undefined }) })}
+          />
+          <div className="grid gap-3">
+            <Text weight="semibold">{t("dashboard.upstreamEditor.models.reasoning")}</Text>
+            <div className="flex flex-wrap gap-4">
+              <Switch checked={effort !== undefined} disabled={!editable || mandatory} label={t("dashboard.upstreamEditor.models.effortLevels")} onChange={(_, data) => updateReasoning({ effort: data.checked ? { supported: ["low", "medium", "high"], default: "medium" } : undefined })} />
+              <Switch checked={budget !== undefined} disabled={!editable || mandatory} label={t("dashboard.upstreamEditor.models.budgetTokens")} onChange={(_, data) => updateReasoning({ budget_tokens: data.checked ? {} : undefined })} />
+              <Switch checked={row.config.chat?.reasoning?.adaptive === true} disabled={!editable || mandatory} label={t("dashboard.upstreamEditor.models.adaptive")} onChange={(_, data) => updateReasoning({ adaptive: data.checked ? true : undefined })} />
+              <Switch checked={mandatory} disabled={!editable || controlledReasoning} label={t("dashboard.upstreamEditor.models.mandatory")} onChange={(_, data) => updateReasoning(data.checked ? { mandatory: true } : { mandatory: undefined })} />
+            </div>
+            {effort && <EffortEditor editable={editable} effort={effort} onChange={(next) => updateReasoning({ effort: next })} t={t} />}
+            {budget && <div className="grid grid-cols-2 gap-4 max-w-[420px]">
+              <NumberField label={t("dashboard.upstreamEditor.models.minimum")} placeholder="e.g. 1024" readOnly={!editable} value={budget.min} onChange={(raw) => updateReasoning({ budget_tokens: numberRange(budget, "min", raw) })} />
+              <NumberField label={t("dashboard.upstreamEditor.models.maximum")} placeholder="e.g. 32000" readOnly={!editable} value={budget.max} onChange={(raw) => updateReasoning({ budget_tokens: numberRange(budget, "max", raw) })} />
+            </div>}
+          </div>
+        </>}
+      </EditorBlock>}
+
+      <EditorBlock title={t("dashboard.upstreamEditor.models.pricing")} description={t("dashboard.upstreamEditor.models.pricingHint")}>
+        <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
+          {pricingByKind[row.config.kind].map((dimension) => <NumberField key={dimension} label={pricingLabels[dimension]} placeholder="$/MTok" readOnly={!editable} value={row.config.cost?.[dimension]} onChange={(raw) => updatePrice(dimension, raw)} />)}
+        </div>
+        <Accordion collapsible defaultOpenItems={tiers.length ? "tiers" : undefined}>
+          <AccordionItem value="tiers">
+            <AccordionHeader>{t("dashboard.upstreamEditor.models.tierPricing", { count: tiers.length })}</AccordionHeader>
+            <AccordionPanel>
+              <div className="grid gap-5 pt-2">
+                {tiers.map((tier, index) => <TierEditor
+                  dimensions={pricingByKind[row.config.kind]}
+                  editable={editable}
+                  index={index}
+                  key={tier.id}
+                  onChange={(next) => writeTiers(tiers.map((item, itemIndex) => itemIndex === index ? next : item))}
+                  onMove={(direction) => writeTiers(moveItem(tiers, index, direction))}
+                  onRemove={() => writeTiers(tiers.filter((_, itemIndex) => itemIndex !== index))}
+                  tier={tier}
+                  t={t}
+                  total={tiers.length}
+                />)}
+                {editable && <Button appearance="secondary" icon={<AddRegular />} onClick={() => writeTiers([...tiers, { id: ++tierId, name: "", rates: {} }])}>
+                  {t("dashboard.upstreamEditor.models.addTier")}
+                </Button>}
+              </div>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+      </EditorBlock>
+
+      <EditorBlock title={t("dashboard.upstreamEditor.models.flags")} description={t("dashboard.upstreamEditor.models.flagsHint")}>
+        {editable && <Switch
+          checked={row.config.flagOverrides !== undefined}
+          label={t("dashboard.upstreamEditor.models.enableFlagOverrides")}
+          onChange={(_, data) => {
+            if (data.checked) patch({ flagOverrides: savedFlagOverrides });
+            else { setSavedFlagOverrides(row.config.flagOverrides ?? {}); patch({ flagOverrides: undefined }); }
+          }}
+        />}
+        {(!editable || row.config.flagOverrides !== undefined) && <FeatureFlagsEditor
+          defaults={record.flag_defaults}
+          inherited={upstreamFlags}
+          flags={flags}
+          readOnly={!editable}
+          value={row.config.flagOverrides ?? {}}
+          onChange={(flagOverrides) => { setSavedFlagOverrides(flagOverrides); patch({ flagOverrides }); }}
+        />}
+      </EditorBlock>
+
+      {editable && <Button appearance="secondary" icon={<DeleteRegular />} onClick={onDelete}>
+        {t("dashboard.upstreamEditor.models.delete")}
+      </Button>}
+    </div>
+  );
+}
+
+function EditorBlock({ children, description, title }: { children: React.ReactNode; description?: string; title: string }) {
+  return <section className="grid gap-4 border border-solid border-fui-stroke1 rounded-lg bg-fui-bg1 p-5">
+    <div className="grid gap-1"><Text as="h2" size={400} weight="semibold" className="!m-0">{title}</Text>{description && <Text size={200} className="text-fui-fg2">{description}</Text>}</div>
+    {children}
+  </section>;
+}
+
+function NumberField({ label, onChange, placeholder, readOnly, value }: { label: string; onChange: (raw: string) => void; placeholder: string; readOnly: boolean; value?: number }) {
+  return <Field className="!min-w-[0px]" label={label}><Input className="!min-w-[0px] !w-full" min={0} placeholder={placeholder} readOnly={readOnly} type="number" value={value === undefined ? "" : String(value)} onChange={(_, data) => onChange(data.value)} /></Field>;
+}
+
+function EffortEditor({ editable, effort, onChange, t }: { editable: boolean; effort: NonNullable<UpstreamChatConfig["reasoning"]>["effort"] & {}; onChange: (effort: NonNullable<UpstreamChatConfig["reasoning"]>["effort"]) => void; t: ReturnType<typeof useTranslation>["t"] }) {
+  const [custom, setCustom] = useState("");
+  const supported = effort.supported;
+  const add = (level: string) => { const value = level.trim(); if (value && !supported.includes(value)) onChange({ supported: [...supported, value], default: effort.default || value }); };
+  return <div className="grid gap-3 border-l-2 border-l-solid border-fui-stroke1 pl-4">
+    <div className="flex flex-wrap gap-2">{supported.map((level) => <Button key={level} disabled={!editable} appearance={effort.default === level ? "primary" : "secondary"} size="small" onClick={() => onChange({ ...effort, default: level })}>{level}<span onClick={(event) => { event.stopPropagation(); const next = supported.filter((item) => item !== level); onChange({ supported: next, default: effort.default === level ? next[0] ?? "" : effort.default }); }}> ×</span></Button>)}</div>
+    {editable && <div className="flex flex-wrap gap-2">{reasoningPresets.filter((level) => !supported.includes(level)).map((level) => <Button key={level} size="small" onClick={() => add(level)}>+ {level}</Button>)}<Input className="!min-w-[0px] !w-[130px]" placeholder={t("dashboard.upstreamEditor.models.customEffortPlaceholder")} size="small" value={custom} onChange={(_, data) => setCustom(data.value)} /><Button size="small" onClick={() => { add(custom); setCustom(""); }}>{t("dashboard.upstreamEditor.models.add")}</Button></div>}
+  </div>;
+}
+
+function TierEditor({ dimensions, editable, index, onChange, onMove, onRemove, t, tier, total }: { dimensions: BillingDimension[]; editable: boolean; index: number; onChange: (tier: TierDraft) => void; onMove: (direction: -1 | 1) => void; onRemove: () => void; t: ReturnType<typeof useTranslation>["t"]; tier: TierDraft; total: number }) {
+  const invalid = (tier.name.trim() === "") !== Object.values(tier.rates).some((rate) => typeof rate === "number");
+  return <div className="grid gap-3 border-t border-t-solid border-fui-stroke1 pt-4 first:border-t-0 first:pt-0">
+    <div className="flex items-center gap-2 min-w-0"><Input className="!min-w-[0px] !w-full" readOnly={!editable} value={tier.name} placeholder={t("dashboard.upstreamEditor.models.tierName")} onChange={(_, data) => onChange({ ...tier, name: data.value })} />{editable && <><Button appearance="subtle" disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => onMove(-1)} /><Button appearance="subtle" disabled={index === total - 1} icon={<ArrowDownRegular />} onClick={() => onMove(1)} /><Button appearance="subtle" icon={<DeleteRegular />} onClick={onRemove} /></>}</div>
+    {invalid && <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.tierIncomplete")}</Text>}
+    <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">{dimensions.map((dimension) => <NumberField key={dimension} label={pricingLabels[dimension]} placeholder={t("dashboard.upstreamEditor.models.inheritPricePlaceholder")} readOnly={!editable} value={tier.rates[dimension]} onChange={(raw) => { const rates = { ...tier.rates }; const value = optionalNumber(raw); if (value === undefined) delete rates[dimension]; else rates[dimension] = value; onChange({ ...tier, rates }); }} />)}</div>
+  </div>;
+}
+
+export function modelValidationError(model: UpstreamModelConfig, t: ReturnType<typeof useTranslation>["t"]): string | null {
+  const effort = model.chat?.reasoning?.effort;
+  if (effort && (effort.supported.length === 0 || !effort.default || !effort.supported.includes(effort.default))) return t("dashboard.upstreamEditor.models.invalidEffort");
+  const budget = model.chat?.reasoning?.budget_tokens;
+  if (budget?.min !== undefined && budget.max !== undefined && budget.max < budget.min) return t("dashboard.upstreamEditor.models.invalidBudget");
+  return null;
+}
+
+export const modelsAreValid = (models: readonly UpstreamModelConfig[]) => models.every((model) => {
+  const effort = model.chat?.reasoning?.effort;
+  if (effort && (effort.supported.length === 0 || !effort.default || !effort.supported.includes(effort.default))) return false;
+  const budget = model.chat?.reasoning?.budget_tokens;
+  return !(budget?.min !== undefined && budget.max !== undefined && budget.max < budget.min);
+});
+
+const optionalNumber = (raw: string): number | undefined => raw === "" ? undefined : Number.isFinite(Number(raw)) && Number(raw) >= 0 ? Number(raw) : undefined;
+const cleanObject = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as T;
+const cleanChat = (chat: UpstreamChatConfig): UpstreamChatConfig | undefined => chat.modalities || chat.reasoning ? chat : undefined;
+const numberRange = (range: { min?: number; max?: number }, key: "min" | "max", raw: string) => { const next = { ...range }; const value = optionalNumber(raw); if (value === undefined) delete next[key]; else next[key] = value; return next; };
+const pricingOrUndefined = (cost: ModelPricing): ModelPricing | undefined => Object.keys(cost).length ? cost : undefined;
+const tiersFromPricing = (cost?: ModelPricing): TierDraft[] => Object.entries(cost?.tiers ?? {}).map(([name, rates]) => ({ id: ++tierId, name, rates: { ...rates } }));
+const moveItem = <T,>(items: T[], index: number, direction: -1 | 1) => { const target = index + direction; if (target < 0 || target >= items.length) return items; const next = [...items]; [next[index], next[target]] = [next[target]!, next[index]!]; return next; };
+
+const defaultEndpointsForKind = (kind: UpstreamModelConfig["kind"], current: UpstreamModelConfig["endpoints"]) => {
+  if (kind === "embedding") return { embeddings: {} };
+  const keys = kind === "image" ? ["imagesGenerations", "imagesEdits"] as const : ["completions", "chatCompletions", "responses", "messages"] as const;
+  const kept: UpstreamModelConfig["endpoints"] = {};
+  for (const key of keys) if (current[key]) kept[key] = current[key];
+  if (Object.keys(kept).length) return kept;
+  return kind === "image" ? { imagesGenerations: {}, imagesEdits: {} } : { chatCompletions: {} };
+};
+
+const modelEndpointOptions = (kind: UpstreamModelConfig["kind"]): [keyof UpstreamModelConfig["endpoints"], string][] => {
+  if (kind === "image") return [["imagesGenerations", "/images/generations"], ["imagesEdits", "/images/edits"]];
+  return [["completions", "/completions"], ["chatCompletions", "/chat/completions"], ["responses", "/responses"], ["messages", "/messages"]];
+};

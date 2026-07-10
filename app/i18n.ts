@@ -261,7 +261,8 @@ export const resources = {
             empty: "Not loaded",
             failed: "Refresh failed",
             readyDetail: "Model cache last refreshed {{time}}.",
-            emptyDetail: "This upstream's model cache has not been populated yet.",
+            emptyDetail:
+              "This upstream's model cache has not been populated yet.",
             failedDetail: "Last refresh failed at {{time}}: {{message}}",
           },
           summary: {
@@ -286,11 +287,248 @@ export const resources = {
             title: "Delete upstream",
             message: "Delete upstream {{name}}? This cannot be undone.",
           },
-          placeholder: {
+          toast: {
+            missing: "This upstream has been deleted.",
+            deleted: "Upstream {{name}} deleted.",
+          },
+        },
+        upstreamEditor: {
+          new: "New upstream",
+          documentTitleNew: "New upstream",
+          documentTitleEdit: "Upstream details",
+          optional: "optional",
+          unsaved: "Unsaved changes",
+          secretKeep: "Leave blank to keep unchanged.",
+          pathOverridesHint:
+            "Leave an entry blank to use its default /v1 path.",
+          disabledModelsHint:
+            "Existing models are best toggled in the Models workspace. Use this field for stale or unavailable model IDs.",
+          prefixInvalid:
+            "The prefix must end in /, use only letters, numbers, dots, underscores, hyphens, or slashes, and contain at most {{max}} characters.",
+          prefixDescription:
+            "Matched as a literal prefix on incoming model ids. Must end with /.",
+          actions: {
             back: "Back to upstreams",
-            newTitle: "New upstream",
-            editTitle: "Edit upstream",
-            description: "The upstream editor will be implemented as a dedicated page.",
+            save: "Save changes",
+            saving: "Saving...",
+            moveUp: "Move up",
+            moveDown: "Move down",
+            remove: "Remove",
+            showSecret: "Show API key",
+            hideSecret: "Hide API key",
+          },
+          sections: {
+            connection: "Connection and authentication",
+            proxy: "Proxy routing",
+            apiPaths: "API paths",
+            prefix: "Model name prefix",
+            disabledModels: "Disabled models",
+          },
+          fields: {
+            name: "Upstream name",
+            enabled: "Enabled",
+            baseUrl: "Base URL",
+            endpoint: "Endpoint",
+            authStyle: "Authentication",
+            apiKey: "API key",
+            fetchModels: "Fetch /models from upstream",
+            modelsPath: "Models path",
+            defaultEndpoints: "Default LLM endpoints",
+            pathOverrides: "Path overrides",
+            modelIds: "Model IDs",
+          },
+          auth: { none: "None" },
+          proxy: {
+            direct: "Direct",
+            empty: "No fallback entries. Traffic goes direct by default.",
+            add: "Add fallback entry",
+            colo: "Current Cloudflare colo: {{colo}}",
+          },
+          prefix: {
+            unprefixed: "Unprefixed",
+            prefixed: "Prefixed",
+            addressable: "Addressable",
+            listed: "Listed",
+          },
+          tabs: { models: "Models", flags: "Upstream feature flags" },
+          flags: {
+            intro:
+              "Upstream behavior varies by provider, API surface, and model. Adjust these defaults only when compatibility requires it.",
+            inherit: "Default",
+            on: "On",
+            off: "Off",
+            inheritResolved: "Default ({{state}})",
+            groups: {
+              vendor: "Vendor Compatibility",
+              shims: "Capability Shims",
+              apiCompatibility: "API Feature Compatibility",
+              sanitization: "Request Sanitization",
+              retry: "Retry Policies",
+              other: "Other",
+            },
+            entries: {
+              "vendor-deepseek": {
+                label: "DeepSeek Compatibility",
+                description:
+                  "DeepSeek's “OpenAI-compatible API” uses non-standard formats for reasoning fields and structured outputs.\nEnable this option to translate requests and responses bidirectionally between the OpenAI canonical format and DeepSeek's non-standard format, including translating reasoning controls (`thinking`) and reasoning content (`reasoning_text`), normalizing cached-token usage, and downgrading the unsupported `json_schema` response format to `json_object`.\nEnable this when the upstream is the **DeepSeek Chat Completions API**.",
+              },
+              "vendor-qwen": {
+                label: "Alibaba Cloud Model Studio Compatibility",
+                description:
+                  "Alibaba Cloud Model Studio's “OpenAI-compatible Chat API” uses a non-standard mechanism for disabling reasoning.\nEnable this option to translate the OpenAI canonical “disable reasoning” request (`reasoning_effort: \"none\"`) into Qwen's top-level field (`enable_thinking: false`).\nEnable this when the upstream is the **Alibaba Cloud Model Studio (Qwen) Chat Completions API**.",
+              },
+              "vendor-kimi": {
+                label: "Kimi Compatibility",
+                description:
+                  "Kimi's API uses a non-standard format for cached-token usage statistics.\nEnable this option to normalize the flat cached-token field (`cached_tokens`) in Kimi responses to the OpenAI canonical format (`prompt_tokens_details.cached_tokens`).\nEnable this when the upstream is the **Kimi (Moonshot AI) Chat Completions API**.",
+              },
+              "retry-cyber-policy": {
+                label: "Retry Cybersecurity Policy Blocks",
+                description:
+                  "OpenAI's Cybersecurity policy may occasionally produce false-positive `cyber_policy` blocks for some requests.\nWhen this option is enabled, Floway automatically retries an upstream request that is incorrectly blocked with a `cyber_policy` 4xx error, up to 10 times.",
+              },
+              "messages-web-search-shim": {
+                label: "Messages Web Search Shim",
+                description:
+                  "The Anthropic Messages API includes web search capabilities, but this upstream may not support search.\nEnable this option to handle web search tool calls through the search provider configured in Floway instead of forwarding them to the upstream.\nThis option is treated as enabled when the upstream does not provide the Messages API.",
+              },
+              "responses-web-search-shim": {
+                label: "Responses Web Search Shim",
+                description:
+                  "The Responses API includes web search capabilities, but this upstream may not support search.\nEnable this option to handle web search (`web_search`) tool calls through the search provider configured in Floway instead of forwarding them to the upstream.\nThis option is treated as enabled when the upstream does not provide the Responses API.",
+              },
+              "responses-image-generation-shim": {
+                label: "Responses Image Generation Shim",
+                description:
+                  "The Responses API includes image generation capabilities, but this upstream may not support image generation.\nEnable this option to route the image generation tool (`image_generation`) to another image-capable upstream in Floway (including `gpt-image-*`) instead of forwarding it to this upstream.\nThis option is treated as enabled when the upstream does not provide the Responses API.",
+              },
+              "responses-compact-shim": {
+                label: "Responses Context Compaction Shim",
+                description:
+                  "The Responses API includes context compaction capabilities, but this upstream may not provide native context compaction.\nWhen this option is enabled, Floway rewrites a compaction request as a normal generation request and injects Codex's context-handoff summarization prompt to “simulate” native context compaction, allowing subsequent requests to continue the task context from before compaction.\nThis option is treated as enabled when the upstream does not provide the Responses API.",
+              },
+              "disable-reasoning-on-forced-tool-choice": {
+                label: "Disable Reasoning for Forced Tool Calls",
+                description:
+                  "Some upstreams do not support forced tool calls and reasoning mode at the same time, and reject such requests outright.\nWhen this option is enabled and the caller forces a specific tool through `tool_choice`, Floway **disables reasoning mode** before forwarding the request.",
+              },
+              "demote-interleaved-system-to-user": {
+                label: "Rewrite Inline system Roles",
+                description:
+                  "Some upstreams only allow the `system` role at the beginning of a conversation and reject inline `system` messages interleaved between `user` or `assistant` messages (for example, DeepSeek-R1).\nWhen this option is enabled, consecutive `system` messages at the beginning of the conversation are preserved, while later interleaved `system` roles are rewritten to `user`. Message content remains unchanged.\nFor Messages API upstreams, this option is treated as enabled because system prompts can only appear in the top-level `system` field.",
+              },
+              "demote-developer-to-system": {
+                label: "Rewrite developer Roles",
+                description:
+                  "The latest OpenAI API specification includes the `developer` role (`role`), but some upstreams do not support it.\nEnable this option to rewrite `developer` as `system` before sending requests to the upstream.\nFor example, Codex system prompts use the `developer` role, while DeepSeek does not support it; enable this option in that case.",
+              },
+              "strip-billing-attribution": {
+                label: "Remove Claude Code Billing Attribution",
+                description:
+                  "Claude Code adds `x-anthropic-billing-header` to the system prompt so Anthropic can determine billing attribution. This marker serves no purpose for **non-official Anthropic upstreams** and is likely to **break prefix caching**.\nEnable this option when the upstream is not an official Anthropic service to remove the marker from the system prompt.\nDo **not** enable it for official Anthropic upstreams such as Claude Code, or billing attribution may be affected.",
+              },
+              "strip-prompt-cache-key": {
+                label: "Remove Prompt Cache Key",
+                description:
+                  "The OpenAI API supports `prompt_cache_key` for identifying reusable prompt prefixes, but some upstreams do not support this field and may reject the request (for example, DeepSeek models provided through Azure).\nEnable this option to remove the top-level `prompt_cache_key` field before sending the request upstream.",
+              },
+            },
+          },
+          models: {
+            title: "Models",
+            summary: "{{total}} total · {{manual}} manual · {{auto}} auto",
+            auto: "Auto",
+            manual: "Manual",
+            add: "Add",
+            refresh: "Refresh models",
+            listingFailed: "Could not fetch the model list from the upstream.",
+            listingFailedWithDetail:
+              "Could not fetch the model list from the upstream: {{message}}",
+            search: "Search model name or ID",
+            enabled: "Enabled",
+            name: "Model name",
+            id: "Model ID",
+            source: "Config",
+            kind: "Kind",
+            actions: "Actions",
+            copy: "Copy model ID",
+            edit: "Edit model",
+            back: "Back to models",
+            identity: "Identity",
+            displayName: "Display name",
+            displayNamePlaceholder: "e.g. GPT 5.4 Pro",
+            deployment: "Deployment",
+            deploymentPlaceholder: "Azure deployment name",
+            upstreamId: "Upstream model ID",
+            upstreamIdPlaceholder: "Raw upstream model ID",
+            publicId: "Public model ID",
+            publicIdPlaceholder: "Public model ID",
+            endpoints: "Supported endpoints",
+            capabilities: "Capabilities and limits",
+            contextWindow: "Context window",
+            promptTokens: "Prompt tokens",
+            outputTokens: "Output tokens",
+            imageInput: "Image input",
+            reasoning: "Reasoning",
+            effortLevels: "Effort levels",
+            customEffortPlaceholder: "custom...",
+            budgetTokens: "Budget tokens",
+            adaptive: "Adaptive",
+            mandatory: "Mandatory",
+            minimum: "Minimum",
+            maximum: "Maximum",
+            pricing: "Pricing",
+            pricingHint:
+              "Used only for Floway usage statistics and estimated cost reporting on the Usage page. This does not change upstream billing or request parameters. Prices are in USD per million tokens.",
+            tierPricing: "Per-tier pricing overrides ({{count}})",
+            addTier: "Add tier",
+            tierName: "Service tier name, e.g. fast",
+            inheritPricePlaceholder: "inherit",
+            tierIncomplete:
+              "Enter both a tier name and at least one rate; incomplete tiers are not saved.",
+            flags: "Model feature flags",
+            flagsHint:
+              "Model overrides use the effective upstream setting by default.",
+            enableFlagOverrides: "Override flags for this model",
+            invalidEffort:
+              "Reasoning effort must include at least one supported level, and its default must be one of those levels.",
+            invalidBudget:
+              "Maximum reasoning budget must be greater than or equal to the minimum.",
+            delete: "Delete manual model",
+          },
+          copilot: {
+            description:
+              "Connect a GitHub Copilot subscription using GitHub device authorization.",
+            connect: "Connect GitHub",
+            deviceCode: "Device code",
+            waiting: "Waiting for authorization...",
+          },
+          oauth: {
+            reimport: "Re-import credential",
+            import: "Import credential",
+            credentialJson: "Credential JSON",
+            preparing: "Preparing authorization...",
+            openAuthorize: "Open authorization page",
+            copy: "Copy authorization URL",
+            callback: "Redirected callback URL or code",
+            unrecognized:
+              "Authorization flow was not recognized. Restart the flow.",
+          },
+          validation: {
+            name: "Upstream name is required.",
+            prefix: "At least one model prefix form must remain addressable.",
+            models: "One or more models have invalid reasoning settings.",
+            copilot: "Complete GitHub device authorization before saving.",
+            credential: "Import a credential before saving.",
+          },
+          toast: {
+            saved: "Upstream settings saved.",
+          },
+          leave: {
+            title: "Discard unsaved changes?",
+            message: "This upstream has changes that have not been saved.",
+            stay: "Keep editing",
+            leave: "Discard and leave",
           },
         },
         usage: {
@@ -318,7 +556,8 @@ export const resources = {
             all: "Show all series",
             invert: "Invert series selection",
             none: "Hide all series",
-            toggleHint: "Click to toggle. Shift-click or double-click to isolate.",
+            toggleHint:
+              "Click to toggle. Shift-click or double-click to isolate.",
           },
           charts: {
             byUser: "By User",
@@ -342,18 +581,22 @@ export const resources = {
         },
         backupRestore: {
           heading: "Backup / Restore",
-          description: "Export or restore gateway configuration and control plane data.",
+          description:
+            "Export or restore gateway configuration and control plane data.",
           export: {
             heading: "Export",
-            description: "Download a complete snapshot of control plane data, including users, API keys, upstreams, proxies, usage records, and search provider configuration.",
+            description:
+              "Download a complete snapshot of control plane data, including users, API keys, upstreams, proxies, usage records, and search provider configuration.",
             includePerformance: "Include Performance Telemetry",
-            includePerformanceHint: "When enabled, the export will include recorded performance metrics alongside configuration data. Performance data can significantly increase file size.",
+            includePerformanceHint:
+              "When enabled, the export will include recorded performance metrics alongside configuration data. Performance data can significantly increase file size.",
             button: "Export JSON",
             buttonExporting: "Exporting…",
           },
           import: {
             heading: "Import",
-            description: "Restore configuration from a previously exported backup file in JSON format.",
+            description:
+              "Restore configuration from a previously exported backup file in JSON format.",
             dropzone: "Drag and drop a backup file here, or click to browse",
             dropzoneActive: "Release to load the file",
             fileSelected: "{{name}} ({{size}})",
@@ -362,15 +605,19 @@ export const resources = {
             records: "records",
             mode: "Import Mode",
             modeMerge: "Merge",
-            modeMergeDesc: "Add imported records alongside existing data. Existing records with matching identifiers are overwritten.",
+            modeMergeDesc:
+              "Add imported records alongside existing data. Existing records with matching identifiers are overwritten.",
             modeReplace: "Replace",
-            modeReplaceDesc: "Clear all existing data before importing the backup file.",
-            replaceWarning: "Replace mode will permanently delete all existing data before importing. This action cannot be undone.",
+            modeReplaceDesc:
+              "Clear all existing data before importing the backup file.",
+            replaceWarning:
+              "Replace mode will permanently delete all existing data before importing. This action cannot be undone.",
             button: "Import Data",
             buttonImporting: "Importing…",
             success: "Import completed successfully.",
             error: "Import failed.",
-            errorInvalidFile: "The selected file is not a valid Floway backup file.",
+            errorInvalidFile:
+              "The selected file is not a valid Floway backup file.",
             previewLabel: {
               users: "Users",
               apiKeys: "API Keys",
@@ -382,11 +629,13 @@ export const resources = {
             },
           },
           confirmTitle: "Confirm Import",
-          confirmMessage: "This will import data from the selected backup file. In replace mode, all existing data will be deleted first. Continue?",
+          confirmMessage:
+            "This will import data from the selected backup file. In replace mode, all existing data will be deleted first. Continue?",
         },
         searchConfig: {
           heading: "Search Provider",
-          description: "Configure web search providers for Anthropic Messages / Responses API tool calling.",
+          description:
+            "Configure web search providers for Anthropic Messages / Responses API tool calling.",
           providerLabel: "Provider",
           provider: {
             disabled: "Disabled",
@@ -394,9 +643,12 @@ export const resources = {
             microsoftGrounding: "Microsoft Grounding",
             jina: "Jina",
           },
-          providerDescTavily: "Tavily is a search engine optimized for LLMs and RAG workflows.",
-          providerDescMicrosoftGrounding: "Microsoft Grounding leverages Bing Search APIs for grounding LLM responses.",
-          providerDescJina: "Jina AI provides web search and content extraction APIs.",
+          providerDescTavily:
+            "Tavily is a search engine optimized for LLMs and RAG workflows.",
+          providerDescMicrosoftGrounding:
+            "Microsoft Grounding leverages Bing Search APIs for grounding LLM responses.",
+          providerDescJina:
+            "Jina AI provides web search and content extraction APIs.",
           getKeyLink: "Get API key →",
           apiKeyLabel: "API Key",
           apiKeyPlaceholder: "Enter API key…",
@@ -408,13 +660,15 @@ export const resources = {
           testing: "Testing…",
           testDisabledHint: "Select a provider to enable testing.",
           testResults: "Test Results",
-          testSuccess: "Connection test successful — {{count}} results returned.",
+          testSuccess:
+            "Connection test successful — {{count}} results returned.",
           testFailed: "Test failed: {{message}}",
           pageAge: "{{age}} ago",
         },
         proxy: {
           heading: "Proxy",
-          description: "Outbound proxies referenced by per-upstream fallback lists.",
+          description:
+            "Outbound proxies referenced by per-upstream fallback lists.",
           listTitle: "Proxies",
           empty: "No proxies configured. Add one on the right.",
           addTitle: "Add Proxy",
@@ -570,7 +824,8 @@ export const resources = {
         },
         pages: {
           playground: "在控制台中运行模型对话，并检查请求行为。",
-          upstreams: "管理 provider 路由优先级、可用状态、模型目录和连接配置。",
+          upstreams:
+            "管理模型提供商的路由优先级、可用状态、模型目录和连接配置。",
           proxy: "管理代理路由、传输方式和 gateway 级代理配置。",
           apiKeys: "创建和管理客户端调用 Floway 时使用的 API key。",
           apiDocs: "阅读 Floway 网关的 API 参考和接入说明。",
@@ -648,13 +903,11 @@ export const resources = {
             nameRequired: "名称不能为空。",
             upstreamRequired: "至少选择一个上游，或关闭覆盖设置。",
             customKeyRequired: "必须填写自定义 API key。",
-            retentionInvalid:
-              "保留时间必须是秒数，或类似 30m、2h、3d 的值。",
+            retentionInvalid: "保留时间必须是秒数，或类似 30m、2h、3d 的值。",
           },
           upstreams: {
             title: "覆盖可用上游（{{count}}）",
-            inheritDescription:
-              "关闭时，该 key 继承当前账号可用的全部上游。",
+            inheritDescription: "关闭时，该 key 继承当前账号可用的全部上游。",
             enabled: "启用",
             order: "顺序",
             name: "名称",
@@ -694,8 +947,7 @@ export const resources = {
             generatedTitle: "轮换 API Key",
             generatedMessage: "轮换 key {{name}}？旧 key 会立即停止工作。",
             title: "轮换自定义 API Key",
-            message:
-              "输入 {{name}} 的替换 key。轮换后旧 key 会立即停止工作。",
+            message: "输入 {{name}} 的替换 key。轮换后旧 key 会立即停止工作。",
           },
           delete: {
             title: "删除 API Key",
@@ -770,11 +1022,241 @@ export const resources = {
             title: "删除上游",
             message: "删除上游 {{name}}？此操作无法撤销。",
           },
-          placeholder: {
+          toast: {
+            missing: "该上游已被删除。",
+            deleted: "已删除上游 {{name}}。",
+          },
+        },
+        upstreamEditor: {
+          new: "新建上游",
+          documentTitleNew: "新建上游",
+          documentTitleEdit: "上游详情",
+          optional: "可选",
+          unsaved: "有未保存更改",
+          secretKeep: "留空以保持不变。",
+          pathOverridesHint: "留空时使用对应的默认 /v1 路径。",
+          disabledModelsHint:
+            "当前模型请优先在模型工作区中启停。这里用于补充已经不可见或失联的模型 ID。",
+          prefixInvalid:
+            "前缀必须以 / 结尾，只能包含字母、数字、点、下划线、连字符或斜杠，且不超过 {{max}} 个字符。",
+          prefixDescription: "作为字面前缀匹配传入的模型 ID，必须以 / 结尾。",
+          actions: {
             back: "返回上游列表",
-            newTitle: "新建上游",
-            editTitle: "编辑上游",
-            description: "上游编辑器后续将作为独立页面实现。",
+            save: "保存更改",
+            saving: "正在保存...",
+            moveUp: "上移",
+            moveDown: "下移",
+            remove: "移除",
+            showSecret: "显示 API 密钥",
+            hideSecret: "隐藏 API 密钥",
+          },
+          sections: {
+            connection: "连接与认证",
+            proxy: "代理路由",
+            apiPaths: "API 路径",
+            prefix: "模型名称前缀",
+            disabledModels: "禁用的模型",
+          },
+          fields: {
+            name: "上游名称",
+            enabled: "启用",
+            baseUrl: "Base URL",
+            endpoint: "Endpoint",
+            authStyle: "认证方式",
+            apiKey: "API 密钥",
+            fetchModels: "从上游获取 /models",
+            modelsPath: "模型列表路径",
+            defaultEndpoints: "默认 LLM API",
+            pathOverrides: "路径覆盖",
+            modelIds: "模型 ID",
+          },
+          auth: { none: "无认证" },
+          proxy: {
+            direct: "直连",
+            empty: "未配置回退出口，默认直接连接。",
+            add: "添加回退出口",
+            colo: "当前 Cloudflare colo：{{colo}}",
+          },
+          prefix: {
+            unprefixed: "无前缀",
+            prefixed: "带前缀",
+            addressable: "可路由",
+            listed: "模型列表可见",
+          },
+          tabs: { models: "模型列表", flags: "上游特性开关" },
+          flags: {
+            intro:
+              "不同提供商、API 和模型的上游行为可能不同。仅在兼容性需要时调整这些默认设置。",
+            inherit: "默认",
+            on: "开",
+            off: "关",
+            inheritResolved: "默认（{{state}}）",
+            groups: {
+              vendor: "上游提供商兼容",
+              shims: "能力兼容层",
+              apiCompatibility: "API 功能兼容",
+              sanitization: "请求净化",
+              retry: "重试策略",
+              other: "其他",
+            },
+            entries: {
+              "vendor-deepseek": {
+                label: "DeepSeek 兼容",
+                description:
+                  "DeepSeek 的“OpenAI 兼容 API”在推理字段和结构化输出等方面采用了非标准格式。\n开启此开关，以在 OpenAI 规范格式与 DeepSeek 非标准格式之间双向转换请求和响应，包括转换推理开关 (`thinking`) 与推理内容 (`reasoning_text`)、归一化缓存 Token 用量，以及将不支持的 `json_schema` 格式化模式降级为 `json_object`。\n当上游为 **DeepSeek chat completions API** 时应开启。",
+              },
+              "vendor-qwen": {
+                label: "阿里云百炼兼容",
+                description:
+                  '阿里云百炼的“OpenAI 兼容 - Chat API”在禁用推理的控制方式上采用了非标准格式。\n开启此开关，以将 OpenAI 规范格式中的“禁用推理”请求 (`reasoning_effort: "none"`) 转换为 Qwen 使用的顶层字段 (`enable_thinking: false`)。\n当上游为**阿里云百炼（Qwen）chat completions API** 时应开启。',
+              },
+              "vendor-kimi": {
+                label: "Kimi 兼容",
+                description:
+                  "Kimi 的 API 在缓存 Token 用量统计方面采用了非标准格式。\n开启此开关，以将 Kimi 响应中的扁平缓存 Token 字段 (`cached_tokens`) 归一化为 OpenAI 规范格式 (`prompt_tokens_details.cached_tokens`)。\n当上游为 **Kimi（月之暗面）chat completions API** 时应开启。",
+              },
+              "retry-cyber-policy": {
+                label: "安全策略拦截重试",
+                description:
+                  "OpenAI 的 Cybersecurity 安全策略可能在部分请求中产生偶发的 `cyber_policy` 误判拦截。\n开启此开关后，当上游误判，返回 `cyber_policy` 4xx 错误时会自动重试。最多 10 次。",
+              },
+              "messages-web-search-shim": {
+                label: "Messages 网页搜索兼容层",
+                description:
+                  "Anthropic Messages API 包含搜索能力，但本上游可能不支持搜索。\n开启此开关，以通过 Floway 配置的搜索提供商来处理网页搜索工具调用，而非转发到上游。\n当上游不提供 Messages API 时，此开关被视为开启。",
+              },
+              "responses-web-search-shim": {
+                label: "Responses 网页搜索兼容层",
+                description:
+                  "Responses API 包含搜索能力，但本上游可能不支持搜索。\n开启此开关，以通过 Floway 配置的搜索提供商来处理网页搜索 (`web_search`) 工具调用，而非转发到上游。\n当上游不提供 Responses API 时，此开关被视为开启。",
+              },
+              "responses-image-generation-shim": {
+                label: "Responses 图像生成兼容层",
+                description:
+                  "Responses API 包含图像生成能力，但本上游可能不支持图像生成。\n开启此开关，以把图像生成工具（`image_generation`）转发到 Floway 中其它支持图像生成（包含 `gpt-image-*`）的上游来执行，而非转发到本上游。\n当上游不提供 Responses API 时，此开关被视为开启。",
+              },
+              "responses-compact-shim": {
+                label: "Responses 上下文压缩兼容层",
+                description:
+                  "Responses API 包含上下文压缩能力，但本上游可能不提供原生上下文压缩。\n开启此开关后，Floway 会将压缩请求改写为普通生成请求，注入 Codex 的上下文交接摘要提示词，来“模拟”原生上下文压缩，并在后续请求中延续压缩前的任务上下文。\n当上游不提供 Responses API 时，此开关被视为开启。",
+              },
+              "disable-reasoning-on-forced-tool-choice": {
+                label: "强制工具调用时禁用推理",
+                description:
+                  "部分上游不支持同时开启“强制工具调用”和推理模式，会直接拒绝此类请求。\n开启此开关后，当调用方通过 `tool_choice` 强制指定某个工具时，Floway 会在转发请求时**关闭推理模式**。",
+              },
+              "demote-interleaved-system-to-user": {
+                label: "改写行内 system 角色",
+                description:
+                  "部分上游只允许在对话开头使用 `system` 角色，不接受穿插在 `user` 或 `assistant` 消息之间的行内 `system` 消息（如 DeepSeek-R1）。\n开启此开关后，对话开头连续的 `system` 消息会保留，而后续穿插的 `system` 角色会被改写为 `user`。消息内容保持不变。\n对于 Messages API 上游，由于系统提示词只能放在顶层 `system` 字段中，此开关被视为开启。",
+              },
+              "demote-developer-to-system": {
+                label: "改写 developer 角色",
+                description:
+                  "OpenAI 的新版 API 规范中包含了 `developer` 这一角色（`role`)，但部分上游并不支持。\n开启此开关，以在请求上游时，把 `developer` 改写为 `system`。\n例如，Codex 的系统提示词会使用 `developer` 角色，但 DeepSeek 不支持，此时就应开启。",
+              },
+              "strip-billing-attribution": {
+                label: "移除 Claude Code 计费归属标记",
+                description:
+                  "Claude Code 会在系统提示词中加入 `x-anthropic-billing-header`，供 Anthropic 计费判断，但对于**非 Anthropic 官方上游**，这个标记没有作用，且很可能会**破坏前缀缓存**。\n当上游不是 Anthropic 官方时应开启，以在系统提示词中移除这个标记。\n**Anthropic 官方上游**（如 Claude Code）**不应开启**，否则会影响计费。",
+              },
+              "strip-prompt-cache-key": {
+                label: "去除 Prompt Cache Key",
+                description:
+                  "OpenAI API 支持通过 `prompt_cache_key` 标识可复用的提示词前缀，但部分上游并不支持，可能导致拒绝请求（如 Azure 提供的 DeepSeek 模型）。\n开启此开关，以在请求上游前移除除顶层的 `prompt_cache_key` 字段。",
+              },
+            },
+          },
+          models: {
+            title: "模型",
+            summary: "共 {{total}} 个 · {{manual}} 个手动 · {{auto}} 个自动",
+            auto: "自动",
+            manual: "手动",
+            add: "添加",
+            refresh: "刷新模型",
+            listingFailed: "无法从上游获取模型列表。",
+            listingFailedWithDetail: "无法从上游获取模型列表：{{message}}",
+            search: "搜索模型名称或 ID",
+            enabled: "启用",
+            name: "模型名称",
+            id: "模型代码",
+            source: "配置方式",
+            kind: "类型",
+            actions: "操作",
+            copy: "复制模型 ID",
+            edit: "编辑模型",
+            back: "返回模型列表",
+            identity: "标识",
+            displayName: "显示名称",
+            displayNamePlaceholder: "例如 GPT 5.4 Pro",
+            deployment: "Deployment",
+            deploymentPlaceholder: "Azure Deployment 名称",
+            upstreamId: "上游模型 ID",
+            upstreamIdPlaceholder: "原始上游模型 ID",
+            publicId: "公开模型 ID",
+            publicIdPlaceholder: "公开模型 ID",
+            endpoints: "支持的 API",
+            capabilities: "能力与限制",
+            contextWindow: "上下文窗口",
+            promptTokens: "Prompt Token",
+            outputTokens: "输出 Token",
+            imageInput: "图像输入",
+            reasoning: "推理",
+            effortLevels: "推理强度",
+            customEffortPlaceholder: "自定义...",
+            budgetTokens: "推理 Token 预算",
+            adaptive: "自适应",
+            mandatory: "强制推理",
+            minimum: "最小值",
+            maximum: "最大值",
+            pricing: "定价",
+            pricingHint:
+              "仅用于 Floway 的用量统计和费用估算，并展示在 Usage 页面；不会修改上游计费或请求参数。价格单位为美元/百万 Token。",
+            tierPricing: "按 Service Tier 覆盖定价（{{count}}）",
+            addTier: "添加 Tier",
+            tierName: "Service Tier 名称，例如 fast",
+            inheritPricePlaceholder: "继承",
+            tierIncomplete:
+              "请同时填写 Tier 名称和至少一项价格；不完整的 Tier 不会保存。",
+            flags: "模型特性开关",
+            flagsHint: "模型覆盖默认采用上游的最终设置。",
+            enableFlagOverrides: "为此模型覆盖特性开关",
+            invalidEffort:
+              "推理强度至少需要一个支持值，且默认值必须包含在支持列表中。",
+            invalidBudget: "最大推理 Token 预算不能小于最小值。",
+            delete: "删除手动模型",
+          },
+          copilot: {
+            description: "通过 GitHub 设备授权连接 GitHub Copilot 订阅。",
+            connect: "连接 GitHub",
+            deviceCode: "设备代码",
+            waiting: "正在等待授权...",
+          },
+          oauth: {
+            reimport: "重新导入凭据",
+            import: "导入凭据",
+            credentialJson: "凭据 JSON",
+            preparing: "正在准备授权...",
+            openAuthorize: "打开授权页面",
+            copy: "复制授权链接",
+            callback: "重定向后的回调 URL 或代码",
+            unrecognized: "无法识别该授权流程，请重新开始。",
+          },
+          validation: {
+            name: "上游名称不能为空。",
+            prefix: "至少保留一种可路由的模型前缀形式。",
+            models: "一个或多个模型的推理设置无效。",
+            copilot: "请先完成 GitHub 设备授权。",
+            credential: "请先导入凭据。",
+          },
+          toast: {
+            saved: "上游设置已保存。",
+          },
+          leave: {
+            title: "放弃未保存的更改？",
+            message: "该上游仍有尚未保存的修改。",
+            stay: "继续编辑",
+            leave: "放弃并离开",
           },
         },
         usage: {
@@ -829,9 +1311,11 @@ export const resources = {
           description: "导出或恢复 gateway 配置和控制平面数据。",
           export: {
             heading: "导出",
-            description: "下载控制平面数据的完整快照，包括用户、API 密钥、上游、代理、使用记录和搜索提供方配置。",
+            description:
+              "下载控制平面数据的完整快照，包括用户、API 密钥、上游、代理、使用记录和搜索提供方配置。",
             includePerformance: "包含性能遥测数据",
-            includePerformanceHint: "启用后，导出文件将包含已记录的性能指标以及配置数据。性能数据可能会显著增加文件大小。",
+            includePerformanceHint:
+              "启用后，导出文件将包含已记录的性能指标以及配置数据。性能数据可能会显著增加文件大小。",
             button: "导出 JSON",
             buttonExporting: "正在导出…",
           },
@@ -846,10 +1330,12 @@ export const resources = {
             records: "条记录",
             mode: "导入模式",
             modeMerge: "合并",
-            modeMergeDesc: "将导入的记录添加到现有数据中。标识符匹配的已有记录会被覆盖。",
+            modeMergeDesc:
+              "将导入的记录添加到现有数据中。标识符匹配的已有记录会被覆盖。",
             modeReplace: "替换",
             modeReplaceDesc: "在导入备份文件之前清除所有现有数据。",
-            replaceWarning: "替换模式将永久删除所有现有数据后再导入。此操作无法撤销。",
+            replaceWarning:
+              "替换模式将永久删除所有现有数据后再导入。此操作无法撤销。",
             button: "导入数据",
             buttonImporting: "正在导入…",
             success: "导入成功完成。",
@@ -866,11 +1352,13 @@ export const resources = {
             },
           },
           confirmTitle: "确认导入",
-          confirmMessage: "将从所选备份文件导入数据。在替换模式下，所有现有数据将被首先删除。是否继续？",
+          confirmMessage:
+            "将从所选备份文件导入数据。在替换模式下，所有现有数据将被首先删除。是否继续？",
         },
         searchConfig: {
           heading: "搜索提供商",
-          description: "配置 Anthropic Messages / Responses API 网络搜索工具调用的提供商。",
+          description:
+            "配置 Anthropic Messages / Responses API 网络搜索工具调用的提供商。",
           providerLabel: "提供商",
           provider: {
             disabled: "禁用",
@@ -879,7 +1367,8 @@ export const resources = {
             jina: "Jina",
           },
           providerDescTavily: "Tavily 是专为 LLM 和 RAG 工作流优化的搜索引擎。",
-          providerDescMicrosoftGrounding: "Microsoft Grounding 利用 Bing Search API 为 LLM 提供答案依据。",
+          providerDescMicrosoftGrounding:
+            "Microsoft Grounding 利用 Bing Search API 为 LLM 提供答案依据。",
           providerDescJina: "Jina AI 提供网络搜索和内容提取 API。",
           getKeyLink: "获取 API 密钥 →",
           apiKeyLabel: "API 密钥",

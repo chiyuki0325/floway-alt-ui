@@ -1,30 +1,42 @@
-import { ArrowLeftRegular } from "@fluentui/react-icons";
-import { redirect, useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
+import { redirect } from "react-router";
 
 import type { Route } from "./+types/dashboard-providers-upstreams-new";
-import type { UpstreamProviderKind } from "../api/types";
-import { getCurrentSession } from "../api/auth";
+import type { UpstreamProviderKind, UpstreamRecord } from "../api/types";
+import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
-import { Panel } from "../components/panel";
-import { ProviderBadge } from "../components/provider-badge";
-import { fluentComponents } from "../fluent";
-
-const { Button, Text } = fluentComponents;
-const providerKinds: readonly UpstreamProviderKind[] = [
-  "custom", "azure", "copilot", "codex", "claude-code", "ollama",
-];
+import { UpstreamEditorPage } from "../components/upstream-editor/upstream-editor-page";
+import {
+  loadEditorAux,
+  providerDefaultName,
+  providerKinds,
+  requireAdmin,
+} from "../components/upstream-editor/editor-data";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   if (!getSessionToken()) throw redirect("/");
-  const session = await getCurrentSession();
-  if (session.error || !session.data.user.isAdmin) {
-    throw redirect("/dashboard/services/api-keys");
-  }
+  if (!(await requireAdmin())) throw redirect("/dashboard/services/api-keys");
   if (!providerKinds.includes(params.provider as UpstreamProviderKind)) {
     throw redirect("/dashboard/providers/upstreams");
   }
-  return { provider: params.provider as UpstreamProviderKind };
+
+  const provider = params.provider as UpstreamProviderKind;
+  const [recordResult, aux] = await Promise.all([
+    callApi<UpstreamRecord>(() =>
+      authFetch(`/api/upstreams/blueprint?kind=${encodeURIComponent(provider)}`),
+    ),
+    loadEditorAux(),
+  ]);
+  if (recordResult.error) throw new Error(recordResult.error.message);
+  const record = {
+    ...recordResult.data,
+    name: providerDefaultName[provider],
+    enabled: true,
+  };
+  const nextSortOrder = aux.upstreams.reduce(
+    (max, item) => Math.max(max, item.sort_order),
+    -1,
+  ) + 1;
+  return { ...aux, mode: "create" as const, record, nextSortOrder };
 }
 
 export function meta({}: Route.MetaArgs) {
@@ -32,22 +44,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function DashboardProvidersUpstreamsNew({ loaderData }: Route.ComponentProps) {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  return (
-    <div className="grid gap-[18px] min-w-0">
-      <Button appearance="subtle" className="!justify-self-start" icon={<ArrowLeftRegular />} onClick={() => navigate("/dashboard/providers/upstreams")}>
-        {t("dashboard.upstreams.placeholder.back")}
-      </Button>
-      <Panel className="grid gap-3 min-w-0 !p-[22px]">
-        <ProviderBadge kind={loaderData.provider} />
-        <Text as="h1" size={600} weight="semibold" className="!m-0">
-          {t("dashboard.upstreams.placeholder.newTitle")}
-        </Text>
-        <Text size={300} className="text-fui-fg2">
-          {t("dashboard.upstreams.placeholder.description")}
-        </Text>
-      </Panel>
-    </div>
-  );
+  return <UpstreamEditorPage data={loaderData} />;
 }

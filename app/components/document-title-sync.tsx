@@ -20,6 +20,12 @@ const dashboardTitleKeys = new Map<string, string>([
 const titleKeyForPathname = (pathname: string) => {
   if (pathname === "/") return "auth.login.title";
   if (pathname === "/dashboard") return "dashboard.title";
+  if (/^\/dashboard\/providers\/upstreams\/new\/[^/]+$/.test(pathname)) {
+    return "dashboard.upstreamEditor.documentTitleNew";
+  }
+  if (/^\/dashboard\/providers\/upstreams\/[^/]+$/.test(pathname)) {
+    return "dashboard.upstreamEditor.documentTitleEdit";
+  }
 
   return dashboardTitleKeys.get(pathname) ?? "app.title";
 };

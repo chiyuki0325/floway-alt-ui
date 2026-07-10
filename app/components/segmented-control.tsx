@@ -23,6 +23,7 @@ const useStyles = makeStyles({
 export interface SegmentedControlItem {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
 export function SegmentedControl({
@@ -47,13 +48,14 @@ export function SegmentedControl({
       {items.map((item) => (
         <button
           aria-selected={value === item.value}
+          disabled={item.disabled}
           className={
             value === item.value
-              ? `bg-transparent border-0 rounded-md cursor-pointer flex-none font-fui-semibold text-fui-base200 min-h-[28px] px-2.5 whitespace-nowrap ${s.active}`
-              : `bg-transparent border-0 rounded-md cursor-pointer flex-none font-fui-semibold text-fui-base200 min-h-[28px] px-2.5 whitespace-nowrap ${s.button} hover:${s.buttonHover}`
+              ? `bg-transparent border-0 rounded-md cursor-pointer flex-none font-fui-semibold text-fui-base200 min-h-[28px] px-2.5 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 ${s.active}`
+              : `bg-transparent border-0 rounded-md cursor-pointer flex-none font-fui-semibold text-fui-base200 min-h-[28px] px-2.5 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 ${s.button} hover:${s.buttonHover}`
           }
           key={item.value}
-          onClick={() => onChange(item.value)}
+          onClick={() => !item.disabled && onChange(item.value)}
           role="tab"
           type="button"
         >

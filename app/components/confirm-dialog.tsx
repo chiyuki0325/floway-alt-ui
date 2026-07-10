@@ -26,6 +26,7 @@ export function ConfirmDialog({
   actionLabel,
   cancelLabel,
   message,
+  onCancel,
   onConfirm,
   onOpenChange,
   open,
@@ -34,6 +35,7 @@ export function ConfirmDialog({
   actionLabel: string;
   cancelLabel?: string;
   message: string;
+  onCancel?: () => void;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -66,7 +68,10 @@ export function ConfirmDialog({
           </Button>
           <Button
             className="font-fui-regular my-1 !w-full"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              if (onCancel) onCancel();
+              else onOpenChange(false);
+            }}
           >
             {cancelLabel ?? t("common.cancel")}
           </Button>

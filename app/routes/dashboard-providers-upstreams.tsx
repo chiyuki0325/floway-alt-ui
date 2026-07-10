@@ -9,9 +9,9 @@ import {
   EditRegular,
   WarningRegular,
 } from "@fluentui/react-icons";
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, redirect, useNavigate } from "react-router";
+import { Link, redirect, useLocation, useNavigate } from "react-router";
 
 import type { Route } from "./+types/dashboard-providers-upstreams";
 import type {
@@ -45,8 +45,12 @@ const {
   TableHeaderCell,
   TableRow,
   Text,
+  Toast,
+  Toaster,
+  ToastTitle,
   Tooltip,
   makeStyles,
+  useToastController,
 } = fluentComponents;
 
 interface ModelsResponse {
@@ -99,12 +103,45 @@ export function meta({}: Route.MetaArgs) {
 export default function DashboardProvidersUpstreams({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const toasterId = useId();
+  const mutationToastId = useId();
+  const { dismissToast, dispatchToast } = useToastController(toasterId);
   const [data, setData] = useState<UpstreamsPageData>(loaderData);
   const [pageError, setPageError] = useState<string | null>(loaderData.loadError);
   const [mutation, setMutation] = useState<Mutation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UpstreamRecord | null>(null);
 
   const busy = mutation !== null;
+
+  useEffect(() => {
+    const search = new URLSearchParams(location.search);
+    if (search.get("missing") !== "1") return;
+
+    dispatchToast(
+      <Toast>
+        <ToastTitle>{t("dashboard.upstreams.toast.missing")}</ToastTitle>
+      </Toast>,
+      { intent: "warning" },
+    );
+    void navigate(location.pathname, { replace: true });
+  }, [dispatchToast, location.pathname, location.search, navigate, t]);
+
+  useEffect(() => {
+    if (!mutation) {
+      dismissToast(mutationToastId);
+      return;
+    }
+
+    dispatchToast(
+      <Toast>
+        <ToastTitle media={<Spinner size="tiny" />}>
+          {t(`dashboard.upstreams.busy.${mutation.kind}`)}
+        </ToastTitle>
+      </Toast>,
+      { toastId: mutationToastId, timeout: -1 },
+    );
+  }, [dismissToast, dispatchToast, mutation, mutationToastId, t]);
 
   const reload = async (): Promise<UpstreamsPageData> => {
     const next = await loadUpstreamsPageData();
@@ -193,10 +230,20 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
     setDeleteTarget(null);
     await reload();
     setMutation(null);
+    dispatchToast(
+      <Toast>
+        <ToastTitle>
+          {t("dashboard.upstreams.toast.deleted", { name: record.name })}
+        </ToastTitle>
+      </Toast>,
+      { intent: "success" },
+    );
   };
 
   return (
     <div className="grid gap-[18px] min-w-0">
+      <Toaster toasterId={toasterId} position="top-end" />
+
       <header className="flex items-start gap-[18px] justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
         <div className="grid gap-1 min-w-0">
           <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2]">
@@ -266,12 +313,6 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
       )}
 
       <Panel className="grid gap-[14px] min-w-0 !p-[18px] !pt-[10px]">
-        {busy && (
-          <span className="text-xs text-fui-fg2 inline-flex items-center gap-[6px] justify-self-end">
-            <Spinner size="tiny" />
-            {t(`dashboard.upstreams.busy.${mutation.kind}`)}
-          </span>
-        )}
         <UpstreamsTable
           busy={busy}
           data={data}
