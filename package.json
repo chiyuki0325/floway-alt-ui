@@ -10,6 +10,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@floway-dev/gateway": "workspace:*",
     "@floway-dev/protocols": "workspace:*",
     "@floway-dev/provider": "workspace:*",
     "@floway-dev/proxy": "workspace:*",
@@ -29,6 +30,7 @@
     "react-hook-form": "^7.81.0",
     "react-i18next": "^17.0.8",
     "react-router": "8.0.0",
+    "react-window": "^2.2.7",
     "zod": "^4.4.3",
     "zod-i18n-map": "^2.27.0",
     "zustand": "^5.0.14"
