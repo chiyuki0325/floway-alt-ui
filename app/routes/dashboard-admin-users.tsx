@@ -6,7 +6,7 @@ import {
   KeyRegular,
   PersonAddRegular,
 } from "@fluentui/react-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { redirect, useOutletContext } from "react-router";
@@ -72,6 +72,7 @@ interface PasswordFormValues {
 
 const useStyles = makeStyles({
   dangerButton: { color: "var(--colorPaletteRedForeground1)" },
+  validationMessage: { color: "var(--colorPaletteRedForeground1)" },
 });
 
 export async function clientLoader(): Promise<UsersPageData> {
@@ -544,6 +545,8 @@ function UpstreamAccessPicker({ disabled, error, ids, onChange, override, upstre
   upstreams: UpstreamOption[];
 }) {
   const { t } = useTranslation();
+  const idPrefix = useId();
+  const styles = useStyles();
   return (
     <div className="grid gap-[10px] min-w-0">
       <div className="flex items-start justify-between gap-3 border border-solid border-fui-stroke1 rounded-lg p-3 bg-fui-bg2">
@@ -559,18 +562,25 @@ function UpstreamAccessPicker({ disabled, error, ids, onChange, override, upstre
         />
       </div>
       {override && (
-        <Field
-          label={t("dashboard.users.upstreams.select")}
-          validationMessage={error ?? undefined}
-          validationState={error ? "error" : undefined}
+        <div
+          aria-describedby={error ? `${idPrefix}-error` : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-labelledby={`${idPrefix}-label`}
+          className="grid gap-1.5"
+          role="group"
         >
+          <Text id={`${idPrefix}-label`} weight="semibold">
+            {t("dashboard.users.upstreams.select")}
+          </Text>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 border border-solid border-fui-stroke1 rounded-lg p-3 max-[560px]:grid-cols-1">
-            {upstreams.map((upstream) => (
+            {upstreams.map((upstream, index) => (
               <Checkbox
                 checked={ids.includes(upstream.id)}
                 disabled={disabled}
+                id={`${idPrefix}-upstream-${index}`}
                 key={upstream.id}
                 label={upstream.name}
+                name={`available-upstream-${upstream.id}`}
                 onChange={(_, data) => onChange({
                   override: true,
                   ids: data.checked
@@ -580,7 +590,12 @@ function UpstreamAccessPicker({ disabled, error, ids, onChange, override, upstre
               />
             ))}
           </div>
-        </Field>
+          {error && (
+            <Text className={styles.validationMessage} id={`${idPrefix}-error`} role="alert" size={200}>
+              {error}
+            </Text>
+          )}
+        </div>
       )}
     </div>
   );

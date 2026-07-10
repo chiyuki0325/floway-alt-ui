@@ -1,4 +1,5 @@
 import { ArrowDownRegular, ArrowUpRegular, DeleteRegular } from "@fluentui/react-icons";
+import { useId } from "react";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -43,12 +44,7 @@ export function UpstreamConfigSidebar({
       </Field>
       <EditorSection title={t("dashboard.upstreamEditor.sections.connection")}>
         <ProviderConfigSection record={record} onPatch={onPatch} />
-        <Field
-          label={t("dashboard.upstreamEditor.sections.proxy")}
-          hint={runtime.kind === "cloudflare" ? t("dashboard.upstreamEditor.proxy.colo", { colo: runtime.colo }) : undefined}
-        >
-          <ProxyFallbackEditor proxies={proxies} />
-        </Field>
+        <ProxyFallbackEditor proxies={proxies} runtime={runtime} />
       </EditorSection>
       {record.kind === "custom" && <EditorSection title={t("dashboard.upstreamEditor.sections.apiPaths")}>
         <ApiPathsSection record={record} />
@@ -79,15 +75,23 @@ function EditorSection({ children, description, title }: { children: React.React
   </section>;
 }
 
-function ProxyFallbackEditor({ proxies }: { proxies: ProxyRecord[] }) {
+function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; runtime: RuntimeInfo }) {
   const { t } = useTranslation();
+  const idPrefix = useId();
   const { control } = useFormContext<UpstreamEditorValues>();
   const { fields, append, move, remove } = useFieldArray({ control, name: "proxyFallbackList" });
   const available = [{ id: "direct", name: t("dashboard.upstreamEditor.proxy.direct") }, ...proxies];
-  return <div className="grid gap-2">
+  const hint = runtime.kind === "cloudflare" ? t("dashboard.upstreamEditor.proxy.colo", { colo: runtime.colo }) : null;
+  return <div
+    aria-describedby={hint ? `${idPrefix}-hint` : undefined}
+    aria-labelledby={`${idPrefix}-label`}
+    className="grid gap-2"
+    role="group"
+  >
+    <Text id={`${idPrefix}-label`} weight="semibold">{t("dashboard.upstreamEditor.sections.proxy")}</Text>
     {fields.length === 0 && <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.proxy.empty")}</Text>}
     {fields.map((field, index) => <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2" key={field.id}>
-      <Controller control={control} name={`proxyFallbackList.${index}.id`} render={({ field: item }) => <Select key={item.value} defaultValue={item.value} onChange={(_, data) => item.onChange(data.value)}>{available.map((proxy) => <option key={proxy.id} value={proxy.id}>{proxy.name}</option>)}</Select>} />
+      <Controller control={control} name={`proxyFallbackList.${index}.id`} render={({ field: item }) => <Select aria-label={t("dashboard.upstreamEditor.sections.proxy")} key={item.value} defaultValue={item.value} onChange={(_, data) => item.onChange(data.value)}>{available.map((proxy) => <option key={proxy.id} value={proxy.id}>{proxy.name}</option>)}</Select>} />
       <div className="inline-flex">
         <Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.moveUp")} disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => move(index, index - 1)} />
         <Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.moveDown")} disabled={index === fields.length - 1} icon={<ArrowDownRegular />} onClick={() => move(index, index + 1)} />
@@ -95,6 +99,7 @@ function ProxyFallbackEditor({ proxies }: { proxies: ProxyRecord[] }) {
       </div>
     </div>)}
     <Button appearance="secondary" onClick={() => append({ id: "direct" })}>{t("dashboard.upstreamEditor.proxy.add")}</Button>
+    {hint && <Text id={`${idPrefix}-hint`} size={200} className="text-fui-fg2">{hint}</Text>}
   </div>;
 }
 

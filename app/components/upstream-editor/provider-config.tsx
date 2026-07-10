@@ -122,6 +122,7 @@ function CustomConfig({ record }: { record: Extract<UpstreamRecord, { kind: "cus
 function CustomApiPaths() {
   const { t } = useTranslation();
   const styles = useStyles();
+  const idPrefix = useId();
   const { control, register } = useFormContext<UpstreamEditorValues>();
   return (
     <div className="grid gap-4">
@@ -132,10 +133,15 @@ function CustomApiPaths() {
       <Field label={t("dashboard.upstreamEditor.fields.modelsPath")}>
         <Input {...register("config.modelsFetch.endpoint" as never)} className="font-mono" placeholder="/v1/models" />
       </Field>
-      <Field
-        label={t("dashboard.upstreamEditor.fields.pathOverrides")}
-        hint={t("dashboard.upstreamEditor.pathOverridesHint")}
+      <div
+        aria-describedby={`${idPrefix}-hint`}
+        aria-labelledby={`${idPrefix}-label`}
+        className="grid gap-1.5"
+        role="group"
       >
+        <Text id={`${idPrefix}-label`} weight="semibold">
+          {t("dashboard.upstreamEditor.fields.pathOverrides")}
+        </Text>
         <div className="grid grid-cols-2 gap-x-3 gap-y-3">
           {pathOverrideKeys.map((path) => (
             <Controller
@@ -156,7 +162,10 @@ function CustomApiPaths() {
             />
           ))}
         </div>
-      </Field>
+        <Text id={`${idPrefix}-hint`} size={200} className="text-fui-fg2">
+          {t("dashboard.upstreamEditor.pathOverridesHint")}
+        </Text>
+      </div>
     </div>
   );
 }

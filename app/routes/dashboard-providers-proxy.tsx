@@ -1111,7 +1111,10 @@ export default function DashboardProvidersProxy() {
           )}
 
           {/* Dial timeout */}
-          <Field label={t("dashboard.proxy.form.timeout")}>
+          <Field
+            hint={t("dashboard.proxy.form.timeoutHint")}
+            label={t("dashboard.proxy.form.timeout")}
+          >
             <Input
               inputMode="numeric"
               min={1}
@@ -1120,9 +1123,6 @@ export default function DashboardProvidersProxy() {
               type="number"
               value={dialTimeoutInput}
             />
-            <Text size={100} className="text-fui-fg3 mt-[4px]">
-              {t("dashboard.proxy.form.timeoutHint")}
-            </Text>
           </Field>
 
           {/* Actions */}

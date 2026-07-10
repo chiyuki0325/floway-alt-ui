@@ -353,9 +353,10 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
               {loaderData.keys.map((key) => <option key={key.id} value={key.id}>{key.name} ({key.key.slice(-4)})</option>)}
             </Select>
           </Field>
-          <Field label={t("dashboard.playground.api")}>
+          <div className="grid gap-0.5">
+            <Text weight="semibold">{t("dashboard.playground.api")}</Text>
             <SegmentedControl ariaLabel={t("dashboard.playground.api")} value={api} items={playgroundApis.map((value) => ({ value, label: t(`dashboard.playground.apis.${value}`) }))} onChange={(value) => changeContext(() => setApi(value as PlaygroundApi))} />
-          </Field>
+          </div>
           <Field label={t("dashboard.playground.model")}>
             <Combobox value={modelQuery || selectedModel?.display_name || ""} selectedOptions={selectedModel ? [selectedModel.id] : []} placeholder={t("dashboard.playground.modelPlaceholder")} onChange={(event) => setModelQuery(event.target.value)} onOptionSelect={(_, data) => {
               if (!data.optionValue) return;

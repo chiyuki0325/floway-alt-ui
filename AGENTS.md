@@ -93,6 +93,12 @@ Floway 控制台是运维/配置型工具，界面应当紧凑、清晰、适合
 - 表单状态优先使用 React Hook Form 管理，校验 schema 优先使用 Zod，并把错误展示接到
   Fluent UI 的 Field/Message 等语义组件上。不要为普通表单手写一套分散的
   `useState` 校验状态。
+- Fluent UI 的 `Field` 只用于关联**单个**表单控件。禁止用一个 `Field` 包裹多个
+  Checkbox、Select、嵌套 Field 或其他复合编辑器，否则 FieldContext 可能把同一组
+  `id` / `name` / ARIA 属性传给多个控件，导致浏览器只识别第一个控件。多选列表和
+  复合编辑器应使用 `role="group"` + `aria-labelledby` / `aria-describedby`，并为每个
+  原生控件设置独立的 `id` 和 `name`；校验错误通过 `role="alert"` 和
+  `aria-describedby` 关联到分组。
 - 本仓库配置了 project-scope `fluentui` MCP server：Codex 使用 `.codex/config.toml`，
   Claude Code 使用 `.mcp.json`。涉及 Fluent UI 组件 API、组合方式或无障碍行为时，
   优先查询该 MCP 的 v9 文档。
