@@ -27,14 +27,17 @@ import {
   SearchRegular,
   SettingsFilled,
   SettingsRegular,
+  SignOutRegular,
 } from "@fluentui/react-icons";
 import type { FluentIcon } from "@fluentui/react-icons";
 
 import type { AuthUser } from "../api/auth";
 import { fluentComponents } from "../fluent";
+import { useAuthStore } from "../stores/auth-store";
+import { ConfirmDialog } from "./confirm-dialog";
 import { FlowayLogo } from "./floway-logo";
 
-const { Text } = fluentComponents;
+const { Button, Text } = fluentComponents;
 
 type NavItem = {
   to: string;
@@ -96,10 +99,12 @@ const navGroups: NavGroup[] = [
 export function Sidebar({ user }: { user: AuthUser }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const clearAuth = useAuthStore((state) => state.clear);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   return (
     <aside
-      className="grid grid-rows-[auto_minmax(0,1fr)] h-screen min-h-0 overflow-hidden p-[22px_16px_18px]"
+      className="grid grid-rows-[auto_minmax(0,1fr)_auto] h-screen min-h-0 overflow-hidden p-[22px_16px_18px]"
       aria-label={t("dashboard.nav.label")}
     >
       <div className="flex items-center min-h-[48px] px-[10px] pb-[17px]">
@@ -134,6 +139,24 @@ export function Sidebar({ user }: { user: AuthUser }) {
           );
         })}
       </nav>
+      <footer className="border-t border-t-solid border-fui-subtle pt-[12px] px-1">
+        <Button
+          appearance="subtle"
+          className="!justify-start !min-h-[38px] !px-3 !w-full text-fui-base300 font-fui-medium"
+          icon={<SignOutRegular />}
+          onClick={() => setLogoutOpen(true)}
+        >
+          {t("dashboard.logout.label")}
+        </Button>
+      </footer>
+      <ConfirmDialog
+        actionLabel={t("dashboard.logout.action")}
+        message={t("dashboard.logout.message")}
+        onConfirm={clearAuth}
+        onOpenChange={setLogoutOpen}
+        open={logoutOpen}
+        title={t("dashboard.logout.title")}
+      />
     </aside>
   );
 }

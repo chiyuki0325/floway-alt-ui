@@ -100,6 +100,28 @@ function findProviderOption(
   );
 }
 
+function SearchPageHeader() {
+  const { t } = useTranslation();
+
+  return (
+    <header className="grid gap-[6px]">
+      <Text
+        size={200}
+        weight="semibold"
+        className="text-fui-fg2 leading-[1.2] uppercase"
+      >
+        {t("dashboard.groups.providers")}
+      </Text>
+      <Text size={700} weight="semibold">
+        {t("dashboard.searchConfig.heading")}
+      </Text>
+      <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+        {t("dashboard.searchConfig.description")}
+      </Text>
+    </header>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -219,18 +241,7 @@ export default function DashboardProvidersSearch() {
   if (!user.isAdmin) {
     return (
       <section className="grid gap-[18px] max-w-[960px] min-w-0">
-        <header className="grid gap-[6px]">
-          <Text
-            size={200}
-            weight="semibold"
-            className="text-fui-fg2 leading-[1.2] uppercase"
-          >
-            {t("dashboard.groups.providers")}
-          </Text>
-          <Text size={700} weight="semibold">
-            {t("dashboard.searchConfig.heading")}
-          </Text>
-        </header>
+        <SearchPageHeader />
         <Panel className="!p-[22px_24px]">
           <div className="grid gap-[10px] max-w-[680px]">
             <Text
@@ -253,18 +264,7 @@ export default function DashboardProvidersSearch() {
   if (loading) {
     return (
       <section className="grid gap-[18px] max-w-[960px] min-w-0">
-        <header className="grid gap-[6px]">
-          <Text
-            size={200}
-            weight="semibold"
-            className="text-fui-fg2 leading-[1.2] uppercase"
-          >
-            {t("dashboard.groups.providers")}
-          </Text>
-          <Text size={700} weight="semibold">
-            {t("dashboard.searchConfig.heading")}
-          </Text>
-        </header>
+        <SearchPageHeader />
         <Panel className="!p-[22px_24px] flex items-center gap-[12px]">
           <Spinner size="tiny" />
           <Text size={300} className="text-fui-fg3">
@@ -279,25 +279,10 @@ export default function DashboardProvidersSearch() {
   return (
     <section className="grid gap-[18px] max-w-[960px] min-w-0">
       {/* Page header */}
-      <header className="grid gap-[6px]">
-        <Text
-          size={200}
-          weight="semibold"
-          className="text-fui-fg2 leading-[1.2] uppercase"
-        >
-          {t("dashboard.groups.providers")}
-        </Text>
-        <Text size={700} weight="semibold">
-          {t("dashboard.searchConfig.heading")}
-        </Text>
-      </header>
+      <SearchPageHeader />
 
       {/* Config panel */}
       <Panel className="!p-[22px_24px] grid gap-[16px]">
-        <Text size={300} className="text-fui-fg3">
-          {t("dashboard.searchConfig.description")}
-        </Text>
-
         {loadError && (
           <MessageBar intent="error">
             <MessageBarBody>{loadError}</MessageBarBody>

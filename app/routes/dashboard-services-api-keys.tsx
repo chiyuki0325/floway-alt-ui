@@ -16,7 +16,7 @@ import prismVscDarkPlusStyles from "prism-themes/themes/prism-vsc-dark-plus.css?
 import prismVsStyles from "prism-themes/themes/prism-vs.css?url";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { redirect, useOutletContext } from "react-router";
 import { z } from "zod";
 
@@ -334,7 +334,11 @@ export default function DashboardServicesApiKeys({
             </Text>
             {selectedKey && (
               <Text size={200} className="text-fui-fg2">
-                {t("dashboard.apiKeys.configuration.selected", { name: selectedKey.name })}
+                <Trans
+                  components={{ strong: <strong className="font-fui-semibold" /> }}
+                  i18nKey="dashboard.apiKeys.configuration.selected"
+                  values={{ name: selectedKey.name }}
+                />
               </Text>
             )}
           </div>
@@ -1179,7 +1183,11 @@ function CliSnippet({
 
   return (
     <div className="grid gap-[14px] min-w-0">
-      <TabList selectedValue={activeSnippet} onTabSelect={(_, data) => setActiveSnippet(data.value === "codex" ? "codex" : "claude")}>
+      <TabList
+        className="ml-[-8px]"
+        selectedValue={activeSnippet}
+        onTabSelect={(_, data) => setActiveSnippet(data.value === "codex" ? "codex" : "claude")}
+      >
         <ProviderTab value="claude" icon={<img alt="" src={claudeIconUrl} />} label={t("dashboard.apiKeys.configuration.claudeCode")} />
         <ProviderTab value="codex" icon={<img alt="" src={codexIconUrl} />} label={t("dashboard.apiKeys.configuration.codex")} />
       </TabList>
@@ -1188,7 +1196,7 @@ function CliSnippet({
         <div className="grid gap-[10px] min-w-0">
           <Checkbox
             checked={onlyClaudeModels}
-            className="justify-self-start"
+            className="justify-self-start ml-[-8px]"
             label={t("dashboard.apiKeys.configuration.onlyClaudeModels")}
             onChange={(_, data) => setOnlyClaudeModels(!!data.checked)}
           />
@@ -1224,7 +1232,7 @@ function CliSnippet({
         <div className="grid gap-[10px] min-w-0">
           <Checkbox
             checked={onlyGpt5Models}
-            className="justify-self-start"
+            className="justify-self-start ml-[-8px]"
             label={t("dashboard.apiKeys.configuration.onlyGpt5Models")}
             onChange={(_, data) => setOnlyGpt5Models(!!data.checked)}
           />

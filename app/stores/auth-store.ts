@@ -13,6 +13,7 @@ interface AuthStore {
   clear: () => void;
   initialize: () => Promise<AuthUser | null>;
   primeFromLogin: (session: LoginResponse) => void;
+  setUser: (user: AuthUser) => void;
 }
 
 let sessionRequest: {
@@ -101,5 +102,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       user: session.user,
       error: null,
     });
+  },
+
+  setUser: (user) => {
+    set({ status: "authenticated", user, error: null });
   },
 }));

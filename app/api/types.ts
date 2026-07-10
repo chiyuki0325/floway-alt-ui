@@ -389,6 +389,24 @@ export interface ApiKey {
   dump_retention_seconds: number | null;
 }
 
+// Raw admin projection returned by GET /api/users. Unlike /auth/me, the
+// telemetry flag is not widened by administrator status so it can be edited.
+export interface ControlPlaneUser {
+  id: number;
+  username: string;
+  isAdmin: boolean;
+  upstreamIds: string[] | null;
+  canViewGlobalTelemetry: boolean;
+  createdAt: string;
+}
+
+export interface UpstreamOption {
+  id: string;
+  name: string;
+  kind: UpstreamProviderKind;
+  enabled: boolean;
+}
+
 export interface ControlPlaneModel extends PublicModel {
   upstreams: { kind: UpstreamProviderKind; id: string; name: string }[];
 }
