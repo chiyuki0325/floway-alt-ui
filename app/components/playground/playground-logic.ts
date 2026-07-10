@@ -107,8 +107,54 @@ export function mergeWireBody(body: BodyInit | null | undefined, custom: Record<
   return JSON.stringify({ ...(generated as Record<string, unknown>), ...custom });
 }
 
-export function createWireFetch(custom: Record<string, unknown>): typeof fetch {
-  return (input, init) => fetch(input, { ...init, body: mergeWireBody(init?.body, custom) });
+function normalizeMessagesSseLine(line: string): string {
+  if (!line.startsWith("data:")) return line;
+  const source = line.slice(5).trimStart();
+  try {
+    const event = JSON.parse(source) as {
+      type?: string;
+      message?: { usage?: Record<string, unknown> };
+    };
+    if (event.type !== "message_start" || !event.message) return line;
+    event.message.usage = {
+      input_tokens: 0,
+      ...event.message.usage,
+    };
+    return `data: ${JSON.stringify(event)}`;
+  } catch {
+    return line;
+  }
+}
+
+function normalizeMessagesStream(response: Response): Response {
+  if (!response.body || !response.headers.get("content-type")?.includes("text/event-stream")) return response;
+  let pending = "";
+  const stream = response.body
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TransformStream<string, string>({
+      transform(chunk, controller) {
+        pending += chunk;
+        const lines = pending.split("\n");
+        pending = lines.pop() ?? "";
+        for (const line of lines) controller.enqueue(`${normalizeMessagesSseLine(line)}\n`);
+      },
+      flush(controller) {
+        if (pending) controller.enqueue(normalizeMessagesSseLine(pending));
+      },
+    }))
+    .pipeThrough(new TextEncoderStream());
+  return new Response(stream, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
+
+export function createWireFetch(custom: Record<string, unknown>, api?: PlaygroundApi): typeof fetch {
+  return async (input, init) => {
+    const response = await fetch(input, { ...init, body: mergeWireBody(init?.body, custom) });
+    return api === "messages" ? normalizeMessagesStream(response) : response;
+  };
 }
 
 export function toModelMessages(messages: readonly PlaygroundMessage[]): ModelMessage[] {

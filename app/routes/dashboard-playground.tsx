@@ -191,7 +191,7 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
     abortRef.current = controller;
 
     try {
-      const wireFetch = createWireFetch(customResult.value);
+      const wireFetch = createWireFetch(customResult.value, api);
       const model = api === "messages"
         ? createAnthropic({ baseURL: "/v1", apiKey: selectedKey.key, fetch: wireFetch })(selectedModel.id)
         : api === "chatCompletions"
@@ -209,8 +209,10 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
         const assistantId = randomId();
         let assistantText = "";
         const result = streamText(options);
-        for await (const delta of result.textStream) {
-          assistantText += delta;
+        for await (const part of result.fullStream) {
+          if (part.type === "error") throw part.error;
+          if (part.type !== "text-delta") continue;
+          assistantText += part.text;
           setMessages((current) => {
             const existing = current.findIndex((message) => message.id === assistantId);
             if (existing < 0) return [...current, { id: assistantId, role: "assistant", text: assistantText }];
