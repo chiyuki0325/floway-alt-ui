@@ -22,10 +22,6 @@
   text-align: center;
 }
 
-.logo :global(.floway-logo-mark) {
-  font-size: 18px;
-}
-
 .heading {
   display: grid;
   gap: 18px;

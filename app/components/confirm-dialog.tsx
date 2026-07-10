@@ -1,14 +1,26 @@
 import { useTranslation } from "react-i18next";
 
 import { fluentComponents } from "../fluent";
-import styles from "./confirm-dialog.module.css";
 
-const {
-  Button,
-  Dialog,
-  DialogSurface,
-  DialogTitle,
-} = fluentComponents;
+const { Button, Dialog, DialogSurface, DialogTitle, makeStyles } = fluentComponents;
+
+const useStyles = makeStyles({
+  body: {
+    display: "grid",
+    gap: "14px",
+    padding: "26px 28px 22px",
+  },
+  actions: {
+    alignItems: "center",
+    display: "grid",
+    gap: "12px",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    padding: "18px 28px 20px",
+    "@media (max-width: 420px)": {
+      gridTemplateColumns: "minmax(0, 1fr)",
+    },
+  },
+});
 
 export function ConfirmDialog({
   actionLabel,
@@ -28,26 +40,32 @@ export function ConfirmDialog({
   title: string;
 }) {
   const { t } = useTranslation();
+  const s = useStyles();
 
   return (
     <Dialog open={open} onOpenChange={(_, data) => onOpenChange(data.open)}>
-      <DialogSurface className={styles.surface}>
-        <div className={styles.body}>
-          <DialogTitle as="h2" className={styles.title}>
+      <DialogSurface className="overflow-hidden !p-0 !w-[min(430px,calc(100vw-48px))]">
+        <div className={s.body}>
+          <DialogTitle
+            as="h2"
+            className="text-fui-fg1 text-fui-base500 font-fui-semibold leading-[1.3] !m-0"
+          >
             {title}
           </DialogTitle>
-          <p className={styles.message}>{message}</p>
+          <p className="text-fui-fg2 text-fui-base300 leading-[1.45] m-0">
+            {message}
+          </p>
         </div>
-        <footer className={styles.actions}>
+        <footer className={`${s.actions} bg-fui-bg2 border-t border-t-solid border-fui-stroke1`}>
           <Button
             appearance="primary"
-            className={styles.actionButton}
+            className="font-fui-regular my-1 !w-full"
             onClick={onConfirm}
           >
             {actionLabel}
           </Button>
           <Button
-            className={styles.actionButton}
+            className="font-fui-regular my-1 !w-full"
             onClick={() => onOpenChange(false)}
           >
             {cancelLabel ?? t("common.cancel")}

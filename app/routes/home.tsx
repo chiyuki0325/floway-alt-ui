@@ -1,6 +1,5 @@
 import type { Route } from "./+types/home";
 import { redirect } from "react-router";
-import { useTranslation } from "react-i18next";
 
 import { login as loginWithPassword } from "../api/auth";
 import { setSessionToken, getSessionToken } from "../auth/session";
@@ -48,16 +47,6 @@ export function meta({}: Route.MetaArgs) {
     { title: "Sign in | Floway" },
     { name: "description", content: "Sign in to the Floway control plane." },
   ];
-}
-
-export function HydrateFallback() {
-  const { t } = useTranslation();
-
-  return (
-    <main className="floway-page-shell floway-page-shell--centered">
-      <div className="floway-loading">{t("common.loading")}</div>
-    </main>
-  );
 }
 
 export default function Home() {

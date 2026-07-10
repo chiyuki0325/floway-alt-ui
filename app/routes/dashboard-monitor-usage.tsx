@@ -24,11 +24,32 @@ import { authFetch, callApi, getCurrentSession } from "../api/auth";
 import type { BillingDimension, ControlPlaneModel } from "../api/types";
 import { getSessionToken } from "../auth/session";
 import { fluentComponents } from "../fluent";
+import { Panel } from "../components/panel";
 import { SegmentedControl } from "../components/segmented-control";
 import { useAuthStore } from "../stores/auth-store";
-import styles from "./dashboard-monitor-usage.module.css";
 
-const { Button, Spinner, Tooltip } = fluentComponents;
+const { Button, Card, Divider, InteractionTag, InteractionTagPrimary, makeStyles, Spinner, Text, Tooltip } = fluentComponents;
+
+const useErrorStyles = makeStyles({
+  root: {
+    backgroundColor: "var(--colorPaletteRedBackground2)",
+    border: "1px solid var(--colorPaletteRedBorder1)",
+    borderRadius: "8px",
+    color: "var(--colorPaletteRedForeground1)",
+    padding: "10px 12px",
+  },
+});
+
+const useChartLoadingStyles = makeStyles({
+  root: {
+    alignItems: "center",
+    color: "var(--colorNeutralForeground3)",
+    display: "grid",
+    fontSize: "13px",
+    height: "100%",
+    justifyItems: "center",
+  },
+});
 
 type UsageView = "all-by-user" | "self-by-key";
 type Range = "today" | "7d" | "30d";
@@ -454,15 +475,6 @@ export async function clientLoader(): Promise<UsagePageData> {
 
 clientLoader.hydrate = true as const;
 
-export function HydrateFallback() {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.loadingPage}>
-      <Spinner label={t("dashboard.usage.loading")} />
-    </div>
-  );
-}
-
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Usage | Floway" }];
 }
@@ -487,6 +499,8 @@ export default function DashboardMonitorUsage({
   const [error, setError] = useState<string | null>(loaderData.error);
   const requestIdRef = useRef(0);
   const didMountRef = useRef(false);
+
+  const errorStyles = useErrorStyles();
 
   const user = loaderData.user;
   const canSwitchView = user.canViewGlobalTelemetry;
@@ -637,14 +651,20 @@ export default function DashboardMonitorUsage({
       : t("dashboard.usage.charts.byKey");
 
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.titleBlock}>
-          <span className={styles.eyebrow}>{t("dashboard.groups.monitor")}</span>
-          <h1>{t("dashboard.nav.usage")}</h1>
-          <p>{t("dashboard.pages.usage")}</p>
+    <section className="grid gap-[18px] min-w-0">
+      <header className="flex items-start justify-between gap-[18px] min-w-0">
+        <div className="grid gap-[6px] min-w-0">
+          <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2] uppercase">
+            {t("dashboard.groups.monitor")}
+          </Text>
+          <Text size={700} weight="semibold">
+            {t("dashboard.nav.usage")}
+          </Text>
+          <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+            {t("dashboard.pages.usage")}
+          </Text>
         </div>
-        <div className={styles.headerActions}>
+        <div className="flex items-center gap-2 flex-shrink-0">
           {loading && <Spinner size="tiny" label={t("dashboard.usage.refreshing")} />}
           <Tooltip
             content={t("dashboard.usage.actions.refresh")}
@@ -659,14 +679,14 @@ export default function DashboardMonitorUsage({
         </div>
       </header>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <div className={errorStyles.root}>{error}</div>}
 
-      <div className={styles.panel}>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarGroup}>
-            <span className={styles.sectionLabel}>
+      <Panel className="!grid gap-[18px] min-w-0 !p-[18px]">
+        <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
+          <div className="flex items-center flex-wrap gap-2.5 min-w-0">
+            <Text size={200} weight="semibold" className="text-fui-fg3 leading-[1.2]">
               {t("dashboard.usage.tokenUsage")}
-            </span>
+            </Text>
             {canSwitchView && (
               <SegmentedControl
                 ariaLabel={t("dashboard.usage.view.label")}
@@ -721,7 +741,7 @@ export default function DashboardMonitorUsage({
           valueFormatter={(value) => formatMetricValue(value, metric, locale)}
         />
 
-        <div className={styles.divider} />
+        <Divider appearance="subtle" />
 
         <UsageChartSection
           chart={byModelChart}
@@ -732,9 +752,9 @@ export default function DashboardMonitorUsage({
           valueFormatter={(value) => formatMetricValue(value, metric, locale)}
         />
 
-        <div className={styles.summaryGrid}>
+        <div className="grid gap-2.5 grid-cols-5 max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
           {summaryMetrics.map((group) => (
-            <div className={styles.summaryGroup} key={group.join("-")}>
+            <div className="grid gap-2 min-w-0" key={group.join("-")}>
               {group.map((summaryMetric) => (
                 <SummaryMetricButton
                   active={metric === summaryMetric}
@@ -748,10 +768,10 @@ export default function DashboardMonitorUsage({
           ))}
         </div>
 
-      </div>
+      </Panel>
 
       {showSearch && (
-        <div className={styles.panel}>
+        <Panel className="!grid gap-[18px] min-w-0 !p-[18px]">
           <UsageChartSection
             chart={searchChart}
             detailsLabel={t("dashboard.usage.charts.search")}
@@ -762,11 +782,43 @@ export default function DashboardMonitorUsage({
             })}
             valueFormatter={(value) => formatCount(value, locale)}
           />
-        </div>
+        </Panel>
       )}
     </section>
   );
 }
+
+const useMetricButtonStyles = makeStyles({
+  root: {
+    backgroundColor: "var(--colorNeutralBackground2)",
+    border: "1px solid var(--colorNeutralStroke1)",
+    borderRadius: "8px",
+    cursor: "pointer",
+    display: "grid",
+    gap: "4px",
+    minHeight: "66px",
+    minWidth: "0",
+    padding: "8px 10px",
+    textAlign: "left",
+    ":hover": {
+      border: "1px solid var(--colorBrandStroke1)",
+    },
+  },
+  activeRoot: {
+    backgroundColor: "var(--colorBrandBackgroundInvertedHover)",
+    border: "1px solid var(--colorBrandStroke1)",
+    "@media (prefers-color-scheme: dark)": {
+      backgroundColor: "var(--colorBrandBackground2)",
+    },
+  },
+  value: {
+    color: "var(--colorNeutralForeground1)",
+    overflowWrap: "anywhere",
+  },
+  activeText: {
+    color: "var(--colorBrandForeground1)",
+  },
+});
 
 function SummaryMetricButton({
   active,
@@ -779,17 +831,20 @@ function SummaryMetricButton({
   onClick: () => void;
   value: string;
 }) {
+  const s = useMetricButtonStyles();
   return (
     <button
       aria-pressed={active}
-      className={[styles.metricButton, active ? styles.metricActive : ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={`${s.root} ${active ? s.activeRoot : ""}`}
       onClick={onClick}
       type="button"
     >
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <Text size={200} weight="semibold" className={`text-fui-fg2 leading-[1.2] ${active ? s.activeText : ""}`}>
+        {label}
+      </Text>
+      <Text size={500} weight="semibold" className={`${s.value} ${active ? s.activeText : ""}`}>
+        {value}
+      </Text>
     </button>
   );
 }
@@ -811,12 +866,15 @@ function UsageChartSection({
 }) {
   const { t } = useTranslation();
   const ids = chart.entries.map((entry) => entry.id);
+  const visibleLegends = chart.entries
+    .filter((entry) => !hidden.has(entry.id))
+    .map((entry) => entry.label);
 
   return (
-    <section className={styles.chartSection}>
-      <div className={styles.chartHeader}>
-        <h2>{title}</h2>
-        <div className={styles.seriesActions} aria-label={detailsLabel}>
+    <section className="grid gap-3 min-w-0">
+      <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
+        <Text size={400} weight="semibold" className="text-fui-fg1 leading-[1.25]">{title}</Text>
+        <div className="flex items-center flex-none gap-1" aria-label={detailsLabel}>
           <Tooltip content={t("dashboard.usage.series.all")} relationship="label">
             <Button
               appearance="subtle"
@@ -852,9 +910,9 @@ function UsageChartSection({
         onHiddenChange={onHiddenChange}
       />
 
-      <div className={styles.chartFrame}>
-        <FluentUsageChart chart={chart} valueFormatter={valueFormatter} />
-      </div>
+      <ChartCard>
+        <FluentUsageChart chart={chart} valueFormatter={valueFormatter} visibleLegends={visibleLegends} />
+      </ChartCard>
     </section>
   );
 }
@@ -871,59 +929,102 @@ function ChartLegend({
   const { t } = useTranslation();
 
   if (!entries.length) {
-    return <p className={styles.empty}>{t("dashboard.usage.empty")}</p>;
+    return <Text size={200} className="text-fui-fg2">{t("dashboard.usage.empty")}</Text>;
   }
 
   return (
-    <div className={styles.legendList}>
-      {entries.map((entry) => {
-        const isHidden = hidden.has(entry.id);
-        return (
-          <button
-            aria-pressed={!isHidden}
-            className={[styles.legendItem, isHidden ? styles.legendHidden : ""]
-              .filter(Boolean)
-              .join(" ")}
-            key={entry.id}
-            onClick={(event) => {
-              const ids = entries.map((item) => item.id);
-              if (event.shiftKey) {
-                onHiddenChange(new Set(ids.filter((id) => id !== entry.id)));
-                return;
-              }
-              const next = new Set(hidden);
-              if (next.has(entry.id)) next.delete(entry.id);
-              else next.add(entry.id);
-              onHiddenChange(next);
-            }}
-            onDoubleClick={() =>
+    <div className="flex flex-wrap gap-[6px] min-w-0">
+      {entries.map((entry) => (
+        <LegendTag
+          key={entry.id}
+          entry={entry}
+          isHidden={hidden.has(entry.id)}
+          onToggle={(exclusive) => {
+            if (exclusive) {
               onHiddenChange(
                 new Set(entries.map((item) => item.id).filter((id) => id !== entry.id)),
-              )
+              );
+              return;
             }
-            title={t("dashboard.usage.series.toggleHint")}
-            type="button"
-          >
-            <span
-              className={styles.legendSwatch}
-              style={{ backgroundColor: colorForSlot(entry.colorSlot) }}
-            />
-            <span>{entry.label}</span>
-          </button>
-        );
-      })}
+            const next = new Set(hidden);
+            if (next.has(entry.id)) next.delete(entry.id);
+            else next.add(entry.id);
+            onHiddenChange(next);
+          }}
+          toggleHint={t("dashboard.usage.series.toggleHint")}
+        />
+      ))}
     </div>
+  );
+}
+
+function LegendTag({
+  entry,
+  isHidden,
+  onToggle,
+  toggleHint,
+}: {
+  entry: ChartEntry;
+  isHidden: boolean;
+  onToggle: (exclusive: boolean) => void;
+  toggleHint: string;
+}) {
+  return (
+    <InteractionTag
+      appearance="outline"
+      shape="circular"
+      size="small"
+    >
+      <InteractionTagPrimary
+        className={isHidden ? "line-through opacity-[0.55]" : ""}
+        icon={
+          <span
+            aria-hidden="true"
+            className="inline-block rounded-full h-[8px] w-[8px] mx-[4px] flex-shrink-0"
+            style={{ backgroundColor: colorForSlot(entry.colorSlot) }}
+          />
+        }
+        onClick={(event) => onToggle(event.shiftKey)}
+        onDoubleClick={() => onToggle(true)}
+        title={toggleHint}
+      >
+        {entry.label}
+      </InteractionTagPrimary>
+    </InteractionTag>
+  );
+}
+
+const useChartCardStyles = makeStyles({
+  root: {
+    "&::after": {
+      borderRadius: "8px",
+    },
+  },
+});
+
+function ChartCard({ children }: { children: React.ReactNode }) {
+  const styles = useChartCardStyles();
+  return (
+    <Card
+      appearance="outline"
+      className={`${styles.root} !rounded-lg min-h-[320px] min-w-0 overflow-hidden`}
+    >
+      {children}
+    </Card>
   );
 }
 
 function FluentUsageChart({
   chart,
   valueFormatter,
+  visibleLegends,
 }: {
   chart: UsageChartModel;
   valueFormatter: (value: number) => string;
+  visibleLegends: string[];
 }) {
   const { i18n, t } = useTranslation();
+  const chartLoadingStyles = useChartLoadingStyles();
   const [components, setComponents] = useState<ChartComponents | null>(null);
   const [host, setHost] = useState<HTMLDivElement | null>(null);
   const size = useElementSize(host);
@@ -969,21 +1070,23 @@ function FluentUsageChart({
         .sort((a, b) => b.y - a.y);
 
       return (
-        <div className={styles.callout}>
-          <strong>{formatCalloutTitle(props.x, labelByTime, chart.range, locale)}</strong>
+        <div className="grid gap-[6px] max-w-[min(760px,calc(100vw-48px))] min-w-[220px] overflow-x-auto p-1">
+          <Text size={200} weight="semibold">
+            {formatCalloutTitle(props.x, labelByTime, chart.range, locale)}
+          </Text>
           {chart.kind === "token" && bucketDetails ? (
-            <table className={styles.calloutTable}>
+            <table className="border-collapse whitespace-nowrap">
               <thead>
                 <tr>
-                  <th />
-                  <th>Req</th>
-                  <th>Cost</th>
-                  <th>Total</th>
-                  <th>Cached</th>
-                  <th>Cached%</th>
-                  <th>Prefill</th>
-                  <th>Output</th>
-                  <th>Hit%</th>
+                  <th className="max-w-[180px] min-w-[120px] pl-0 text-left" />
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Req</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Cost</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Total</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Cached</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Cached%</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Prefill</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Output</Text></th>
+                  <th className="px-2 py-[2px] text-right"><Text size={100} weight="semibold" className="text-fui-fg2">Hit%</Text></th>
                 </tr>
               </thead>
               <tbody>
@@ -1001,20 +1104,20 @@ function FluentUsageChart({
                   const prefill = detail.input + detail.cacheCreation + detail.inputImage;
                   return (
                     <tr key={item.legend}>
-                      <td>
-                        <span className={styles.calloutLegend}>
-                          <i style={{ backgroundColor: item.color }} />
-                          {item.legend}
+                      <td className="max-w-[180px] min-w-[120px] pl-0 text-left">
+                        <span className="flex items-center gap-[6px] min-w-0 overflow-hidden text-ellipsis">
+                          <i className="rounded-[2px] h-[10px] w-[10px] flex-shrink-0" style={{ backgroundColor: item.color }} />
+                          <Text size={200}>{item.legend}</Text>
                         </span>
                       </td>
-                      <td>{formatCount(detail.requests, locale)}</td>
-                      <td>{formatCost(detail.cost)}</td>
-                      <td>{formatTokenCount(total, locale)}</td>
-                      <td>{formatTokenCount(detail.cacheRead, locale)}</td>
-                      <td>{formatInputRate(detail.cacheRead, prompt)}</td>
-                      <td>{formatTokenCount(prefill, locale)}</td>
-                      <td>{formatTokenCount(output, locale)}</td>
-                      <td>{formatHitRate(detail.cacheRead, detail.cacheCreation)}</td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatCount(detail.requests, locale)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatCost(detail.cost)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatTokenCount(total, locale)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatTokenCount(detail.cacheRead, locale)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatInputRate(detail.cacheRead, prompt)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatTokenCount(prefill, locale)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatTokenCount(output, locale)}</Text></td>
+                      <td className="px-2 py-[2px] text-right"><Text size={200}>{formatHitRate(detail.cacheRead, detail.cacheCreation)}</Text></td>
                     </tr>
                   );
                 })}
@@ -1022,10 +1125,10 @@ function FluentUsageChart({
             </table>
           ) : (
             rows.map((item) => (
-              <span key={item.legend}>
-                <i style={{ backgroundColor: item.color }} />
+              <Text key={item.legend} size={200} className="flex items-center gap-1.5 justify-between font-mono">
+                <i className="rounded-full h-[8px] w-[8px] flex-shrink-0" style={{ backgroundColor: item.color }} />
                 {item.legend}: {valueFormatter(item.y)}
-              </span>
+              </Text>
             ))
           )}
         </div>
@@ -1035,15 +1138,19 @@ function FluentUsageChart({
   );
 
   return (
-    <div className={styles.chartHost} ref={setHost}>
+    <div className="h-[320px] min-w-0 w-full" ref={setHost}>
       {!components || size.width < 120 ? (
-        <div className={styles.chartLoading}>{t("dashboard.usage.loading")}</div>
+        <div className={chartLoadingStyles.root}>{t("dashboard.usage.loading")}</div>
       ) : chart.data.lineChartData?.length ? (
         chart.stacked ? (
           <components.AreaChart
             data={chart.data}
             height={size.height}
             hideLegend
+            legendProps={{
+              selectedLegends: visibleLegends,
+              canSelectMultipleLegends: true,
+            }}
             margins={{ top: 16, right: 20, bottom: 42, left: 54 }}
             mode="tonexty"
             onRenderCalloutPerStack={callout}
@@ -1058,6 +1165,10 @@ function FluentUsageChart({
             data={chart.data}
             height={size.height}
             hideLegend
+            legendProps={{
+              selectedLegends: visibleLegends,
+              canSelectMultipleLegends: true,
+            }}
             margins={{ top: 16, right: 20, bottom: 42, left: 54 }}
             onRenderCalloutPerStack={callout}
             tickValues={tickValues}
@@ -1069,7 +1180,7 @@ function FluentUsageChart({
           />
         )
       ) : (
-        <div className={styles.chartLoading}>{t("dashboard.usage.empty")}</div>
+        <div className={chartLoadingStyles.root}>{t("dashboard.usage.empty")}</div>
       )}
     </div>
   );

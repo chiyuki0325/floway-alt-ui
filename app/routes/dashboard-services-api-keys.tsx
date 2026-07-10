@@ -9,11 +9,7 @@ import {
   DeleteRegular,
   DismissRegular,
   EditRegular,
-  KeyRegular,
 } from "@fluentui/react-icons";
-import Prism from "prismjs";
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-toml";
 import claudeIconUrl from "../assets/claude-color.svg";
 import codexIconUrl from "../assets/codex.svg";
 import prismVscDarkPlusStyles from "prism-themes/themes/prism-vsc-dark-plus.css?url";
@@ -27,27 +23,19 @@ import { z } from "zod";
 import type { ApiKey, ControlPlaneModel, UpstreamProviderKind } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
+import { CodeBlock } from "../components/code-block";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { DialogShell } from "../components/dialog-shell";
+import { Panel } from "../components/panel";
 import { ProviderBadge, providerLabel } from "../components/provider-badge";
 import { fluentComponents } from "../fluent";
 import type { DashboardOutletContext } from "./dashboard";
 import type { Route } from "./+types/dashboard-services-api-keys";
-import styles from "./dashboard-services-api-keys.module.css";
 
 const {
   Button,
   Checkbox,
-  DataGrid,
-  DataGridBody,
-  DataGridCell,
-  DataGridHeader,
-  DataGridHeaderCell,
-  DataGridRow,
-  Dialog,
   DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
   DialogTitle,
   Dropdown,
   Field,
@@ -60,10 +48,29 @@ const {
   Switch,
   Tab,
   TabList,
+  Table,
+  TableBody,
+  TableCell,
   TableCellLayout,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+  Text,
   Tooltip,
   createTableColumn,
+  makeStyles,
+  useTableColumnSizing_unstable,
+  useTableFeatures,
+  useTableSort,
 } = fluentComponents;
+
+const useStyles = makeStyles({
+  selectedRow: { backgroundColor: "var(--colorBrandBackground2)" },
+  selectedDot: { backgroundColor: "var(--colorBrandForeground1)" },
+  accentText: { color: "var(--colorBrandForeground1)" },
+  dangerText: { color: "var(--colorPaletteRedForeground1)" },
+  fieldError: { color: "var(--colorPaletteRedForeground1)" },
+});
 
 type ApiKeyFormat = ApiKey["api_key_format"];
 type RetentionPreset = "off" | "1h" | "6h" | "24h" | "7d" | "custom";
@@ -130,12 +137,6 @@ const apiKeyPlaceholder = "<your-api-key>";
 const claudeModelPattern = /(^|\/)claude-/;
 const codexModelPattern = /(^|\/)gpt-5/;
 const claudeTier: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
-const upstreamPickerColumnSizing = {
-  enabled: { minWidth: 56, idealWidth: 64 },
-  order: { minWidth: 84, idealWidth: 92 },
-  name: { minWidth: 220, idealWidth: 300 },
-  kind: { minWidth: 120, idealWidth: 136 },
-};
 
 export async function clientLoader(): Promise<ApiKeysPageData> {
   if (!getSessionToken()) throw redirect("/");
@@ -158,34 +159,14 @@ export async function clientLoader(): Promise<ApiKeysPageData> {
   };
 }
 
-clientLoader.hydrate = true as const;
-
-export function HydrateFallback() {
-  const { t } = useTranslation();
-
-  return (
-    <main className={styles.loadingPage}>
-      <Spinner label={t("common.loading")} />
-    </main>
-  );
-}
-
 export function meta({}: Route.MetaArgs) {
   return [{ title: "API Keys | Floway" }];
 }
 
 export function links() {
   return [
-    {
-      rel: "stylesheet",
-      href: prismVsStyles,
-      media: "(prefers-color-scheme: light)",
-    },
-    {
-      rel: "stylesheet",
-      href: prismVscDarkPlusStyles,
-      media: "(prefers-color-scheme: dark)",
-    },
+    { rel: "stylesheet", href: prismVsStyles, media: "(prefers-color-scheme: light)" },
+    { rel: "stylesheet", href: prismVscDarkPlusStyles, media: "(prefers-color-scheme: dark)" },
   ];
 }
 
@@ -203,6 +184,8 @@ export default function DashboardServicesApiKeys({
   const [rotateGeneratedTarget, setRotateGeneratedTarget] = useState<ApiKey | null>(null);
   const [rotateTarget, setRotateTarget] = useState<ApiKey | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ApiKey | null>(null);
+  const [deleteSnapName, setDeleteSnapName] = useState("");
+  const [rotateGenSnapName, setRotateGenSnapName] = useState("");
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
   const [copyFailedTag, setCopyFailedTag] = useState<string | null>(null);
 
@@ -283,14 +266,20 @@ export default function DashboardServicesApiKeys({
   };
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.titleBlock}>
-          <span className={styles.eyebrow}>{t("dashboard.groups.services")}</span>
-          <h1>{t("dashboard.nav.apiKeys")}</h1>
-          <p>{t("dashboard.pages.apiKeys")}</p>
+    <div className="grid gap-[18px] min-w-0">
+      <header className="flex items-start gap-[18px] justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
+        <div className="grid gap-1 min-w-0">
+          <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2]">
+            {t("dashboard.groups.services")}
+          </Text>
+          <Text size={700} weight="semibold">
+            {t("dashboard.nav.apiKeys")}
+          </Text>
+          <Text size={400} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+            {t("dashboard.pages.apiKeys")}
+          </Text>
         </div>
-        <div className={styles.headerActions}>
+        <div className="flex items-center flex-none max-[900px]:justify-start">
           <Button
             appearance="primary"
             icon={<AddRegular />}
@@ -307,11 +296,13 @@ export default function DashboardServicesApiKeys({
         </MessageBar>
       )}
 
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <span className={styles.sectionLabel}>{t("dashboard.apiKeys.table.title")}</span>
+      <Panel className="grid gap-[14px] min-w-0 !p-[18px]">
+        <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
+          <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2]">
+            {t("dashboard.apiKeys.table.title")}
+          </Text>
           {loading && (
-            <span className={styles.pending}>
+            <span className="text-xs text-fui-fg2 inline-flex items-center gap-[6px]">
               <Spinner size="tiny" />
               {t("dashboard.apiKeys.loading")}
             </span>
@@ -322,31 +313,29 @@ export default function DashboardServicesApiKeys({
           copyFailedTag={copyFailedTag}
           keys={data.keys}
           onCopy={copyToClipboard}
-          onDelete={setDeleteTarget}
+          onDelete={(key) => { setDeleteSnapName(key.name); setDeleteTarget(key); }}
           onEdit={setEditTarget}
           onRotate={(key) =>
             key.api_key_format === "custom"
               ? setRotateTarget(key)
-              : setRotateGeneratedTarget(key)
+              : (setRotateGenSnapName(key.name), setRotateGeneratedTarget(key))
           }
           onSelect={setSelectedKeyId}
           selectedKeyId={selectedKey?.id ?? ""}
           upstreams={data.upstreams}
         />
-      </section>
+      </Panel>
 
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <div className={styles.configurationHeading}>
-            <h2 className={styles.configurationTitle}>
+      <Panel className="grid gap-[14px] min-w-0 !p-[18px]">
+        <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
+          <div className="grid gap-[5px] min-w-0">
+            <Text size={500} weight="semibold" className="text-fui-fg1 leading-[1.25]">
               {t("dashboard.apiKeys.configuration.title")}
-            </h2>
+            </Text>
             {selectedKey && (
-              <span className={styles.selectedHint}>
-                {t("dashboard.apiKeys.configuration.selected", {
-                  name: selectedKey.name,
-                })}
-              </span>
+              <Text size={200} className="text-fui-fg2">
+                {t("dashboard.apiKeys.configuration.selected", { name: selectedKey.name })}
+              </Text>
             )}
           </div>
         </div>
@@ -357,7 +346,7 @@ export default function DashboardServicesApiKeys({
           models={data.models}
           onCopy={copyToClipboard}
         />
-      </section>
+      </Panel>
 
       <KeyDialog
         apiKey={null}
@@ -390,7 +379,7 @@ export default function DashboardServicesApiKeys({
       <ConfirmDialog
         actionLabel={t("dashboard.apiKeys.actions.rotate")}
         message={t("dashboard.apiKeys.rotate.generatedMessage", {
-          name: rotateGeneratedTarget?.name ?? "",
+          name: rotateGenSnapName,
         })}
         onConfirm={() => {
           if (rotateGeneratedTarget) {
@@ -408,7 +397,7 @@ export default function DashboardServicesApiKeys({
       <ConfirmDialog
         actionLabel={t("dashboard.apiKeys.actions.delete")}
         message={t("dashboard.apiKeys.delete.message", {
-          name: deleteTarget?.name ?? "",
+          name: deleteSnapName,
         })}
         onConfirm={() => {
           if (deleteTarget) void deleteKey(deleteTarget);
@@ -424,29 +413,15 @@ export default function DashboardServicesApiKeys({
 }
 
 function KeysTable({
-  copiedTag,
-  copyFailedTag,
-  keys,
-  onCopy,
-  onDelete,
-  onEdit,
-  onRotate,
-  onSelect,
-  selectedKeyId,
-  upstreams,
+  copiedTag, copyFailedTag, keys, onCopy, onDelete, onEdit, onRotate, onSelect, selectedKeyId, upstreams,
 }: {
-  copiedTag: string | null;
-  copyFailedTag: string | null;
-  keys: ApiKey[];
-  onCopy: (text: string, tag: string) => void;
-  onDelete: (key: ApiKey) => void;
-  onEdit: (key: ApiKey) => void;
-  onRotate: (key: ApiKey) => void;
-  onSelect: (id: string) => void;
-  selectedKeyId: string;
-  upstreams: UpstreamOption[];
+  copiedTag: string | null; copyFailedTag: string | null; keys: ApiKey[];
+  onCopy: (text: string, tag: string) => void; onDelete: (key: ApiKey) => void;
+  onEdit: (key: ApiKey) => void; onRotate: (key: ApiKey) => void;
+  onSelect: (id: string) => void; selectedKeyId: string; upstreams: UpstreamOption[];
 }) {
   const { t } = useTranslation();
+  const s = useStyles();
   const upstreamById = useMemo(
     () => new Map(upstreams.map((upstream) => [upstream.id, upstream])),
     [upstreams],
@@ -455,37 +430,33 @@ function KeysTable({
   const columns = useMemo(
     () => [
       createTableColumn<ApiKey>({
-        columnId: "name",
-        compare: (a, b) => a.name.localeCompare(b.name),
+        columnId: "name", compare: (a, b) => a.name.localeCompare(b.name),
         renderHeaderCell: () => t("dashboard.apiKeys.table.name"),
         renderCell: (key) => (
           <TableCellLayout>
-            <div className={styles.keyNameCell}>
-              <span
-                className={
-                  key.id === selectedKeyId
-                    ? styles.selectedDot
-                    : styles.unselectedDot
-                }
-              />
-              <span className={styles.truncate}>{key.name}</span>
+            <div className="inline-flex items-center gap-2 min-w-0">
+              <span className={`rounded-full flex-none h-[7px] w-[7px] ${key.id === selectedKeyId ? s.selectedDot : "bg-transparent"}`} />
+              <span className="truncate min-w-0">{key.name}</span>
             </div>
           </TableCellLayout>
         ),
       }),
       createTableColumn<ApiKey>({
-        columnId: "key",
-        renderHeaderCell: () => t("dashboard.apiKeys.table.key"),
+        columnId: "key", renderHeaderCell: () => t("dashboard.apiKeys.table.key"),
         renderCell: (key) => (
-          <code className={styles.inlineCode}>{truncateKey(key.key)}</code>
+          <code className="bg-fui-bg2 border border-fui-stroke1 rounded-md text-fui-fg2 inline-block font-mono text-xs max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap p-[2px_6px]">
+            {truncateKey(key.key)}
+          </code>
         ),
       }),
       createTableColumn<ApiKey>({
-        columnId: "upstreams",
-        renderHeaderCell: () => t("dashboard.apiKeys.table.upstreams"),
+        columnId: "upstreams", renderHeaderCell: () => t("dashboard.apiKeys.table.upstreams"),
         renderCell: (key) => (
           <span
-            className={upstreamsClassName(key)}
+            className={
+              !key.upstream_ids ? undefined
+              : key.upstream_ids.length === 0 ? s.dangerText : s.accentText
+            }
             title={upstreamsTitle(key, upstreamById, t)}
           >
             {upstreamsText(key, upstreamById, t)}
@@ -493,106 +464,77 @@ function KeysTable({
         ),
       }),
       createTableColumn<ApiKey>({
-        columnId: "created",
-        compare: (a, b) => a.created_at.localeCompare(b.created_at),
+        columnId: "created", compare: (a, b) => a.created_at.localeCompare(b.created_at),
         renderHeaderCell: () => t("dashboard.apiKeys.table.created"),
-        renderCell: (key) => (
-          <span title={fullDateTime(key.created_at)}>{shortDate(key.created_at)}</span>
-        ),
+        renderCell: (key) => <span title={fullDateTime(key.created_at)}>{shortDate(key.created_at)}</span>,
       }),
       createTableColumn<ApiKey>({
-        columnId: "lastUsed",
-        compare: (a, b) => (a.last_used_at ?? "").localeCompare(b.last_used_at ?? ""),
+        columnId: "lastUsed", compare: (a, b) => (a.last_used_at ?? "").localeCompare(b.last_used_at ?? ""),
         renderHeaderCell: () => t("dashboard.apiKeys.table.lastUsed"),
-        renderCell: (key) =>
-          key.last_used_at ? (
-            <span title={fullDateTime(key.last_used_at)}>
-              {relativeTime(key.last_used_at, t)}
-            </span>
-          ) : (
-            <span>{t("dashboard.apiKeys.table.never")}</span>
-          ),
+        renderCell: (key) => key.last_used_at
+          ? <span title={fullDateTime(key.last_used_at)}>{relativeTime(key.last_used_at, t)}</span>
+          : <span>{t("dashboard.apiKeys.table.never")}</span>,
       }),
       createTableColumn<ApiKey>({
-        columnId: "actions",
-        renderHeaderCell: () => t("dashboard.apiKeys.table.actions"),
+        columnId: "actions", renderHeaderCell: () => t("dashboard.apiKeys.table.actions"),
         renderCell: (key) => {
           const copyTag = `key-${key.id}`;
           return (
-            <div className={styles.rowActions} onClick={(event) => event.stopPropagation()}>
-              <IconButton
-                icon={
-                  copyFailedTag === copyTag ? (
-                    <DismissRegular />
-                  ) : copiedTag === copyTag ? (
-                    <CheckmarkRegular />
-                  ) : (
-                    <CopyRegular />
-                  )
-                }
-                label={
-                  copyFailedTag === copyTag
-                    ? t("dashboard.apiKeys.copy.failed")
-                    : copiedTag === copyTag
-                      ? t("dashboard.apiKeys.copy.copied")
-                      : t("dashboard.apiKeys.actions.copy")
-                }
-                onClick={() => onCopy(key.key, copyTag)}
-              />
-              <IconButton
-                icon={<EditRegular />}
-                label={t("dashboard.apiKeys.actions.edit")}
-                onClick={() => onEdit(key)}
-              />
-              <IconButton
-                icon={<ArrowClockwiseRegular />}
-                label={t("dashboard.apiKeys.actions.rotate")}
-                onClick={() => onRotate(key)}
-              />
-              <IconButton
-                icon={<DeleteRegular />}
-                label={t("dashboard.apiKeys.actions.delete")}
-                onClick={() => onDelete(key)}
-              />
+            <div className="inline-flex items-center gap-[2px]" onClick={(event) => event.stopPropagation()}>
+              <IconButton icon={copyFailedTag === copyTag ? <DismissRegular /> : copiedTag === copyTag ? <CheckmarkRegular /> : <CopyRegular />}
+                label={copyFailedTag === copyTag ? t("dashboard.apiKeys.copy.failed") : copiedTag === copyTag ? t("dashboard.apiKeys.copy.copied") : t("dashboard.apiKeys.actions.copy")}
+                onClick={() => onCopy(key.key, copyTag)} />
+              <IconButton icon={<EditRegular />} label={t("dashboard.apiKeys.actions.edit")} onClick={() => onEdit(key)} />
+              <IconButton icon={<ArrowClockwiseRegular />} label={t("dashboard.apiKeys.actions.rotate")} onClick={() => onRotate(key)} />
+              <IconButton icon={<DeleteRegular />} label={t("dashboard.apiKeys.actions.delete")} onClick={() => onDelete(key)} />
             </div>
           );
         },
       }),
     ],
-    [copiedTag, copyFailedTag, onCopy, onDelete, onEdit, onRotate, selectedKeyId, t, upstreamById],
+    [copiedTag, copyFailedTag, onCopy, onDelete, onEdit, onRotate, s, selectedKeyId, t, upstreamById],
   );
 
+  const columnSizingOptions = useMemo(
+    () => ({
+      name: { defaultWidth: 180 }, key: { defaultWidth: 160 },
+      upstreams: { defaultWidth: 240 }, actions: { defaultWidth: 200 },
+    }), []);
+
+  const { getRows, columnSizing_unstable, tableRef } = useTableFeatures(
+    { columns, items: keys },
+    [useTableSort({}), useTableColumnSizing_unstable({ columnSizingOptions })],
+  );
+  const rows = getRows();
+
   if (keys.length === 0) {
-    return <p className={styles.empty}>{t("dashboard.apiKeys.empty")}</p>;
+    return <Text size={300} className="text-fui-fg3 !m-0 text-center p-[18px_0]">{t("dashboard.apiKeys.empty")}</Text>;
   }
 
   return (
-    <div className={styles.tableScroller}>
-      <DataGrid
-        columns={columns}
-        getRowId={(key: ApiKey) => key.id}
-        items={keys}
-        sortable
-      >
-        <DataGridHeader>
-          <DataGridRow>
-            {({ renderHeaderCell }) => (
-              <DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
-            )}
-          </DataGridRow>
-        </DataGridHeader>
-        <DataGridBody<ApiKey>>
-          {({ item, rowId }) => (
-            <DataGridRow<ApiKey>
-              className={item.id === selectedKeyId ? styles.selectedRow : undefined}
-              key={rowId}
-              onClick={() => onSelect(item.id)}
-            >
-              {({ renderCell }) => <DataGridCell>{renderCell(item)}</DataGridCell>}
-            </DataGridRow>
-          )}
-        </DataGridBody>
-      </DataGrid>
+    <div className="min-w-0 overflow-x-auto">
+      <Table ref={tableRef} {...columnSizing_unstable.getTableProps()} aria-label={t("dashboard.apiKeys.table.title")} sortable>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column) => (
+              <TableHeaderCell key={column.columnId} {...columnSizing_unstable.getTableHeaderCellProps(column.columnId)}>
+                {column.renderHeaderCell()}
+              </TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(({ item }) => (
+            <TableRow className={item.id === selectedKeyId ? s.selectedRow : undefined} key={item.id} onClick={() => onSelect(item.id)}>
+              {columns.map((column) => (
+                <TableCell key={column.columnId} {...columnSizing_unstable.getTableCellProps(column.columnId)}>
+                  {column.renderCell(item)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -736,162 +678,195 @@ function KeyDialog({
   };
 
   return (
-    <Dialog
+    <DialogShell
       open={open}
       onOpenChange={(_, data) => onOpenChange(data.open)}
+      onSubmit={handleSubmit(save)}
+      title={
+        <DialogTitle>
+          {isCreate
+            ? t("dashboard.apiKeys.dialog.createTitle")
+            : t("dashboard.apiKeys.dialog.editTitle")}
+        </DialogTitle>
+      }
+      actions={
+        <DialogActions>
+          <Button disabled={saving} onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button appearance="primary" disabled={saving} type="submit">
+            {saving
+              ? t("dashboard.apiKeys.actions.saving")
+              : isCreate
+                ? t("dashboard.apiKeys.actions.create")
+                : t("dashboard.apiKeys.actions.save")}
+          </Button>
+        </DialogActions>
+      }
     >
-      <DialogSurface className={styles.dialogSurface}>
-        <form onSubmit={handleSubmit(save)}>
-          <DialogBody>
-            <DialogTitle>
-              {isCreate
-                ? t("dashboard.apiKeys.dialog.createTitle")
-                : t("dashboard.apiKeys.dialog.editTitle")}
-            </DialogTitle>
-            <DialogContent className={styles.dialogContent}>
-              <Controller
-                control={control}
-                name="name"
-                render={({ field }) => (
-                  <Field
-                    label={t("dashboard.apiKeys.form.name")}
-                    validationMessage={errors.name?.message ? t(errors.name.message) : undefined}
-                    validationState={errors.name ? "error" : undefined}
-                  >
-                    <Input {...field} disabled={saving} />
-                  </Field>
-                )}
-              />
-
-              <UpstreamPicker
-                available={visibleUpstreams}
-                disabled={saving}
-                error={errors.upstreamIds?.message ? t(errors.upstreamIds.message) : null}
-                ids={values.upstreamIds}
-                override={values.upstreamOverride}
-                onChange={(next) => {
-                  setValue("upstreamOverride", next.override, { shouldValidate: true });
-                  setValue("upstreamIds", next.ids, { shouldValidate: true });
-                }}
-              />
-
-              {isCreate && (
-                <div className={styles.formGrid}>
-                  <Controller
-                    control={control}
-                    name="keyFormat"
-                    render={({ field }) => (
-                      <Field label={t("dashboard.apiKeys.form.format")}>
-                        <Select {...field} disabled={saving}>
-                          <option value="openai">
-                            {t("dashboard.apiKeys.format.openai")}
-                          </option>
-                          <option value="custom">
-                            {t("dashboard.apiKeys.format.custom")}
-                          </option>
-                        </Select>
-                      </Field>
-                    )}
-                  />
-                  {values.keyFormat === "custom" && (
-                    <Controller
-                      control={control}
-                      name="customKey"
-                      render={({ field }) => (
-                        <Field
-                          label={t("dashboard.apiKeys.form.customKey")}
-                          validationMessage={
-                            errors.customKey?.message ? t(errors.customKey.message) : undefined
-                          }
-                          validationState={errors.customKey ? "error" : undefined}
-                        >
-                          <Input
-                            {...field}
-                            disabled={saving}
-                            placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
-                          />
-                        </Field>
-                      )}
-                    />
-                  )}
-                </div>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field }) => (
+                <Field
+                  label={t("dashboard.apiKeys.form.name")}
+                  validationMessage={errors.name?.message ? t(errors.name.message) : undefined}
+                  validationState={errors.name ? "error" : undefined}
+                >
+                  <Input {...field} disabled={saving} />
+                </Field>
               )}
+            />
 
-              <div className={styles.formGrid}>
+            <UpstreamPicker
+              available={visibleUpstreams}
+              disabled={saving}
+              error={errors.upstreamIds?.message ? t(errors.upstreamIds.message) : null}
+              ids={values.upstreamIds}
+              override={values.upstreamOverride}
+              onChange={(next) => {
+                setValue("upstreamOverride", next.override, { shouldValidate: true });
+                setValue("upstreamIds", next.ids, { shouldValidate: true });
+              }}
+            />
+
+            {isCreate && (
+              <div className="grid gap-3 grid-cols-2 min-w-0 max-[900px]:grid-cols-1">
                 <Controller
                   control={control}
-                  name="retentionPreset"
+                  name="keyFormat"
                   render={({ field }) => (
-                    <Field
-                      hint={t("dashboard.apiKeys.form.retentionHint")}
-                      label={t("dashboard.apiKeys.form.retention")}
-                    >
+                    <Field label={t("dashboard.apiKeys.form.format")}>
                       <Select {...field} disabled={saving}>
-                        <option value="off">{t("dashboard.apiKeys.retention.off")}</option>
-                        <option value="1h">{t("dashboard.apiKeys.retention.1h")}</option>
-                        <option value="6h">{t("dashboard.apiKeys.retention.6h")}</option>
-                        <option value="24h">{t("dashboard.apiKeys.retention.24h")}</option>
-                        <option value="7d">{t("dashboard.apiKeys.retention.7d")}</option>
+                        <option value="openai">
+                          {t("dashboard.apiKeys.format.openai")}
+                        </option>
                         <option value="custom">
-                          {t("dashboard.apiKeys.retention.custom")}
+                          {t("dashboard.apiKeys.format.custom")}
                         </option>
                       </Select>
                     </Field>
                   )}
                 />
-                {values.retentionPreset === "custom" && (
+                {values.keyFormat === "custom" && (
                   <Controller
                     control={control}
-                    name="retentionCustom"
+                    name="customKey"
                     render={({ field }) => (
                       <Field
-                        label={t("dashboard.apiKeys.form.retentionCustom")}
+                        label={t("dashboard.apiKeys.form.customKey")}
                         validationMessage={
-                          errors.retentionCustom?.message
-                            ? t(errors.retentionCustom.message)
-                            : undefined
+                          errors.customKey?.message ? t(errors.customKey.message) : undefined
                         }
-                        validationState={errors.retentionCustom ? "error" : undefined}
+                        validationState={errors.customKey ? "error" : undefined}
                       >
                         <Input
                           {...field}
                           disabled={saving}
-                          placeholder={t("dashboard.apiKeys.form.retentionPlaceholder")}
+                          placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
                         />
                       </Field>
                     )}
                   />
                 )}
               </div>
+            )}
 
-              {retentionWarning && (
-                <MessageBar intent="warning">
-                  <MessageBarBody>{retentionWarning}</MessageBarBody>
-                </MessageBar>
+            <div className="grid gap-3 grid-cols-2 min-w-0 max-[900px]:grid-cols-1">
+              <Controller
+                control={control}
+                name="retentionPreset"
+                render={({ field }) => (
+                  <Field
+                    hint={t("dashboard.apiKeys.form.retentionHint")}
+                    label={t("dashboard.apiKeys.form.retention")}
+                  >
+                    <Select {...field} disabled={saving}>
+                      <option value="off">{t("dashboard.apiKeys.retention.off")}</option>
+                      <option value="1h">{t("dashboard.apiKeys.retention.1h")}</option>
+                      <option value="6h">{t("dashboard.apiKeys.retention.6h")}</option>
+                      <option value="24h">{t("dashboard.apiKeys.retention.24h")}</option>
+                      <option value="7d">{t("dashboard.apiKeys.retention.7d")}</option>
+                      <option value="custom">
+                        {t("dashboard.apiKeys.retention.custom")}
+                      </option>
+                    </Select>
+                  </Field>
+                )}
+              />
+              {values.retentionPreset === "custom" && (
+                <Controller
+                  control={control}
+                  name="retentionCustom"
+                  render={({ field }) => (
+                    <Field
+                      label={t("dashboard.apiKeys.form.retentionCustom")}
+                      validationMessage={
+                        errors.retentionCustom?.message
+                          ? t(errors.retentionCustom.message)
+                          : undefined
+                      }
+                      validationState={errors.retentionCustom ? "error" : undefined}
+                    >
+                      <Input
+                        {...field}
+                        disabled={saving}
+                        placeholder={t("dashboard.apiKeys.form.retentionPlaceholder")}
+                      />
+                    </Field>
+                  )}
+                />
               )}
+            </div>
 
-              {error && (
-                <MessageBar intent="error">
-                  <MessageBarBody>{error}</MessageBarBody>
-                </MessageBar>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button disabled={saving} onClick={() => onOpenChange(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button appearance="primary" disabled={saving} type="submit">
-                {saving
-                  ? t("dashboard.apiKeys.actions.saving")
-                  : isCreate
-                    ? t("dashboard.apiKeys.actions.create")
-                    : t("dashboard.apiKeys.actions.save")}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </form>
-      </DialogSurface>
-    </Dialog>
+            {retentionWarning && (
+              <MessageBar intent="warning">
+                <MessageBarBody>{retentionWarning}</MessageBarBody>
+              </MessageBar>
+            )}
+
+            {error && (
+              <MessageBar intent="error">
+                <MessageBarBody>{error}</MessageBarBody>
+              </MessageBar>
+            )}
+    </DialogShell>
+  );
+}
+
+function UpstreamPickerTable({
+  columns, rows,
+}: {
+  columns: ReturnType<typeof createTableColumn<UpstreamRow>>[]; rows: UpstreamRow[];
+}) {
+  const upstreamSizingOptions = useMemo(
+    () => ({
+      enabled: { defaultWidth: 80, minWidth: 70 },
+      order: { defaultWidth: 80, minWidth: 60 },
+      kind: { defaultWidth: 140 },
+    }),
+    [],
+  );
+  const { getRows: getUpstreamRows, columnSizing_unstable: cs, tableRef: ref } = useTableFeatures(
+    { columns, items: rows }, [
+      useTableSort({}),
+      useTableColumnSizing_unstable({ columnSizingOptions: upstreamSizingOptions }),
+    ],
+  );
+  const upstreamRows = getUpstreamRows();
+  return (
+    <div className="min-w-0 overflow-x-auto">
+      <Table ref={ref} {...cs.getTableProps()} aria-label="Upstreams" sortable>
+        <TableHeader><TableRow>{columns.map((col) => (
+          <TableHeaderCell key={col.columnId} {...cs.getTableHeaderCellProps(col.columnId)}>{col.renderHeaderCell()}</TableHeaderCell>
+        ))}</TableRow></TableHeader>
+        <TableBody>{upstreamRows.map(({ item }) => (
+          <TableRow key={item.id}>{columns.map((col) => (
+            <TableCell key={col.columnId} {...cs.getTableCellProps(col.columnId)}>{col.renderCell(item)}</TableCell>
+          ))}</TableRow>
+        ))}</TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -911,6 +886,7 @@ function UpstreamPicker({
   override: boolean;
 }) {
   const { t } = useTranslation();
+  const s = useStyles();
   const rows = useMemo(() => upstreamRows(available, ids), [available, ids]);
   const selectedCount = override ? ids.length : available.length;
   const columns = useMemo(
@@ -932,7 +908,7 @@ function UpstreamPicker({
         renderCell: (row) => {
           const selectedIndex = ids.indexOf(row.id);
           return (
-            <div className={styles.orderActions}>
+            <div className="inline-flex items-center gap-1">
               <IconButton
                 disabled={disabled || selectedIndex <= 0}
                 icon={<ArrowUpRegular />}
@@ -957,7 +933,7 @@ function UpstreamPicker({
         renderHeaderCell: () => t("dashboard.apiKeys.upstreams.name"),
         renderCell: (row) => (
           <TableCellLayout>
-            <span className={styles.truncate}>{row.name}</span>
+            <span className="truncate min-w-0">{row.name}</span>
           </TableCellLayout>
         ),
       }),
@@ -989,13 +965,13 @@ function UpstreamPicker({
   }
 
   return (
-    <div className={styles.upstreamPicker}>
-      <div className={styles.switchLine}>
+    <div className="grid gap-[10px] min-w-0">
+      <div className="flex items-center gap-3 justify-between rounded-lg border border-fui-stroke1 bg-fui-bg2 p-[10px_12px]">
         <div>
-          <span className={styles.switchTitle}>
+          <span className="text-fui-fg1 text-[13px] font-650">
             {t("dashboard.apiKeys.upstreams.title", { count: selectedCount })}
           </span>
-          <p>{t("dashboard.apiKeys.upstreams.inheritDescription")}</p>
+          <HintText>{t("dashboard.apiKeys.upstreams.inheritDescription")}</HintText>
         </div>
         <Switch
           checked={override}
@@ -1003,35 +979,8 @@ function UpstreamPicker({
           onChange={(_, data) => onChange({ override: !!data.checked, ids })}
         />
       </div>
-      {error && <p className={styles.fieldError}>{error}</p>}
-      {override && (
-        <div className={styles.tableScroller}>
-          <DataGrid
-            columnSizingOptions={upstreamPickerColumnSizing}
-            columns={columns}
-            getRowId={(row: UpstreamRow) => row.id}
-            items={rows}
-            resizableColumns
-            resizableColumnsOptions={{ autoFitColumns: false }}
-            sortable
-          >
-            <DataGridHeader>
-              <DataGridRow>
-                {({ renderHeaderCell }) => (
-                  <DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
-                )}
-              </DataGridRow>
-            </DataGridHeader>
-            <DataGridBody<UpstreamRow>>
-              {({ item, rowId }) => (
-                <DataGridRow<UpstreamRow> key={rowId}>
-                  {({ renderCell }) => <DataGridCell>{renderCell(item)}</DataGridCell>}
-                </DataGridRow>
-              )}
-            </DataGridBody>
-          </DataGrid>
-        </div>
-      )}
+      {error && <span className={`${s.fieldError} text-xs !m-0`}>{error}</span>}
+      {override && <UpstreamPickerTable columns={columns} rows={rows} />}
     </div>
   );
 }
@@ -1051,13 +1000,15 @@ function RotateCustomKeyDialog({
   const [customKey, setCustomKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [snapName, setSnapName] = useState("");
 
   useEffect(() => {
     if (open) {
       setCustomKey("");
       setError(null);
+      if (apiKey) setSnapName(apiKey.name);
     }
-  }, [open]);
+  }, [open, apiKey]);
 
   const rotate = async () => {
     if (!apiKey) return;
@@ -1085,40 +1036,37 @@ function RotateCustomKeyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(_, data) => onOpenChange(data.open)}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>{t("dashboard.apiKeys.rotate.title")}</DialogTitle>
-          <DialogContent className={styles.dialogContent}>
-            <p className={styles.dialogText}>
-              {t("dashboard.apiKeys.rotate.message", { name: apiKey?.name ?? "" })}
-            </p>
-            <Field
-              label={t("dashboard.apiKeys.form.customKey")}
-              validationMessage={error ?? undefined}
-              validationState={error ? "error" : undefined}
-            >
-              <Input
-                disabled={saving}
-                onChange={(_, data) => setCustomKey(data.value)}
-                placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
-                value={customKey}
-              />
-            </Field>
-          </DialogContent>
-          <DialogActions>
-            <Button disabled={saving} onClick={() => onOpenChange(false)}>
-              {t("common.cancel")}
-            </Button>
-            <Button appearance="primary" disabled={saving} onClick={() => void rotate()}>
-              {saving
-                ? t("dashboard.apiKeys.actions.saving")
-                : t("dashboard.apiKeys.actions.rotate")}
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
-    </Dialog>
+    <DialogShell
+      open={open}
+      onOpenChange={(_, data) => onOpenChange(data.open)}
+      title={<DialogTitle>{t("dashboard.apiKeys.rotate.title")}</DialogTitle>}
+      actions={
+        <DialogActions>
+          <Button disabled={saving} onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button appearance="primary" disabled={saving} onClick={() => void rotate()}>
+            {saving ? t("dashboard.apiKeys.actions.saving") : t("dashboard.apiKeys.actions.rotate")}
+          </Button>
+        </DialogActions>
+      }
+    >
+      <Text size={200} className="text-fui-fg2 leading-[1.35] !m-0">
+        {t("dashboard.apiKeys.rotate.message", { name: snapName })}
+      </Text>
+      <Field
+        label={t("dashboard.apiKeys.form.customKey")}
+        validationMessage={error ?? undefined}
+        validationState={error ? "error" : undefined}
+      >
+        <Input
+          disabled={saving}
+          onChange={(_, data) => setCustomKey(data.value)}
+          placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
+          value={customKey}
+        />
+      </Field>
+    </DialogShell>
   );
 }
 
@@ -1230,36 +1178,21 @@ function CliSnippet({
   const codexAuthCommand = codexAuthSnippet(baseUrl, apiKey);
 
   return (
-    <div className={styles.snippetTabs}>
-      <TabList
-        selectedValue={activeSnippet}
-        onTabSelect={(_, data) =>
-          setActiveSnippet(data.value === "codex" ? "codex" : "claude")
-        }
-      >
-        <Tab value="claude">
-          <span className={styles.tabLabel}>
-            <img alt="" src={claudeIconUrl} />
-            {t("dashboard.apiKeys.configuration.claudeCode")}
-          </span>
-        </Tab>
-        <Tab value="codex">
-          <span className={styles.tabLabel}>
-            <img alt="" src={codexIconUrl} />
-            {t("dashboard.apiKeys.configuration.codex")}
-          </span>
-        </Tab>
+    <div className="grid gap-[14px] min-w-0">
+      <TabList selectedValue={activeSnippet} onTabSelect={(_, data) => setActiveSnippet(data.value === "codex" ? "codex" : "claude")}>
+        <ProviderTab value="claude" icon={<img alt="" src={claudeIconUrl} />} label={t("dashboard.apiKeys.configuration.claudeCode")} />
+        <ProviderTab value="codex" icon={<img alt="" src={codexIconUrl} />} label={t("dashboard.apiKeys.configuration.codex")} />
       </TabList>
 
       {activeSnippet === "claude" ? (
-        <div className={styles.snippetPanel}>
+        <div className="grid gap-[10px] min-w-0">
           <Checkbox
             checked={onlyClaudeModels}
-            className={styles.modelFilter}
+            className="justify-self-start"
             label={t("dashboard.apiKeys.configuration.onlyClaudeModels")}
             onChange={(_, data) => setOnlyClaudeModels(!!data.checked)}
           />
-          <div className={styles.pickerRow}>
+          <div className="flex items-end flex-wrap gap-[10px] min-w-0">
             <SnippetSelect
               label={t("dashboard.apiKeys.configuration.model")}
               onChange={setClaudeModel}
@@ -1279,7 +1212,7 @@ function CliSnippet({
               value={haikuModel}
             />
           </div>
-          <p className={styles.snippetHint}>{t("dashboard.apiKeys.configuration.claudeHint")}</p>
+          <HintText>{t("dashboard.apiKeys.configuration.claudeHint")}</HintText>
           <CodeBlock
             code={claudeSnippet}
             copied={copiedTag === "snippet-claude"}
@@ -1288,14 +1221,14 @@ function CliSnippet({
           />
         </div>
       ) : (
-        <div className={styles.snippetPanel}>
+        <div className="grid gap-[10px] min-w-0">
           <Checkbox
             checked={onlyGpt5Models}
-            className={styles.modelFilter}
+            className="justify-self-start"
             label={t("dashboard.apiKeys.configuration.onlyGpt5Models")}
             onChange={(_, data) => setOnlyGpt5Models(!!data.checked)}
           />
-          <div className={styles.pickerRow}>
+          <div className="flex items-end flex-wrap gap-[10px] min-w-0">
             <SnippetSelect
               label={t("dashboard.apiKeys.configuration.model")}
               onChange={setCodexModel}
@@ -1303,14 +1236,14 @@ function CliSnippet({
               value={codexModel}
             />
           </div>
-          <p className={styles.snippetHint}>{t("dashboard.apiKeys.configuration.codexConfigHint")}</p>
+          <HintText>{t("dashboard.apiKeys.configuration.codexConfigHint")}</HintText>
           <CodeBlock
             code={codexSnippet}
             copied={copiedTag === "snippet-codex-config"}
             language="toml"
             onCopy={() => onCopy(codexSnippet, "snippet-codex-config")}
           />
-          <p className={styles.snippetHint}>{t("dashboard.apiKeys.configuration.codexAuthHint")}</p>
+          <HintText>{t("dashboard.apiKeys.configuration.codexAuthHint")}</HintText>
           <CodeBlock
             code={codexAuthCommand}
             copied={copiedTag === "snippet-codex-auth"}
@@ -1335,7 +1268,7 @@ function SnippetSelect({
   value: string;
 }) {
   return (
-    <label className={styles.snippetSelect}>
+    <label className="grid gap-1 min-w-[min(220px,100%)] [&_span]:text-fui-fg2 [&_span]:text-xs [&_span]:font-fui-semibold">
       <span>{label}</span>
       <Dropdown
         disabled={options.length === 0}
@@ -1357,43 +1290,17 @@ function SnippetSelect({
   );
 }
 
-function CodeBlock({
-  code,
-  copied,
-  language,
-  onCopy,
-}: {
-  code: string;
-  copied: boolean;
-  language: string;
-  onCopy: () => void;
-}) {
-  const { t } = useTranslation();
-  const highlighted = useMemo(() => {
-    const grammar = Prism.languages[language] ?? Prism.languages.plain;
-    return grammar ? Prism.highlight(code, grammar, language) : escapeHtml(code);
-  }, [code, language]);
+function HintText({ children }: { children: string }) {
+  return <Text size={200} className="text-fui-fg2 leading-[1.35] !m-0">{children}</Text>;
+}
 
+function ProviderTab({ value, icon, label }: { value: string; icon: React.ReactElement; label: string }) {
   return (
-    <div className={styles.codeBlock}>
-      <div className={styles.codeHeader}>
-        <span>{language}</span>
-        <Button
-          appearance="subtle"
-          icon={copied ? <CheckmarkRegular /> : <CopyRegular />}
-          onClick={onCopy}
-          size="small"
-        >
-          {copied ? t("dashboard.apiKeys.copy.copied") : t("dashboard.apiKeys.actions.copy")}
-        </Button>
-      </div>
-      <pre className={`language-${language}`}>
-        <code
-          className={`language-${language}`}
-          dangerouslySetInnerHTML={{ __html: highlighted }}
-        />
-      </pre>
-    </div>
+    <Tab value={value}>
+      <span className="inline-flex items-center gap-[7px] min-w-0 [&_img]:block [&_img]:flex-none [&_img]:h-4 [&_img]:w-4">
+        {icon}{label}
+      </span>
+    </Tab>
   );
 }
 
@@ -1560,12 +1467,6 @@ const upstreamsTitle = (
   return key.upstream_ids.map((id) => upstreamById.get(id)?.name ?? id).join("\n");
 };
 
-const upstreamsClassName = (key: ApiKey) => {
-  if (!key.upstream_ids) return undefined;
-  if (key.upstream_ids.length === 0) return styles.dangerText;
-  return styles.accentText;
-};
-
 const modelsForApiKey = (models: ControlPlaneModel[], key: ApiKey | null) => {
   if (!key?.upstream_ids) return models;
   if (key.upstream_ids.length === 0) return [];
@@ -1620,14 +1521,6 @@ const sortCodex = (a: string, b: string) => {
 };
 
 const dedupe = (items: string[]) => [...new Set(items)];
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 
 const codexAuthSnippet = (baseUrl: string, apiKey: string) => {
   const host = (() => {

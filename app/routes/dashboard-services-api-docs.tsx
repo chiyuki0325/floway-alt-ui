@@ -2,9 +2,9 @@ import { useTranslation } from "react-i18next";
 import { ArrowUpRight16Regular } from "@fluentui/react-icons";
 
 import { fluentComponents } from "../fluent";
-import styles from "./dashboard-services-api-docs.module.css";
+import { Panel } from "../components/panel";
 
-const { Card } = fluentComponents;
+const { Link, Text } = fluentComponents;
 
 type EndpointRow = {
   method: "GET" | "POST";
@@ -91,44 +91,48 @@ export default function DashboardServicesApiDocs() {
   const { t } = useTranslation();
 
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <p>{t("dashboard.groups.services")}</p>
-        <h1>{t("dashboard.nav.apiDocs")}</h1>
+    <section className="grid gap-[18px] max-w-[960px] min-w-0">
+      <header className="grid gap-[6px]">
+        <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2] uppercase">
+          {t("dashboard.groups.services")}
+        </Text>
+        <Text size={700} weight="semibold">
+          {t("dashboard.nav.apiDocs")}
+        </Text>
       </header>
-
-      <Card className={styles.panel}>
-        <h2>{t("dashboard.apiDocs.endpointsTitle")}</h2>
-        <div className={styles.endpointList}>
+      <Panel className="grid gap-[14px] !p-[22px_24px] max-[680px]:!p-[18px]">
+        <Text size={400} weight="semibold">
+          {t("dashboard.apiDocs.endpointsTitle")}
+        </Text>
+        <div className="grid min-w-0">
           {endpoints.map((endpoint) => (
             <div
-              className={styles.endpointRow}
+              className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 py-[6px] px-2 border-b border-fui-subtle last:border-b-0 min-w-0"
               key={`${endpoint.method} ${endpoint.path}`}
             >
               <span
-                className={
-                  endpoint.method === "GET"
-                    ? styles.methodGet
-                    : styles.methodPost
-                }
+                className="rounded inline-flex font-mono text-[11px] font-bold justify-center leading-none p-[4px_7px] w-[46px]"
+                style={{
+                  color: endpoint.method === "GET"
+                    ? "light-dark(#0f6cbd, #75b6f7)"
+                    : "light-dark(#107c41, #7fd99a)",
+                  background: endpoint.method === "GET"
+                    ? "light-dark(#e6f2fb, rgba(71,158,245,0.18))"
+                    : "light-dark(#e8f5ee, rgba(84,179,111,0.18))",
+                }}
               >
                 {endpoint.method}
               </span>
-              <code className={styles.path}>{endpoint.path}</code>
-              <span className={styles.name}>{endpoint.name}</span>
-              <a
-                className={styles.docsLink}
-                href={endpoint.docs}
-                rel="noreferrer"
-                target="_blank"
-              >
+              <code className="font-mono text-xs min-w-0 truncate">{endpoint.path}</code>
+              <span className="text-xs min-w-0 truncate">{endpoint.name}</span>
+              <Link href={endpoint.docs} target="_blank">
                 {t("dashboard.apiDocs.docsLink")}
                 <ArrowUpRight16Regular aria-hidden="true" />
-              </a>
+              </Link>
             </div>
           ))}
         </div>
-      </Card>
+      </Panel>
     </section>
   );
 }

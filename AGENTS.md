@@ -16,7 +16,7 @@ Floway 是 LLM API gateway。前端主要服务于控制台能力：登录、上
 - 应用框架：React 19 + React Router 8 Framework Mode。
 - 构建工具：Vite 8。
 - UI 组件：`@fluentui/react-components`。
-- 样式：Tailwind CSS 4，经 `@tailwindcss/vite` 接入，主要用于布局和局部样式。
+- 样式：UnoCSS（`presetWind3`），经 `unocss/vite` 接入，主要用于布局和局部样式。
 - 表单/校验：`react-hook-form`、`@hookform/resolvers`、`zod`。
 - 国际化：`react-i18next`，Zod 错误文案使用 `zod-i18n-map`。
 - 图标：`@fluentui/react-icons`，新增图标优先从这里选。
@@ -88,6 +88,9 @@ Floway 控制台是运维/配置型工具，界面应当紧凑、清晰、适合
 - 优先使用 Fluent UI React Components 里的 Button、Input、Field、Select、
   Checkbox、Switch、Dialog、Menu、Tab、Table 等基础组件承载可访问性、焦点管理和
   交互状态。只有项目确实需要 Fluent UI 未覆盖的形态时，再写轻量自定义组件。
+- Fluent UI 组件统一从 `app/fluent.ts` 导入：`import { fluentComponents } from "../fluent"`，
+  然后在模块顶层解构所需组件（如 `const { Button, Text, makeStyles } = fluentComponents;`）。
+  不要直接从 `@fluentui/react-components` 导入组件。
 - 表单状态优先使用 React Hook Form 管理，校验 schema 优先使用 Zod，并把错误展示接到
   Fluent UI 的 Field/Message 等语义组件上。不要为普通表单手写一套分散的
   `useState` 校验状态。
@@ -99,6 +102,35 @@ Floway 控制台是运维/配置型工具，界面应当紧凑、清晰、适合
 - 不嵌套卡片；表格、列表、编辑面板保持信息密度。
 - 避免大面积单色渐变、装饰性背景和无关插图。
 - 移动端和窄屏上文字不能溢出按钮、标签或表格单元。
+
+## UnoCSS 与 Design Token
+
+本项目不写 CSS Modules，也不维护全局 CSS 文件。所有样式直接用 UnoCSS 原子类写在
+组件 `className` 上。全局 reset 内联在 `app/root.tsx` 的 `<style>` 标签中。
+
+**核心规则：写样式前先读 `uno.config.ts`。** 该文件通过 `theme`、`shortcuts`、
+`rules` 将 FluentUI 的 CSS custom property token 映射为原子类。禁止使用硬编码颜色
+（`#xxx`）、字重数值（`font-[650]`）或字号像素值（`text-[13px]`），必须走
+`fui-*` 前缀的 token 体系。
+
+`fui-*` token 由 `FluentProvider` 注入，亮/暗主题各自有对应值，不需要组件手动处理
+夜间模式。
+
+**可以写任意值（`[value]`）的场景**：间距（`gap-3.5`、`pt-[26px]`）、尺寸
+（`w-[min(430px,calc(100vw-48px))]`）、行高（`leading-[1.3]`）等布局微调。
+颜色和字体永远不走任意值。
+
+**覆盖 Fluent UI 内置样式**时，在原子类前加 `!` 前缀（等价 `!important`）：
+`!text-fui-fg1`、`!m-0`。Dialog、Button 等组件的默认样式优先级很高，不加 `!`
+会被盖掉。
+
+**禁止**：`import styles from "./xxx.module.css"`、`import "./app.css"`（全局样式文件不存在）、在组件内写 `<style>` 标签。
+
+组件内若有自定义样式需求（如特定色调、局部覆盖），使用 FluentUI 的 `makeStyles`，不要为了局部样式去改 `uno.config.ts`。`uno.config.ts` 只放全局通用的 token 映射和 shortcut。
+
+**禁止**乱改 `uno.config.ts`，不然某些小组件的自定义样式会污染到全局。改之前需要经过用户同意。
+
+**封装重复原子类**：当你发现一坨完全相同的原子类组合写了 ≥3 遍，或者以后很可能被其他地方复用，ALWAYS 封装成一个小组件（如 `HintText`、`ProviderTab`）或共享常量。原子类是好的，复制粘贴是坏的。
 
 ## UI 字符串与国际化
 
