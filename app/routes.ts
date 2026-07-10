@@ -6,6 +6,8 @@ export default [
     index("routes/dashboard-index.tsx"),
     route("playground", "routes/dashboard-playground.tsx"),
     route("providers/upstreams", "routes/dashboard-providers-upstreams.tsx"),
+    route("providers/upstreams/new/:provider", "routes/dashboard-providers-upstreams-new.tsx"),
+    route("providers/upstreams/:id", "routes/dashboard-providers-upstreams-edit.tsx"),
     route("providers/search", "routes/dashboard-providers-search.tsx"),
     route("providers/proxy", "routes/dashboard-providers-proxy.tsx"),
     route("services/api-keys", "routes/dashboard-services-api-keys.tsx"),

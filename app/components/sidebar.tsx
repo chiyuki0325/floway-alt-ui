@@ -58,7 +58,7 @@ const navGroups: NavGroup[] = [
   {
     labelKey: "dashboard.groups.providers",
     items: [
-      { to: "/dashboard/providers/upstreams", labelKey: "dashboard.nav.upstreams", icon: bundleIcon(PlugConnectedFilled, PlugConnectedRegular) },
+      { to: "/dashboard/providers/upstreams", labelKey: "dashboard.nav.upstreams", icon: bundleIcon(PlugConnectedFilled, PlugConnectedRegular), adminOnly: true },
       { to: "/dashboard/providers/search", labelKey: "dashboard.nav.search", icon: bundleIcon(SearchFilled, SearchRegular), adminOnly: true },
       { to: "/dashboard/providers/proxy", labelKey: "dashboard.nav.proxy", icon: bundleIcon(ArrowRoutingFilled, ArrowRoutingRegular), adminOnly: true },
     ],
@@ -148,7 +148,7 @@ function SidebarNavLink({
   const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   const Icon = item.icon;
-  const active = currentPath === item.to;
+  const active = currentPath === item.to || currentPath.startsWith(`${item.to}/`);
   const showFilled = hovered;
 
   return (
