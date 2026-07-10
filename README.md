@@ -81,10 +81,10 @@ pnpm typecheck
 
 # 生产构建
 pnpm build
-
-# 启动生产服务
-pnpm start
 ```
+
+生产产物位于 `build/client`，部署时由静态文件服务器托管，并将未匹配的页面路径
+回退到 `index.html`。
 
 ## 项目结构
 

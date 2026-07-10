@@ -30,7 +30,6 @@ pnpm install
 pnpm dev
 pnpm build
 pnpm typecheck
-pnpm start
 ```
 
 `pnpm dev` 启动 React Router 开发服务器，默认入口通常是

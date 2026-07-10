@@ -25,12 +25,13 @@ import type { BillingDimension, ControlPlaneModel } from "../api/types";
 import { getSessionToken } from "../auth/session";
 import { fluentComponents } from "../fluent";
 import { PageLoadingPanel } from "../components/page-loading-panel";
+import { OutlineCard } from "../components/outline-card";
 import { Panel } from "../components/panel";
 import { SegmentedControl } from "../components/segmented-control";
 import { useAuthStore } from "../stores/auth-store";
 import { useDashboardOutletContext } from "./dashboard";
 
-const { Button, Card, Divider, InteractionTag, InteractionTagPrimary, makeStyles, mergeClasses, Spinner, Text, Tooltip } = fluentComponents;
+const { Button, Divider, InteractionTag, InteractionTagPrimary, makeStyles, mergeClasses, Spinner, Text, Tooltip } = fluentComponents;
 
 const useErrorStyles = makeStyles({
   root: {
@@ -978,23 +979,11 @@ function LegendTag({
   );
 }
 
-const useChartCardStyles = makeStyles({
-  root: {
-    "&::after": {
-      borderRadius: "8px",
-    },
-  },
-});
-
 function ChartCard({ children }: { children: React.ReactNode }) {
-  const styles = useChartCardStyles();
   return (
-    <Card
-      appearance="outline"
-      className={`${styles.root} !rounded-lg min-h-[320px] min-w-0 overflow-hidden`}
-    >
+    <OutlineCard className="min-h-[320px] min-w-0 overflow-hidden">
       {children}
-    </Card>
+    </OutlineCard>
   );
 }
 

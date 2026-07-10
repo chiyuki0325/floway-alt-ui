@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowSyncRegular,
+  ArrowClockwiseRegular,
   DeleteRegular,
   EditRegular,
   KeyRegular,
@@ -157,9 +157,10 @@ export default function DashboardAdminUsers({ loaderData }: Route.ComponentProps
         <div className="flex items-center gap-2 flex-none">
           <Tooltip content={t("dashboard.users.actions.refresh")} relationship="label">
             <Button
+              appearance="subtle"
               aria-label={t("dashboard.users.actions.refresh")}
               disabled={loading || deleting}
-              icon={loading ? <Spinner size="tiny" /> : <ArrowSyncRegular />}
+              icon={loading ? <Spinner size="tiny" /> : <ArrowClockwiseRegular />}
               onClick={() => void reload()}
             />
           </Tooltip>

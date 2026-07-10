@@ -1,7 +1,7 @@
 import {
   AddRegular,
+  ArrowClockwiseRegular,
   ArrowDownRegular,
-  ArrowSyncRegular,
   ArrowUpRegular,
   CheckmarkCircleRegular,
   ChevronDownRegular,
@@ -281,9 +281,10 @@ export default function DashboardProvidersUpstreams() {
         <div className="flex items-center gap-2 flex-none max-[900px]:justify-start">
           <Tooltip content={t("dashboard.upstreams.actions.refresh")} relationship="label">
             <Button
+              appearance="subtle"
               aria-label={t("dashboard.upstreams.actions.refresh")}
               disabled={initialLoading || busy}
-              icon={mutation?.kind === "reload" ? <Spinner size="tiny" /> : <ArrowSyncRegular />}
+              icon={mutation?.kind === "reload" ? <Spinner size="tiny" /> : <ArrowClockwiseRegular />}
               onClick={() => void handleReload()}
             />
           </Tooltip>
