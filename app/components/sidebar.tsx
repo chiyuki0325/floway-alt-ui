@@ -37,7 +37,35 @@ import { useAuthStore } from "../stores/auth-store";
 import { ConfirmDialog } from "./confirm-dialog";
 import { FlowayLogo } from "./floway-logo";
 
-const { Button, Text } = fluentComponents;
+const { Button, Text, makeStyles, mergeClasses } = fluentComponents;
+
+const useSidebarStyles = makeStyles({
+  footer: {
+    borderTopColor: "light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08))",
+  },
+  navLink: {
+    color: "light-dark(#3f3f46, #ffffff)",
+    ":hover": {
+      backgroundColor: "light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08))",
+      color: "light-dark(#242424, #ffffff)",
+    },
+    ":focus-visible": {
+      outline: "2px solid #0f6cbd",
+    },
+  },
+  activeNavLink: {
+    backgroundColor: "light-dark(#ffffff, rgba(255, 255, 255, 0.06))",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.06)",
+    color: "light-dark(#111827, #ffffff)",
+    ":hover": {
+      backgroundColor: "light-dark(#ffffff, rgba(255, 255, 255, 0.06))",
+      color: "light-dark(#111827, #ffffff)",
+    },
+  },
+  activeIndicator: {
+    backgroundColor: "#0f6cbd",
+  },
+});
 
 type NavItem = {
   to: string;
@@ -95,6 +123,7 @@ const accountIcon = bundleIcon(PersonFilled, PersonRegular);
 
 export function Sidebar({ user }: { user: AuthUser }) {
   const { t } = useTranslation();
+  const styles = useSidebarStyles();
   const { pathname } = useLocation();
   const clearAuth = useAuthStore((state) => state.clear);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -136,7 +165,7 @@ export function Sidebar({ user }: { user: AuthUser }) {
           );
         })}
       </nav>
-      <footer className="grid gap-0.5 border-t border-t-solid border-fui-subtle pt-[12px] px-1">
+      <footer className={mergeClasses("grid gap-0.5 border-t border-t-solid pt-[12px] px-1", styles.footer)}>
         <SidebarNavLink
           currentPath={pathname}
           item={{
@@ -180,6 +209,7 @@ function SidebarNavLink({
   label?: string;
 }) {
   const { t } = useTranslation();
+  const styles = useSidebarStyles();
   const [hovered, setHovered] = useState(false);
   const Icon = item.icon;
   const active = currentPath === item.to || currentPath.startsWith(`${item.to}/`);
@@ -189,23 +219,23 @@ function SidebarNavLink({
     <NavLink
       aria-current={active ? "page" : undefined}
       className={({ isPending }) =>
-        [
+        mergeClasses(
           "relative grid grid-cols-[4px_20px_minmax(0,1fr)] items-center gap-2 rounded-lg text-fui-base300 font-fui-medium min-h-[38px] px-3 pl-2 no-underline",
-          "focus-visible:[outline:2px_solid_#0f6cbd] focus-visible:outline-offset-2",
-          active
-            ? "text-fui-nav-active bg-fui-nav-active shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-            : "text-fui-nav-default hover:text-fui-nav-hover hover:bg-fui-nav-hover",
-          isPending ? "opacity-72" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")
+          "focus-visible:outline-offset-2",
+          styles.navLink,
+          active && styles.activeNavLink,
+          isPending && "opacity-72",
+        )
       }
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       to={item.to}
     >
       <span
-        className={`block rounded-full h-[18px] w-[3px] ${active ? "bg-[#0f6cbd]" : "bg-transparent"}`}
+        className={mergeClasses(
+          "block rounded-full h-[18px] w-[3px]",
+          active ? styles.activeIndicator : "bg-transparent",
+        )}
         aria-hidden="true"
       />
       <span className="relative h-5 w-5">
