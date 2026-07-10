@@ -1,7 +1,7 @@
 import type { CardProps } from "@fluentui/react-components";
 import { fluentComponents } from "../fluent";
 
-const { Card } = fluentComponents;
+const { Card, mergeClasses } = fluentComponents;
 
 export type PanelRadius = 8 | 12;
 
@@ -18,7 +18,7 @@ export function Panel({ className, radius = 8, ...props }: PanelProps) {
   return (
     <Card
       {...props}
-      className={`${className ?? ""} ${radiusClasses[radius]}`}
+      className={mergeClasses(className, radiusClasses[radius])}
     />
   );
 }

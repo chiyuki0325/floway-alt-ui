@@ -30,7 +30,7 @@ import { SegmentedControl } from "../components/segmented-control";
 import { useAuthStore } from "../stores/auth-store";
 import { useDashboardOutletContext } from "./dashboard";
 
-const { Button, Card, Divider, InteractionTag, InteractionTagPrimary, makeStyles, Spinner, Text, Tooltip } = fluentComponents;
+const { Button, Card, Divider, InteractionTag, InteractionTagPrimary, makeStyles, mergeClasses, Spinner, Text, Tooltip } = fluentComponents;
 
 const useErrorStyles = makeStyles({
   root: {
@@ -811,14 +811,22 @@ function SummaryMetricButton({
   return (
     <button
       aria-pressed={active}
-      className={`${s.root} ${active ? s.activeRoot : ""}`}
+      className={mergeClasses(s.root, active && s.activeRoot)}
       onClick={onClick}
       type="button"
     >
-      <Text size={200} weight="semibold" className={`text-fui-fg2 leading-[1.2] ${active ? s.activeText : ""}`}>
+      <Text
+        size={200}
+        weight="semibold"
+        className={mergeClasses("text-fui-fg2 leading-[1.2]", active && s.activeText)}
+      >
         {label}
       </Text>
-      <Text size={500} weight="semibold" className={`${s.value} ${active ? s.activeText : ""}`}>
+      <Text
+        size={500}
+        weight="semibold"
+        className={mergeClasses(s.value, active && s.activeText)}
+      >
         {value}
       </Text>
     </button>
