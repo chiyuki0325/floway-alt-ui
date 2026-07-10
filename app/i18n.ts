@@ -246,6 +246,28 @@ export const resources = {
             copied: "Copied",
             failed: "Copy failed",
           },
+          toast: {
+            create: {
+              pending: "Creating API key {{name}}",
+              success: "Created API key {{name}}",
+              error: "Could not create API key {{name}}: {{message}}",
+            },
+            edit: {
+              pending: "Saving API key {{name}}",
+              success: "Saved API key {{name}}",
+              error: "Could not save API key {{name}}: {{message}}",
+            },
+            rotate: {
+              pending: "Rotating API key {{name}}",
+              success: "Finished rotating API key {{name}}",
+              error: "Could not rotate API key {{name}}: {{message}}",
+            },
+            delete: {
+              pending: "Deleting API key {{name}}",
+              success: "Deleted API key {{name}}",
+              error: "Could not delete API key {{name}}: {{message}}",
+            },
+          },
           table: {
             title: "API Keys",
             name: "Name",
@@ -1198,6 +1220,28 @@ export const resources = {
           copy: {
             copied: "已复制",
             failed: "复制失败",
+          },
+          toast: {
+            create: {
+              pending: "正在创建 API 密钥 {{name}}",
+              success: "已创建 API 密钥 {{name}}",
+              error: "无法创建 API 密钥 {{name}}：{{message}}",
+            },
+            edit: {
+              pending: "正在保存 API 密钥 {{name}}",
+              success: "已保存 API 密钥 {{name}}",
+              error: "无法保存 API 密钥 {{name}}：{{message}}",
+            },
+            rotate: {
+              pending: "正在轮换 API 密钥 {{name}}",
+              success: "已完成轮换 API 密钥 {{name}}",
+              error: "无法轮换 API 密钥 {{name}}：{{message}}",
+            },
+            delete: {
+              pending: "正在删除 API 密钥 {{name}}",
+              success: "已删除 API 密钥 {{name}}",
+              error: "无法删除 API 密钥 {{name}}：{{message}}",
+            },
           },
           table: {
             title: "API 密钥",

@@ -14,7 +14,7 @@ import claudeIconUrl from "../assets/claude-color.svg";
 import codexIconUrl from "../assets/codex.svg";
 import prismVscDarkPlusStyles from "prism-themes/themes/prism-vsc-dark-plus.css?url";
 import prismVsStyles from "prism-themes/themes/prism-vs.css?url";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 import { redirect, useOutletContext } from "react-router";
@@ -57,9 +57,13 @@ const {
   TableHeaderCell,
   TableRow,
   Text,
+  Toast,
+  Toaster,
+  ToastTitle,
   Tooltip,
   createTableColumn,
   makeStyles,
+  useToastController,
   useTableColumnSizing_unstable,
   useTableFeatures,
   useTableSort,
@@ -126,6 +130,14 @@ interface UpdateKeyBody {
   dump_retention_seconds: number | null;
 }
 
+type ApiKeyMutation = "create" | "edit" | "rotate" | "delete";
+
+interface MutationToastController {
+  start: (kind: ApiKeyMutation, name: string) => string;
+  succeed: (toastId: string, kind: ApiKeyMutation, name: string) => void;
+  fail: (toastId: string, kind: ApiKeyMutation, name: string, message: string) => void;
+}
+
 const retentionPresetSeconds: Record<Exclude<RetentionPreset, "off" | "custom">, number> = {
   "1h": 3600,
   "6h": 6 * 3600,
@@ -158,6 +170,10 @@ export function links() {
 export default function DashboardServicesApiKeys() {
   const { t } = useTranslation();
   const { user } = useOutletContext<DashboardOutletContext>();
+  const toasterId = useId();
+  const mutationToastId = useId();
+  const mutationToastSequence = useRef(0);
+  const { dispatchToast, updateToast } = useToastController(toasterId);
   const [data, setData] = useState<ApiKeysPageData>({
     keys: [],
     upstreams: [],
@@ -181,6 +197,47 @@ export default function DashboardServicesApiKeys() {
   const selectedKey =
     data.keys.find((key) => key.id === selectedKeyId) ?? data.keys[0] ?? null;
   const configurationKey = selectedKey?.key ?? apiKeyPlaceholder;
+
+  const mutationToasts: MutationToastController = {
+    start: (kind, name) => {
+      const toastId = `${mutationToastId}-${mutationToastSequence.current++}`;
+      dispatchToast(
+        <Toast>
+          <ToastTitle media={<Spinner size="tiny" />}>
+            {t(`dashboard.apiKeys.toast.${kind}.pending`, { name })}
+          </ToastTitle>
+        </Toast>,
+        { toastId, timeout: -1 },
+      );
+      return toastId;
+    },
+    succeed: (toastId, kind, name) => {
+      updateToast({
+        content: (
+          <Toast>
+            <ToastTitle>{t(`dashboard.apiKeys.toast.${kind}.success`, { name })}</ToastTitle>
+          </Toast>
+        ),
+        intent: "success",
+        toastId,
+        timeout: 3000,
+      });
+    },
+    fail: (toastId, kind, name, message) => {
+      updateToast({
+        content: (
+          <Toast>
+            <ToastTitle>
+              {t(`dashboard.apiKeys.toast.${kind}.error`, { name, message })}
+            </ToastTitle>
+          </Toast>
+        ),
+        intent: "error",
+        toastId,
+        timeout: 5000,
+      });
+    },
+  };
 
   const reload = async () => {
     setLoading(true);
@@ -260,33 +317,41 @@ export default function DashboardServicesApiKeys() {
 
   const rotateGeneratedKey = async (key: ApiKey) => {
     setPageError(null);
+    const toastId = mutationToasts.start("rotate", key.name);
     const result = await callApi<ApiKey>(() =>
       authFetch(`/api/keys/${encodeURIComponent(key.id)}/rotate`, {
         method: "POST",
       }),
     );
     if (result.error) {
+      mutationToasts.fail(toastId, "rotate", key.name, result.error.message);
       setPageError(result.error.message);
       return;
     }
+    mutationToasts.succeed(toastId, "rotate", key.name);
     await reload();
   };
 
   const deleteKey = async (key: ApiKey) => {
     setPageError(null);
+    const toastId = mutationToasts.start("delete", key.name);
     const result = await callApi<{ ok: true }>(() =>
       authFetch(`/api/keys/${encodeURIComponent(key.id)}`, { method: "DELETE" }),
     );
     if (result.error) {
+      mutationToasts.fail(toastId, "delete", key.name, result.error.message);
       setPageError(result.error.message);
       return;
     }
     setDeleteTarget(null);
+    mutationToasts.succeed(toastId, "delete", key.name);
     await reload();
   };
 
   return (
     <div className="grid gap-[18px] min-w-0">
+      <Toaster toasterId={toasterId} position="top-end" />
+
       <header className="flex items-start gap-[18px] justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
         <div className="grid gap-1 min-w-0">
           <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2]">
@@ -382,6 +447,7 @@ export default function DashboardServicesApiKeys() {
         mode="create"
         onOpenChange={setCreateOpen}
         onSaved={reload}
+        mutationToasts={mutationToasts}
         open={createOpen}
         upstreams={data.upstreams}
         userUpstreamIds={user.upstreamIds}
@@ -393,6 +459,7 @@ export default function DashboardServicesApiKeys() {
           if (!open) setEditTarget(null);
         }}
         onSaved={reload}
+        mutationToasts={mutationToasts}
         open={editTarget !== null}
         upstreams={data.upstreams}
         userUpstreamIds={user.upstreamIds}
@@ -403,6 +470,7 @@ export default function DashboardServicesApiKeys() {
           if (!open) setRotateTarget(null);
         }}
         onSaved={reload}
+        mutationToasts={mutationToasts}
         open={rotateTarget !== null}
       />
       <ConfirmDialog
@@ -573,6 +641,7 @@ function KeysTable({
 function KeyDialog({
   apiKey,
   mode,
+  mutationToasts,
   onOpenChange,
   onSaved,
   open,
@@ -581,6 +650,7 @@ function KeyDialog({
 }: {
   apiKey: ApiKey | null;
   mode: "create" | "edit";
+  mutationToasts: MutationToastController;
   onOpenChange: (open: boolean) => void;
   onSaved: () => Promise<void>;
   open: boolean;
@@ -677,6 +747,8 @@ function KeyDialog({
       upstream_ids: values.upstreamOverride ? values.upstreamIds : null,
       dump_retention_seconds: retention,
     };
+    const mutationKind = isCreate ? "create" : "edit";
+    const toastId = mutationToasts.start(mutationKind, common.name);
     const result = isCreate
       ? await callApi<ApiKey>(() =>
           authFetch("/api/keys", {
@@ -701,10 +773,12 @@ function KeyDialog({
     setSaving(false);
 
     if (result.error) {
+      mutationToasts.fail(toastId, mutationKind, common.name, result.error.message);
       setError(result.error.message);
       return;
     }
     onOpenChange(false);
+    mutationToasts.succeed(toastId, mutationKind, common.name);
     await onSaved();
   };
 
@@ -1018,11 +1092,13 @@ function UpstreamPicker({
 
 function RotateCustomKeyDialog({
   apiKey,
+  mutationToasts,
   onOpenChange,
   onSaved,
   open,
 }: {
   apiKey: ApiKey | null;
+  mutationToasts: MutationToastController;
   onOpenChange: (open: boolean) => void;
   onSaved: () => Promise<void>;
   open: boolean;
@@ -1050,6 +1126,7 @@ function RotateCustomKeyDialog({
     }
     setSaving(true);
     setError(null);
+    const toastId = mutationToasts.start("rotate", snapName);
     const result = await callApi<ApiKey>(() =>
       authFetch(`/api/keys/${encodeURIComponent(apiKey.id)}/rotate`, {
         method: "POST",
@@ -1059,10 +1136,12 @@ function RotateCustomKeyDialog({
     );
     setSaving(false);
     if (result.error) {
+      mutationToasts.fail(toastId, "rotate", snapName, result.error.message);
       setError(result.error.message);
       return;
     }
     onOpenChange(false);
+    mutationToasts.succeed(toastId, "rotate", snapName);
     await onSaved();
   };
 
