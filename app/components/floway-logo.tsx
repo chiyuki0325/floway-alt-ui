@@ -7,8 +7,8 @@ const { makeStyles } = fluentComponents;
 const useMarkStyles = makeStyles({
   root: {
     alignItems: "center",
-    background: "light-dark(#b3cf73, #204c25)",
-    border: "1px solid light-dark(#5a9c46, #367029)",
+    background: "light-dark(#f8d7e3, #5c2038)",
+    border: "1px solid light-dark(#d8799c, #b65279)",
     borderRadius: "6px",
     boxShadow: "none",
     display: "inline-flex",
@@ -48,7 +48,7 @@ export function FlowayLogo({ size = "default", className }: FlowayLogoProps) {
         className={`${ms.root} ${compact ? ms.compact : ""}`}
         aria-hidden="true"
       >
-        🥦
+        🌸
       </span>
       <span
         className={`font-semibold leading-none tracking-normal ${compact ? "text-lg max-[520px]:text-xl" : "text-xl"}`}
