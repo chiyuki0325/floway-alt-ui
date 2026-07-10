@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { redirect } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
+  AddRegular,
   ArrowSyncRegular,
   DeleteRegular,
-  EditRegular,
 } from "@fluentui/react-icons";
 
 import { DEFAULT_DIAL_DEADLINE_MS } from "@floway-dev/proxy/constants";
@@ -623,17 +623,30 @@ export default function DashboardProvidersProxy() {
                 </span>
               )}
             </div>
-            <Tooltip
-              content={t("dashboard.proxy.actions.refresh")}
-              relationship="label"
-            >
-              <Button
-                appearance="transparent"
-                icon={<ArrowSyncRegular />}
-                onClick={refreshProxies}
-                size="small"
-              />
-            </Tooltip>
+            <div className="flex items-center gap-[4px]">
+              <Tooltip
+                content={t("dashboard.proxy.addTitle")}
+                relationship="label"
+              >
+                <Button
+                  appearance="transparent"
+                  icon={<AddRegular />}
+                  onClick={clearForm}
+                  size="small"
+                />
+              </Tooltip>
+              <Tooltip
+                content={t("dashboard.proxy.actions.refresh")}
+                relationship="label"
+              >
+                <Button
+                  appearance="transparent"
+                  icon={<ArrowSyncRegular />}
+                  onClick={refreshProxies}
+                  size="small"
+                />
+              </Tooltip>
+            </div>
           </div>
 
           {proxies.length === 0 ? (
@@ -658,7 +671,20 @@ export default function DashboardProvidersProxy() {
                   };
 
                   return (
-                    <TableRow key={proxy.id}>
+                    <TableRow
+                      aria-label={`${t("dashboard.proxy.actions.edit")}: ${proxy.name}`}
+                      className="cursor-pointer hover:bg-fui-bg2"
+                      key={proxy.id}
+                      onClick={() => handleEdit(proxy)}
+                      onKeyDown={(event) => {
+                        if (event.target !== event.currentTarget) return;
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleEdit(proxy);
+                        }
+                      }}
+                      tabIndex={0}
+                    >
                       <TableCell>
                         <TableCellLayout>
                           <div className="flex items-center gap-[8px] min-w-0">
@@ -686,14 +712,11 @@ export default function DashboardProvidersProxy() {
                         <div className="flex items-center gap-[4px] justify-end">
                           <Button
                             appearance="transparent"
-                            icon={<EditRegular />}
-                            onClick={() => handleEdit(proxy)}
-                            size="small"
-                          />
-                          <Button
-                            appearance="transparent"
                             icon={<DeleteRegular />}
-                            onClick={() => setDeleteTarget(proxy)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(proxy);
+                            }}
                             size="small"
                           />
                         </div>
