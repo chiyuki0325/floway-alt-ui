@@ -26,23 +26,22 @@ import {
 } from "./format";
 
 const { MessageBar, MessageBarBody, Select, Spinner, Text, makeStyles, mergeClasses } = fluentComponents;
-const ROW_HEIGHT = 88;
+const ROW_HEIGHT = 74;
 
 const useStyles = makeStyles({
   list: { outlineStyle: "none" },
   row: {
-    backgroundColor: "var(--colorNeutralBackground2)",
-    border: "1px solid var(--colorNeutralStroke1)",
-    borderRadius: "8px",
+    backgroundColor: "transparent",
+    borderBottom: "1px solid var(--colorNeutralStroke2)",
     cursor: "pointer",
     outlineStyle: "none",
     padding: "8px 10px",
-    ":hover": { border: "1px solid var(--colorBrandStroke1)" },
     ":focus-visible": { boxShadow: "inset 0 0 0 2px var(--colorCompoundBrandStroke)" },
   },
   selected: {
     backgroundColor: "var(--colorBrandBackgroundInvertedHover)",
     border: "1px solid var(--colorBrandStroke1)",
+    borderRadius: "8px",
     "@media (prefers-color-scheme: dark)": {
       backgroundColor: "var(--colorBrandBackground2)",
     },
@@ -83,6 +82,7 @@ function RequestRow({ index, style, records, selectedId, now, onSelect, selectBy
   const tokens = totalTokens(record);
   const rowError = errorLabel(record.error, record.status);
   const StatusIcon = severity === "success" ? CheckmarkCircleRegular : DismissCircleRegular;
+  const selected = selectedId === record.id;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -99,14 +99,14 @@ function RequestRow({ index, style, records, selectedId, now, onSelect, selectBy
 
   return (
     <div
-      aria-selected={selectedId === record.id}
-      className={mergeClasses(s.row, selectedId === record.id && s.selected)}
+      aria-selected={selected}
+      className={mergeClasses(s.row, selected && s.selected)}
       data-record-index={index}
       onClick={() => onSelect(record.id)}
       onKeyDown={handleKeyDown}
       role="option"
       style={style}
-      tabIndex={selectedId === record.id || (selectedId === null && index === 0) ? 0 : -1}
+      tabIndex={selected || (selectedId === null && index === 0) ? 0 : -1}
     >
       <div className="flex items-center gap-2 min-w-0">
         <StatusIcon className={s[severity]} />
