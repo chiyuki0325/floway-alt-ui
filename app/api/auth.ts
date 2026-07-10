@@ -108,6 +108,19 @@ export const login = (body: {
 export const getCurrentSession = (): Promise<ApiResult<MeResponse>> =>
   callApi<MeResponse>(() => authFetch("/auth/me"));
 
+// Mirrors PATCH /api/users/me/password in the Floway control plane.
+export const changeOwnPassword = (body: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<ApiResult<{ ok: true }>> =>
+  callApi<{ ok: true }>(() =>
+    authFetch("/api/users/me/password", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
+
 const errorMessageFromBody = (body: unknown): string | null => {
   if (!body || typeof body !== "object") return null;
 

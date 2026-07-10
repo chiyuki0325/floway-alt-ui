@@ -1,10 +1,70 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
+import { z } from "zod";
 
+import type { Route } from "./+types/dashboard-settings";
+import { changeOwnPassword } from "../api/auth";
+import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
-import { useDashboardOutletContext } from "./dashboard";
-import styles from "./dashboard-settings.module.css";
 
-const { Badge, Card } = fluentComponents;
+const {
+  Button,
+  Field,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  Spinner,
+  Text,
+} = fluentComponents;
+
+const passwordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, "dashboard.settings.validation.currentPasswordRequired")
+      .max(1024, "validation.passwordMax"),
+    newPassword: z
+      .string()
+      .min(1, "dashboard.settings.validation.newPasswordRequired")
+      .max(1024, "validation.passwordMax"),
+    confirmPassword: z.string(),
+  })
+  .refine((values) => values.newPassword === values.confirmPassword, {
+    message: "dashboard.settings.validation.passwordMismatch",
+    path: ["confirmPassword"],
+  });
+
+type PasswordFormValues = z.infer<typeof passwordSchema>;
+
+type SettingsActionData =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function clientAction({
+  request,
+}: Route.ClientActionArgs): Promise<SettingsActionData> {
+  const formData = await request.formData();
+  const values = passwordSchema.safeParse({
+    currentPassword: String(formData.get("currentPassword") ?? ""),
+    newPassword: String(formData.get("newPassword") ?? ""),
+    confirmPassword: String(formData.get("confirmPassword") ?? ""),
+  });
+
+  if (!values.success) {
+    return { ok: false, error: values.error.issues[0]?.message ?? "validation.passwordRequired" };
+  }
+
+  const result = await changeOwnPassword({
+    currentPassword: values.data.currentPassword,
+    newPassword: values.data.newPassword,
+  });
+
+  if (result.error) return { ok: false, error: result.error.message };
+  return { ok: true };
+}
 
 export function meta() {
   return [{ title: "Settings | Floway" }];
@@ -12,37 +72,124 @@ export function meta() {
 
 export default function DashboardSettings() {
   const { t } = useTranslation();
-  const { user } = useDashboardOutletContext();
+  const fetcher = useFetcher<SettingsActionData>();
+  const saving = fetcher.state !== "idle";
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  useEffect(() => {
+    if (fetcher.data?.ok) reset();
+  }, [fetcher.data, reset]);
+
+  const submit = (values: PasswordFormValues) => {
+    void fetcher.submit(values, { method: "post" });
+  };
 
   return (
-    <section className={styles.placeholder}>
-      <Card className={styles.panel}>
-        <div className={styles.heading}>
-          <p>{t("dashboard.settings.title")}</p>
-          <h1>{t("dashboard.settings.heading")}</h1>
-        </div>
+    <section className="grid gap-[18px] max-w-[960px] min-w-0">
+      <header className="grid gap-[6px]">
+        <Text size={200} weight="semibold" className="text-fui-fg2 leading-[1.2] uppercase">
+          {t("dashboard.settings.eyebrow")}
+        </Text>
+        <Text size={700} weight="semibold">
+          {t("dashboard.nav.settings")}
+        </Text>
+        <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+          {t("dashboard.settings.description")}
+        </Text>
+      </header>
 
-        <div className={styles.body}>
-          <p>{t("dashboard.settings.intro")}</p>
-          <div className={styles.badges}>
-            <Badge appearance="filled">
-              {t("dashboard.settings.signedInAs", {
-                username: user.username,
-              })}
-            </Badge>
-            <Badge appearance="tint" color={user.isAdmin ? "brand" : "subtle"}>
-              {user.isAdmin
-                ? t("dashboard.settings.admin")
-                : t("dashboard.settings.operator")}
-            </Badge>
-            <Badge appearance="outline">
-              {user.canViewGlobalTelemetry
-                ? t("dashboard.settings.telemetryAllowed")
-                : t("dashboard.settings.telemetryScoped")}
-            </Badge>
+      <Panel className="grid w-full max-w-[480px] gap-[18px] !p-[22px_24px] max-[680px]:!p-[18px]">
+        <Text size={400} weight="semibold">
+          {t("dashboard.settings.changePassword")}
+        </Text>
+
+        <form className="grid gap-4" onSubmit={handleSubmit(submit)}>
+          <Controller
+            control={control}
+            name="currentPassword"
+            render={({ field }) => (
+              <Field
+                label={t("dashboard.settings.currentPassword")}
+                required
+                validationMessage={errors.currentPassword?.message ? t(errors.currentPassword.message) : undefined}
+                validationState={errors.currentPassword ? "error" : undefined}
+              >
+                <Input {...field} autoComplete="current-password" disabled={saving} type="password" />
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="newPassword"
+            render={({ field }) => (
+              <Field
+                label={t("dashboard.settings.newPassword")}
+                required
+                validationMessage={errors.newPassword?.message ? t(errors.newPassword.message) : undefined}
+                validationState={errors.newPassword ? "error" : undefined}
+              >
+                <Input {...field} autoComplete="new-password" disabled={saving} type="password" />
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <Field
+                label={t("dashboard.settings.confirmPassword")}
+                required
+                validationMessage={errors.confirmPassword?.message ? t(errors.confirmPassword.message) : undefined}
+                validationState={errors.confirmPassword ? "error" : undefined}
+              >
+                <Input {...field} autoComplete="new-password" disabled={saving} type="password" />
+              </Field>
+            )}
+          />
+
+          <Text size={200} className="text-fui-fg2 leading-[1.45]">
+            {t("dashboard.settings.otherDevices")}
+          </Text>
+
+          {fetcher.data?.ok === false && (
+            <MessageBar intent="error">
+              <MessageBarBody>{t(fetcher.data.error)}</MessageBarBody>
+            </MessageBar>
+          )}
+          {fetcher.data?.ok === true && (
+            <MessageBar intent="success">
+              <MessageBarBody>{t("dashboard.settings.passwordUpdated")}</MessageBarBody>
+            </MessageBar>
+          )}
+
+          <div className="flex justify-end pt-1">
+            <Button appearance="primary" disabled={saving} type="submit">
+              {saving ? (
+                <span className="inline-flex items-center gap-2">
+                  <Spinner size="tiny" />
+                  {t("dashboard.settings.saving")}
+                </span>
+              ) : (
+                t("dashboard.settings.save")
+              )}
+            </Button>
           </div>
-        </div>
-      </Card>
+        </form>
+      </Panel>
     </section>
   );
 }

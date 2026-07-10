@@ -11,7 +11,7 @@ import {
 } from "@fluentui/react-icons";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, redirect, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, redirect, useLocation, useNavigate } from "react-router";
 
 import type { Route } from "./+types/dashboard-providers-upstreams";
 import type {
@@ -19,12 +19,14 @@ import type {
   UpstreamProviderKind,
   UpstreamRecord,
 } from "../api/types";
-import { authFetch, callApi, getCurrentSession } from "../api/auth";
+import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { ProviderBadge, ProviderIcon } from "../components/provider-badge";
 import { fluentComponents } from "../fluent";
+import { useDashboardOutletContext } from "./dashboard";
 
 const {
   Button,
@@ -85,34 +87,50 @@ const useStyles = makeStyles({
   warning: { color: "var(--colorPaletteDarkOrangeForeground1)" },
 });
 
-export async function clientLoader(): Promise<UpstreamsPageData> {
+export async function clientLoader() {
   if (!getSessionToken()) throw redirect("/");
-
-  const session = await getCurrentSession();
-  if (session.error || !session.data.user.isAdmin) {
-    throw redirect("/dashboard/services/api-keys");
-  }
-
-  return loadUpstreamsPageData();
+  return null;
 }
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Upstreams | Floway" }];
 }
 
-export default function DashboardProvidersUpstreams({ loaderData }: Route.ComponentProps) {
+export default function DashboardProvidersUpstreams() {
   const { t } = useTranslation();
+  const { user } = useDashboardOutletContext();
   const navigate = useNavigate();
   const location = useLocation();
   const toasterId = useId();
   const mutationToastId = useId();
   const { dismissToast, dispatchToast } = useToastController(toasterId);
-  const [data, setData] = useState<UpstreamsPageData>(loaderData);
-  const [pageError, setPageError] = useState<string | null>(loaderData.loadError);
+  const [data, setData] = useState<UpstreamsPageData>({
+    upstreams: [],
+    models: null,
+    loadError: null,
+    modelsError: null,
+  });
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [mutation, setMutation] = useState<Mutation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UpstreamRecord | null>(null);
 
   const busy = mutation !== null;
+
+  useEffect(() => {
+    if (!user.isAdmin) return;
+
+    let cancelled = false;
+    void loadUpstreamsPageData().then((next) => {
+      if (cancelled) return;
+      setData(next);
+      setPageError(next.loadError);
+      setInitialLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user.isAdmin]);
 
   useEffect(() => {
     const search = new URLSearchParams(location.search);
@@ -240,6 +258,10 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
     );
   };
 
+  if (!user.isAdmin) {
+    return <Navigate replace to="/dashboard/services/api-keys" />;
+  }
+
   return (
     <div className="grid gap-[18px] min-w-0">
       <Toaster toasterId={toasterId} position="top-end" />
@@ -260,14 +282,14 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
           <Tooltip content={t("dashboard.upstreams.actions.refresh")} relationship="label">
             <Button
               aria-label={t("dashboard.upstreams.actions.refresh")}
-              disabled={busy}
+              disabled={initialLoading || busy}
               icon={mutation?.kind === "reload" ? <Spinner size="tiny" /> : <ArrowSyncRegular />}
               onClick={() => void handleReload()}
             />
           </Tooltip>
           <Menu positioning={{ autoSize: true }}>
             <MenuTrigger disableButtonEnhancement>
-              <Button appearance="primary" disabled={busy} icon={<AddRegular />}>
+              <Button appearance="primary" disabled={initialLoading || busy} icon={<AddRegular />}>
                 {t("dashboard.upstreams.actions.create")}
                 <ChevronDownRegular className="ml-1.5" />
               </Button>
@@ -293,24 +315,28 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
         </div>
       </header>
 
-      {pageError && (
-        <MessageBar intent="error">
-          <MessageBarBody>{pageError}</MessageBarBody>
-          <MessageBarActions>
-            <Button appearance="transparent" disabled={busy} onClick={() => void handleReload()}>
-              {t("dashboard.upstreams.actions.retry")}
-            </Button>
-          </MessageBarActions>
-        </MessageBar>
-      )}
+      {initialLoading ? (
+        <PageLoadingPanel label={t("common.loading")} />
+      ) : (
+        <>
+          {pageError && (
+            <MessageBar intent="error">
+              <MessageBarBody>{pageError}</MessageBarBody>
+              <MessageBarActions>
+                <Button appearance="transparent" disabled={busy} onClick={() => void handleReload()}>
+                  {t("dashboard.upstreams.actions.retry")}
+                </Button>
+              </MessageBarActions>
+            </MessageBar>
+          )}
 
-      {data.modelsError && (
-        <MessageBar intent="warning">
-          <MessageBarBody>
-            {t("dashboard.upstreams.errors.models", { message: data.modelsError })}
-          </MessageBarBody>
-        </MessageBar>
-      )}
+          {data.modelsError && (
+            <MessageBar intent="warning">
+              <MessageBarBody>
+                {t("dashboard.upstreams.errors.models", { message: data.modelsError })}
+              </MessageBarBody>
+            </MessageBar>
+          )}
 
       <Panel className="grid gap-[14px] min-w-0 !p-[18px] !pt-[10px]">
         <UpstreamsTable
@@ -340,6 +366,8 @@ export default function DashboardProvidersUpstreams({ loaderData }: Route.Compon
         open={deleteTarget !== null}
         title={t("dashboard.upstreams.delete.title")}
       />
+        </>
+      )}
     </div>
   );
 }

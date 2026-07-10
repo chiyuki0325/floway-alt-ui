@@ -26,6 +26,7 @@ import { getSessionToken } from "../auth/session";
 import { CodeBlock } from "../components/code-block";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { DialogShell } from "../components/dialog-shell";
+import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { ProviderBadge, providerLabel } from "../components/provider-badge";
 import { fluentComponents } from "../fluent";
@@ -138,25 +139,9 @@ const claudeModelPattern = /(^|\/)claude-/;
 const codexModelPattern = /(^|\/)gpt-5/;
 const claudeTier: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
 
-export async function clientLoader(): Promise<ApiKeysPageData> {
+export async function clientLoader() {
   if (!getSessionToken()) throw redirect("/");
-
-  const [keysRes, upstreamsRes, modelsRes] = await Promise.all([
-    callApi<ApiKey[]>(() => authFetch("/api/keys")),
-    callApi<UpstreamOption[]>(() => authFetch("/api/upstream-options")),
-    callApi<ModelsResponse>(() => authFetch("/api/models")),
-  ]);
-
-  return {
-    keys: keysRes.data ?? [],
-    upstreams: upstreamsRes.data ?? [],
-    models: modelsRes.data?.data ?? [],
-    error:
-      keysRes.error?.message ??
-      upstreamsRes.error?.message ??
-      modelsRes.error?.message ??
-      null,
-  };
+  return null;
 }
 
 export function meta({}: Route.MetaArgs) {
@@ -170,14 +155,18 @@ export function links() {
   ];
 }
 
-export default function DashboardServicesApiKeys({
-  loaderData,
-}: Route.ComponentProps) {
+export default function DashboardServicesApiKeys() {
   const { t } = useTranslation();
   const { user } = useOutletContext<DashboardOutletContext>();
-  const [data, setData] = useState<ApiKeysPageData>(loaderData);
-  const [selectedKeyId, setSelectedKeyId] = useState(loaderData.keys[0]?.id ?? "");
-  const [pageError, setPageError] = useState<string | null>(loaderData.error);
+  const [data, setData] = useState<ApiKeysPageData>({
+    keys: [],
+    upstreams: [],
+    models: [],
+    error: null,
+  });
+  const [selectedKeyId, setSelectedKeyId] = useState("");
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ApiKey | null>(null);
@@ -222,6 +211,37 @@ export default function DashboardServicesApiKeys({
       next.keys.some((key) => key.id === current) ? current : next.keys[0]?.id ?? "",
     );
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [keysRes, upstreamsRes, modelsRes] = await Promise.all([
+        callApi<ApiKey[]>(() => authFetch("/api/keys")),
+        callApi<UpstreamOption[]>(() => authFetch("/api/upstream-options")),
+        callApi<ModelsResponse>(() => authFetch("/api/models")),
+      ]);
+      if (cancelled) return;
+
+      const error =
+        keysRes.error?.message ??
+        upstreamsRes.error?.message ??
+        modelsRes.error?.message ??
+        null;
+      const next: ApiKeysPageData = {
+        keys: keysRes.data ?? [],
+        upstreams: upstreamsRes.data ?? [],
+        models: modelsRes.data?.data ?? [],
+        error,
+      };
+      setData(next);
+      setSelectedKeyId(next.keys[0]?.id ?? "");
+      setPageError(error);
+      setInitialLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const copyToClipboard = async (text: string, tag: string) => {
     try {
@@ -282,6 +302,7 @@ export default function DashboardServicesApiKeys({
         <div className="flex items-center flex-none max-[900px]:justify-start">
           <Button
             appearance="primary"
+            disabled={initialLoading}
             icon={<AddRegular />}
             onClick={() => setCreateOpen(true)}
           >
@@ -290,11 +311,15 @@ export default function DashboardServicesApiKeys({
         </div>
       </header>
 
-      {pageError && (
-        <MessageBar intent="error">
-          <MessageBarBody>{pageError}</MessageBarBody>
-        </MessageBar>
-      )}
+      {initialLoading ? (
+        <PageLoadingPanel label={t("common.loading")} />
+      ) : (
+        <>
+          {pageError && (
+            <MessageBar intent="error">
+              <MessageBarBody>{pageError}</MessageBarBody>
+            </MessageBar>
+          )}
 
       <Panel className="grid gap-[14px] min-w-0 !p-[18px]">
         <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
@@ -412,6 +437,8 @@ export default function DashboardServicesApiKeys({
         open={deleteTarget !== null}
         title={t("dashboard.apiKeys.delete.title")}
       />
+        </>
+      )}
     </div>
   );
 }

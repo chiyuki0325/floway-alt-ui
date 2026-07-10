@@ -21,12 +21,12 @@ import {
   KeyRegular,
   PeopleFilled,
   PeopleRegular,
+  PersonFilled,
+  PersonRegular,
   PlugConnectedFilled,
   PlugConnectedRegular,
   SearchFilled,
   SearchRegular,
-  SettingsFilled,
-  SettingsRegular,
   SignOutRegular,
 } from "@fluentui/react-icons";
 import type { FluentIcon } from "@fluentui/react-icons";
@@ -89,12 +89,9 @@ const navGroups: NavGroup[] = [
       { to: "/dashboard/admin/backup-restore", labelKey: "dashboard.nav.backupRestore", icon: bundleIcon(DatabaseArrowUpFilled, DatabaseArrowUpRegular), adminOnly: true },
     ],
   },
-  {
-    items: [
-      { to: "/dashboard/settings", labelKey: "dashboard.nav.settings", icon: bundleIcon(SettingsFilled, SettingsRegular) },
-    ],
-  },
 ];
+
+const accountIcon = bundleIcon(PersonFilled, PersonRegular);
 
 export function Sidebar({ user }: { user: AuthUser }) {
   const { t } = useTranslation();
@@ -139,14 +136,26 @@ export function Sidebar({ user }: { user: AuthUser }) {
           );
         })}
       </nav>
-      <footer className="border-t border-t-solid border-fui-subtle pt-[12px] px-1">
+      <footer className="grid gap-0.5 border-t border-t-solid border-fui-subtle pt-[12px] px-1">
+        <SidebarNavLink
+          currentPath={pathname}
+          item={{
+            to: "/dashboard/settings",
+            labelKey: "dashboard.nav.settings",
+            icon: accountIcon,
+          }}
+          label={user.username}
+        />
         <Button
           appearance="subtle"
-          className="!justify-start !min-h-[38px] !px-3 !w-full text-fui-base300 font-fui-medium"
-          icon={<SignOutRegular />}
+          className="!grid !grid-cols-[4px_20px_minmax(0,1fr)] !items-center !justify-items-stretch !gap-2 !min-h-[38px] !px-3 !pl-2 !w-full text-fui-base300 font-fui-medium"
           onClick={() => setLogoutOpen(true)}
         >
-          {t("dashboard.logout.label")}
+          <span className="block h-[18px] w-[3px]" aria-hidden="true" />
+          <SignOutRegular className="h-5 w-5 text-xl" aria-hidden="true" />
+          <Text className="!text-left" truncate wrap={false}>
+            {t("dashboard.logout.label")}
+          </Text>
         </Button>
       </footer>
       <ConfirmDialog
@@ -164,9 +173,11 @@ export function Sidebar({ user }: { user: AuthUser }) {
 function SidebarNavLink({
   currentPath,
   item,
+  label,
 }: {
   currentPath: string;
   item: NavItem;
+  label?: string;
 }) {
   const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
@@ -210,7 +221,7 @@ function SidebarNavLink({
         />
       </span>
       <Text truncate wrap={false}>
-        {t(item.labelKey)}
+        {label ?? t(item.labelKey)}
       </Text>
     </NavLink>
   );

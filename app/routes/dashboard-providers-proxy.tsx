@@ -27,6 +27,7 @@ import type { BackoffRow, ProxyConflictBody, ProxyRecord } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
 import { useDashboardOutletContext } from "./dashboard";
@@ -70,6 +71,28 @@ export function meta({}: Route.MetaArgs) {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_DIAL_TIMEOUT_SECONDS = Math.floor(DEFAULT_DIAL_DEADLINE_MS / 1000);
+
+function ProxyPageHeader() {
+  const { t } = useTranslation();
+
+  return (
+    <header className="grid gap-[6px]">
+      <Text
+        size={200}
+        weight="semibold"
+        className="text-fui-fg2 leading-[1.2] uppercase"
+      >
+        {t("dashboard.groups.providers")}
+      </Text>
+      <Text size={700} weight="semibold">
+        {t("dashboard.proxy.heading")}
+      </Text>
+      <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+        {t("dashboard.proxy.description")}
+      </Text>
+    </header>
+  );
+}
 
 type FormKind =
   | "http" | "https"
@@ -515,18 +538,7 @@ export default function DashboardProvidersProxy() {
   if (!user.isAdmin) {
     return (
       <section className="grid gap-[18px] min-w-0">
-        <header className="grid gap-[6px]">
-          <Text
-            size={200}
-            weight="semibold"
-            className="text-fui-fg2 leading-[1.2] uppercase"
-          >
-            {t("dashboard.groups.providers")}
-          </Text>
-          <Text size={700} weight="semibold">
-            {t("dashboard.proxy.heading")}
-          </Text>
-        </header>
+        <ProxyPageHeader />
         <Panel className="!p-[22px_24px]">
           <div className="grid gap-[10px] max-w-[680px]">
             <Text
@@ -549,24 +561,8 @@ export default function DashboardProvidersProxy() {
   if (loading) {
     return (
       <section className="grid gap-[18px] min-w-0">
-        <header className="grid gap-[6px]">
-          <Text
-            size={200}
-            weight="semibold"
-            className="text-fui-fg2 leading-[1.2] uppercase"
-          >
-            {t("dashboard.groups.providers")}
-          </Text>
-          <Text size={700} weight="semibold">
-            {t("dashboard.proxy.heading")}
-          </Text>
-        </header>
-        <Panel className="!p-[22px_24px] flex items-center gap-[12px]">
-          <Spinner size="tiny" />
-          <Text size={300} className="text-fui-fg3">
-            {t("common.loading")}
-          </Text>
-        </Panel>
+        <ProxyPageHeader />
+        <PageLoadingPanel label={t("common.loading")} />
       </section>
     );
   }
@@ -575,21 +571,7 @@ export default function DashboardProvidersProxy() {
   return (
     <section className="grid gap-[18px] min-w-0">
       {/* Page header */}
-      <header className="grid gap-[6px]">
-        <Text
-          size={200}
-          weight="semibold"
-          className="text-fui-fg2 leading-[1.2] uppercase"
-        >
-          {t("dashboard.groups.providers")}
-        </Text>
-        <Text size={700} weight="semibold">
-          {t("dashboard.proxy.heading")}
-        </Text>
-        <Text size={300} className="text-fui-fg2 leading-[1.45]">
-          {t("dashboard.proxy.description")}
-        </Text>
-      </header>
+      <ProxyPageHeader />
 
       {/* Load error */}
       {loadError && (

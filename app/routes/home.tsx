@@ -51,7 +51,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <main className="floway-page-shell floway-page-shell--centered">
+    <main className="grid min-h-screen place-items-center p-6 max-[520px]:p-4">
       <LoginForm />
     </main>
   );

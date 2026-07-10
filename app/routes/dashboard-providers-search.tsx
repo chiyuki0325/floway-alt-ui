@@ -9,6 +9,7 @@ import { getSessionToken } from "../auth/session";
 import bingIconUrl from "../assets/bing.svg";
 import jinaIconUrl from "../assets/jina.svg";
 import tavilyIconUrl from "../assets/tavily.svg";
+import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
 import { useDashboardOutletContext } from "./dashboard";
@@ -265,12 +266,7 @@ export default function DashboardProvidersSearch() {
     return (
       <section className="grid gap-[18px] max-w-[960px] min-w-0">
         <SearchPageHeader />
-        <Panel className="!p-[22px_24px] flex items-center gap-[12px]">
-          <Spinner size="tiny" />
-          <Text size={300} className="text-fui-fg3">
-            {t("common.loading")}
-          </Text>
-        </Panel>
+        <PageLoadingPanel label={t("common.loading")} />
       </section>
     );
   }

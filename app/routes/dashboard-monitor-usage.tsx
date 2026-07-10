@@ -20,13 +20,15 @@ import type {
 
 import type { Route } from "./+types/dashboard-monitor-usage";
 import type { AuthUser } from "../api/auth";
-import { authFetch, callApi, getCurrentSession } from "../api/auth";
+import { authFetch, callApi } from "../api/auth";
 import type { BillingDimension, ControlPlaneModel } from "../api/types";
 import { getSessionToken } from "../auth/session";
 import { fluentComponents } from "../fluent";
+import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { SegmentedControl } from "../components/segmented-control";
 import { useAuthStore } from "../stores/auth-store";
+import { useDashboardOutletContext } from "./dashboard";
 
 const { Button, Card, Divider, InteractionTag, InteractionTagPrimary, makeStyles, Spinner, Text, Tooltip } = fluentComponents;
 
@@ -436,73 +438,38 @@ const loadUsagePageData = async (
   };
 };
 
-export async function clientLoader(): Promise<UsagePageData> {
+export async function clientLoader() {
   if (!getSessionToken()) throw redirect("/");
-
-  const session = await getCurrentSession();
-  if (!session.data) {
-    if (session.error.status === 401) throw redirect("/");
-    return {
-      user: {
-        id: 0,
-        username: "",
-        isAdmin: false,
-        canViewGlobalTelemetry: false,
-        upstreamIds: null,
-      },
-      view: "self-by-key",
-      range: "today",
-      loadedAt: Date.now(),
-      usage: emptyUsageResponse(),
-      search: emptySearchUsageResponse(),
-      models: [],
-      error: session.error.message,
-    };
-  }
-
-  const loadedAt = Date.now();
-  const view = session.data.user.canViewGlobalTelemetry
-    ? "all-by-user"
-    : "self-by-key";
-  return {
-    user: session.data.user,
-    view,
-    range: "today",
-    loadedAt,
-    ...(await loadUsagePageData(session.data.user, view, "today", loadedAt)),
-  };
+  return null;
 }
-
-clientLoader.hydrate = true as const;
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Usage | Floway" }];
 }
 
-export default function DashboardMonitorUsage({
-  loaderData,
-}: Route.ComponentProps) {
+export default function DashboardMonitorUsage() {
   const { i18n, t } = useTranslation();
+  const { user } = useDashboardOutletContext();
   const clearAuth = useAuthStore((state) => state.clear);
-  const [view, setView] = useState<UsageView>(loaderData.view);
-  const [range, setRange] = useState<Range>(loaderData.range);
-  const [loadedRange, setLoadedRange] = useState<Range>(loaderData.range);
-  const [loadedAt, setLoadedAt] = useState(loaderData.loadedAt);
-  const [usage, setUsage] = useState(loaderData.usage);
-  const [search, setSearch] = useState(loaderData.search);
-  const [models, setModels] = useState(loaderData.models);
+  const initialView: UsageView = user.canViewGlobalTelemetry ? "all-by-user" : "self-by-key";
+  const [view, setView] = useState<UsageView>(initialView);
+  const [range, setRange] = useState<Range>("today");
+  const [loadedRange, setLoadedRange] = useState<Range>("today");
+  const [loadedAt, setLoadedAt] = useState(Date.now());
+  const [usage, setUsage] = useState(emptyUsageResponse);
+  const [search, setSearch] = useState(emptySearchUsageResponse);
+  const [models, setModels] = useState<ControlPlaneModel[]>([]);
   const [metric, setMetric] = useState<Metric>("total");
   const [redactKeys, setRedactKeys] = useState(false);
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(() => new Set());
   const [hiddenModels, setHiddenModels] = useState<Set<string>>(() => new Set());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(loaderData.error);
+  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
-  const didMountRef = useRef(false);
 
   const errorStyles = useErrorStyles();
 
-  const user = loaderData.user;
   const canSwitchView = user.canViewGlobalTelemetry;
   const locale = localeForLanguage(i18n.language);
 
@@ -538,16 +505,18 @@ export default function DashboardMonitorUsage({
       if (requestId !== requestIdRef.current) return;
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
-      if (requestId === requestIdRef.current) setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setInitialLoading(false);
+      }
     }
   }, [range, user, view]);
 
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
-    }
     void refresh();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refresh]);
 
   useEffect(() => {
@@ -665,13 +634,14 @@ export default function DashboardMonitorUsage({
           </Text>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {loading && <Spinner size="tiny" label={t("dashboard.usage.refreshing")} />}
+          {loading && !initialLoading && <Spinner size="tiny" label={t("dashboard.usage.refreshing")} />}
           <Tooltip
             content={t("dashboard.usage.actions.refresh")}
             relationship="label"
           >
             <Button
               appearance="subtle"
+              disabled={initialLoading}
               icon={<ArrowClockwiseRegular />}
               onClick={() => void refresh()}
             />
@@ -679,7 +649,11 @@ export default function DashboardMonitorUsage({
         </div>
       </header>
 
-      {error && <div className={errorStyles.root}>{error}</div>}
+      {initialLoading ? (
+        <PageLoadingPanel label={t("common.loading")} />
+      ) : (
+        <>
+          {error && <div className={errorStyles.root}>{error}</div>}
 
       <Panel className="!grid gap-[18px] min-w-0 !p-[18px]">
         <div className="flex items-center gap-3 justify-between min-w-0 max-[900px]:flex-col max-[900px]:items-stretch">
@@ -783,6 +757,8 @@ export default function DashboardMonitorUsage({
             valueFormatter={(value) => formatCount(value, locale)}
           />
         </Panel>
+      )}
+        </>
       )}
     </section>
   );
