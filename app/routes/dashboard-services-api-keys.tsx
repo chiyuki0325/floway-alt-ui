@@ -275,7 +275,7 @@ export default function DashboardServicesApiKeys({
           <Text size={700} weight="semibold">
             {t("dashboard.nav.apiKeys")}
           </Text>
-          <Text size={400} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
+          <Text size={300} className="text-fui-fg2 leading-[1.45] max-w-[760px]">
             {t("dashboard.pages.apiKeys")}
           </Text>
         </div>

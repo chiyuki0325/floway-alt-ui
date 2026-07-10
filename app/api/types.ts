@@ -433,3 +433,39 @@ export type DeviceFlowPoll =
       state: CopilotUpstreamState;
     };
   };
+
+// Backup / restore DTOs — the frontend is a pass-through and does not introspect
+// individual records, so the data arrays use unknown[].
+
+export interface BackupExportData {
+  users: unknown[];
+  apiKeys: unknown[];
+  upstreams: unknown[];
+  proxies: unknown[];
+  usage: unknown[];
+  searchUsage: unknown[];
+  performance?: unknown[];
+  performanceIncluded: boolean;
+  searchConfig: unknown;
+}
+
+export interface BackupExportResponse {
+  version: number;
+  exportedAt: string;
+  data: BackupExportData;
+}
+
+export interface BackupImportCounts {
+  users: number;
+  apiKeys: number;
+  upstreams: number;
+  proxies: number;
+  usage: number;
+  searchUsage: number;
+  performance: number;
+}
+
+export interface BackupImportResponse {
+  ok: true;
+  imported: BackupImportCounts;
+}
