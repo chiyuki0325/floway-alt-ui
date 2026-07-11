@@ -52,6 +52,7 @@ const jaJP = {
         "upstreams": "アップストリーム",
         "search": "検索",
         "proxy": "プロキシ",
+        "modelAliases": "モデルエイリアス",
         "apiKeys": "API キー",
         "apiDocs": "API ドキュメント",
         "requests": "リクエスト履歴",
@@ -860,6 +861,20 @@ const jaJP = {
         "testSuccess": "接続テストに成功しました。{{count}} 件の結果が返されました。",
         "testFailed": "テストに失敗しました：{{message}}",
         "pageAge": "{{age}} 前"
+      },
+      "modelAliases": {
+        "heading": "モデルエイリアス", "description": "仮想モデル ID を作成し、固定リクエストルールを適用しながら 1 つ以上のターゲットモデルへルーティングします。", "listTitle": "エイリアス", "count": "{{count}} 件設定済み", "empty": "エイリアスはまだありません。仮想モデル ID を公開するには作成してください。",
+        "columns": { "alias": "エイリアス", "kind": "種類", "targets": "ターゲット", "selection": "選択方法", "visibility": "モデル一覧", "actions": "操作" },
+        "actions": { "create": "新規エイリアス", "refresh": "エイリアスを更新", "save": "保存", "saving": "保存中…", "delete": "削除", "deleting": "削除中…", "addTarget": "ターゲットを追加", "editNamed": "エイリアス {{name}} を編集", "deleteNamed": "エイリアス {{name}} を削除" },
+        "dialog": { "createTitle": "エイリアスの作成", "editTitle": "エイリアスの編集：{{name}}" },
+        "form": { "name": "エイリアス ID", "namePlaceholder": "my-alias-id", "displayName": "表示名", "displayPlaceholder": "任意の表示名", "kind": "種類", "selection": "選択方法", "visible": "/v1/models に表示" },
+        "kind": { "chat": "チャット", "embedding": "埋め込み", "image": "画像" }, "selection": { "first": "最初に利用可能", "random": "ランダム" }, "visibility": { "visible": "表示", "hidden": "非表示" },
+        "target": { "heading": "モデル", "description": "「最初に利用可能」では順番にターゲットを試します。候補を選択するか任意のモデル ID を入力できます。", "label": "ターゲット {{number}}", "modelId": "ターゲットモデル ID", "placeholder": "ターゲットモデル ID", "toggle": "ターゲットルールを切り替え", "moveUp": "ターゲットを上へ", "moveDown": "ターゲットを下へ", "remove": "ターゲットを削除", "count_one": "{{count}} ターゲット", "count_other": "{{count}} ターゲット" },
+        "rules": { "effort": "推論エフォート", "budget": "推論予算トークン", "adaptive": "適応型推論", "adaptiveAuto": "自動（モデルに従う）", "adaptiveOn": "オン（適応型を強制）", "adaptiveOff": "オフ（非適応型を強制）", "summary": "推論サマリー", "verbosity": "詳細度", "serviceTier": "サービス階層" },
+        "metadata": { "heading": "公開メタデータ", "description": "/v1/models がこのエイリアスについて報告する機能です。", "manual": "公開メタデータを手動で上書き", "limits": "トークン上限", "context": "コンテキストウィンドウ", "prompt": "プロンプトトークン", "output": "出力トークン", "modalities": "モダリティ", "imageInput": "画像入力", "reasoning": "推論", "effortEnabled": "エフォートレベル", "budgetEnabled": "予算トークン", "adaptive": "適応型", "mandatory": "必須", "efforts": "対応エフォート", "effortsHint": "カンマ区切り。順序は維持されます。", "defaultEffort": "デフォルトエフォート", "minBudget": "最小予算", "maxBudget": "最大予算" },
+        "warnings": { "label": "エイリアス警告", "shadow": "エイリアス ID が実モデル {{id}} {{display}} を隠します。", "noTarget": "現在、このゲートウェイのモデルに解決できるターゲットがありません。", "unknownTarget": "{{id}} は現在、有効なモデルに解決できません。", "wrongKind": "{{id}} は {{actual}} モデルですが、このエイリアスは {{expected}} です。", "notAdvertisedEffort": "ターゲットは推論エフォートを公開していません。", "unsupportedEffort": "ターゲットが公開するエフォート：{{values}}。", "adaptiveBudgetConflict": "適応型推論と固定予算は併用できません。", "notAdvertisedBudget": "ターゲットは推論予算を公開していません。", "budgetBelow": "ターゲットの最小値（{{value}}）未満です。", "budgetAbove": "ターゲットの最大値（{{value}}）を超えています。", "notAdvertisedAdaptive": "ターゲットは適応型推論を公開していません。", "ruleAdvisory": "一部のルールはこのターゲットでサポートされない可能性があります。" },
+        "validation": { "nameRequired": "エイリアス ID を入力してください。", "duplicate": "この ID のエイリアスは既に存在します。", "targetRequired": "すべてのターゲットにモデル ID が必要です。", "budget": "推論予算は 0 以上の整数である必要があります。", "adaptiveBudget": "適応型推論と固定予算は併用できません。", "metadataNumber": "メタデータのトークン値は 0 以上の整数である必要があります。", "metadataRange": "最大予算は最小予算以上である必要があります。" },
+        "delete": { "title": "エイリアスの削除", "message": "エイリアス {{name}} を削除しますか？この操作は元に戻せません。" }, "errors": { "load": "エイリアスを読み込めませんでした。", "message": "エイリアス操作を完了できませんでした：{{message}}" }
       },
       "proxy": {
         "heading": "プロキシ",

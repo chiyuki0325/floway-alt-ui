@@ -25,6 +25,8 @@ import {
   PersonRegular,
   PlugConnectedFilled,
   PlugConnectedRegular,
+  RenameFilled,
+  RenameRegular,
   SearchFilled,
   SearchRegular,
   SignOutRegular,
@@ -92,6 +94,7 @@ const navGroups: NavGroup[] = [
       { to: "/dashboard/providers/upstreams", labelKey: "dashboard.nav.upstreams", icon: bundleIcon(PlugConnectedFilled, PlugConnectedRegular), adminOnly: true },
       { to: "/dashboard/providers/search", labelKey: "dashboard.nav.search", icon: bundleIcon(SearchFilled, SearchRegular), adminOnly: true },
       { to: "/dashboard/providers/proxy", labelKey: "dashboard.nav.proxy", icon: bundleIcon(ArrowRoutingFilled, ArrowRoutingRegular), adminOnly: true },
+      { to: "/dashboard/providers/model-aliases", labelKey: "dashboard.nav.modelAliases", icon: bundleIcon(RenameFilled, RenameRegular), adminOnly: true },
     ],
   },
   {
