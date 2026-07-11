@@ -84,7 +84,7 @@ const jaJP = {
         "adminOnlyDescription": "このページは管理者のみ利用でき、一般ユーザーのサイドバーには表示されません。"
       },
       "playground": {
-        "system": "システムプロンプト",
+        "system": "カスタムシステムプロンプト",
         "systemPlaceholder": "任意のモデル指示",
         "key": "API キー",
         "api": "プロトコル",
@@ -99,13 +99,9 @@ const jaJP = {
         "noKeyOption": "API キーなし",
         "noModel": "モデルが選択されていません",
         "noModelForApi": "このプロトコルをサポートする到達可能なチャット モデルはありません。",
-        "roles": {
-          "user": "あなた",
-          "assistant": "アシスタント"
-        },
         "apis": {
           "responses": "Responses",
-          "chatCompletions": "Chat",
+          "chatCompletions": "Chat Completions",
           "messages": "Messages"
         },
         "settings": {
@@ -114,7 +110,7 @@ const jaJP = {
           "customJson": "カスタム JSON"
         },
         "actions": {
-          "clear": "クリア",
+          "newTopic": "新しいトピック",
           "edit": "編集",
           "delete": "削除",
           "save": "保存",

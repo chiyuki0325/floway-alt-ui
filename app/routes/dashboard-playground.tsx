@@ -1,10 +1,8 @@
 import {
+  ChevronDownRegular,
+  ChevronUpRegular,
   DeleteRegular,
-  DismissRegular,
   EditRegular,
-  ImageRegular,
-  SendRegular,
-  StopRegular,
 } from "@fluentui/react-icons";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -18,6 +16,10 @@ import type { ApiKey, ControlPlaneModel } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { Combobox, Input, Select, SpinButton, Textarea } from "../components/fluent-form-controls";
+import { Panel } from "../components/panel";
+import { PlaygroundComposer } from "../components/playground/playground-composer";
+import { PlaygroundMarkdown } from "../components/playground/playground-markdown";
+import { PlaygroundMessageCard } from "../components/playground/playground-message-card";
 import {
   availableModels,
   createWireFetch,
@@ -33,11 +35,13 @@ import {
 } from "../components/playground/playground-logic";
 import { SegmentedControl } from "../components/segmented-control";
 import { fluentComponents } from "../fluent";
+import { australianDarkTheme, australianLightTheme } from "../theme";
 import { useDashboardOutletContext } from "./dashboard";
 
 const {
   Button,
   Field,
+  FluentProvider,
   MessageBar,
   MessageBarBody,
   Option,
@@ -48,6 +52,21 @@ const {
   makeStyles,
   tokens,
 } = fluentComponents;
+
+function useAustralianTheme() {
+  const [dark, setDark] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (event: MediaQueryListEvent) => setDark(event.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return dark ? australianDarkTheme : australianLightTheme;
+}
 
 interface ModelsResponse { data: ControlPlaneModel[] }
 interface LoaderData { keys: ApiKey[]; models: ControlPlaneModel[]; error: string | null }
@@ -70,12 +89,20 @@ export function meta({}: Route.MetaArgs) {
 }
 
 const useStyles = makeStyles({
-  shell: { border: `1px solid ${tokens.colorNeutralStroke1}`, backgroundColor: tokens.colorNeutralBackground1 },
-  settings: { borderLeft: `1px solid ${tokens.colorNeutralStroke1}`, backgroundColor: tokens.colorNeutralBackground2 },
   toolbar: { borderBottom: `1px solid ${tokens.colorNeutralStroke1}` },
-  composer: { borderTop: `1px solid ${tokens.colorNeutralStroke1}`, backgroundColor: tokens.colorNeutralBackground1 },
-  userBubble: { backgroundColor: tokens.colorBrandBackground2, border: `1px solid ${tokens.colorBrandStroke2}` },
-  assistantBubble: { backgroundColor: tokens.colorNeutralBackground2, border: `1px solid ${tokens.colorNeutralStroke2}` },
+  systemToggle: {
+    color: tokens.colorNeutralForeground2,
+    backgroundColor: "transparent",
+    border: 0,
+    "&:hover": {
+      color: tokens.colorNeutralForeground1,
+      backgroundColor: tokens.colorNeutralBackground1Hover,
+    },
+  },
+  brandIconAction: {
+    color: "light-dark(#2770ea, #244b8f)",
+    "&:hover": { color: "light-dark(#1b4aef, #203581)" },
+  },
   messageActions: { opacity: 0, transitionProperty: "opacity", transitionDuration: tokens.durationFaster },
   messageRow: { "&:hover .playground-message-actions, &:focus-within .playground-message-actions": { opacity: 1 } },
   code: { fontFamily: tokens.fontFamilyMonospace },
@@ -86,6 +113,7 @@ const randomId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Mat
 export default function DashboardPlayground({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation();
   const { user } = useDashboardOutletContext();
+  const australianTheme = useAustralianTheme();
   const s = useStyles();
   const [api, setApi] = useState<PlaygroundApi>("responses");
   const [keyId, setKeyId] = useState(loaderData.keys[0]?.id ?? "");
@@ -93,6 +121,7 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
   const [modelQuery, setModelQuery] = useState("");
   const [messages, setMessages] = useState<PlaygroundMessage[]>([]);
   const [system, setSystem] = useState("");
+  const [showSystem, setShowSystem] = useState(false);
   const [draft, setDraft] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [showImage, setShowImage] = useState(false);
@@ -202,18 +231,26 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
 
       const assistantId = randomId();
       let assistantText = "";
+      let renderFrame: number | null = null;
+      const commitAssistantText = () => {
+        renderFrame = null;
+        const text = assistantText;
+        setMessages((current) => {
+          const existing = current.findIndex((message) => message.id === assistantId);
+          if (existing < 0) return [...current, { id: assistantId, role: "assistant", text }];
+          return current.map((message) => message.id === assistantId ? { ...message, text } : message);
+        });
+      };
       const result = streamText(options);
       for await (const part of result.fullStream) {
         if (part.type === "error") throw part.error;
         if (part.type !== "text-delta") continue;
         assistantText += part.text;
-        setMessages((current) => {
-          const existing = current.findIndex((message) => message.id === assistantId);
-          if (existing < 0) return [...current, { id: assistantId, role: "assistant", text: assistantText }];
-          return current.map((message) => message.id === assistantId ? { ...message, text: assistantText } : message);
-        });
+        if (renderFrame === null) renderFrame = requestAnimationFrame(commitAssistantText);
       }
-      if (!assistantText && !controller.signal.aborted) {
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      if (assistantText) commitAssistantText();
+      else if (!controller.signal.aborted) {
         setMessages((current) => [...current, { id: assistantId, role: "assistant", text: t("dashboard.playground.emptyResponse") }]);
       }
     } catch (error) {
@@ -262,38 +299,47 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
   const canSend = Boolean(selectedKey && selectedModel && (draft.trim() || imageUrl.trim()));
 
   return (
-    <section className={`h-full min-h-[560px] min-w-0 overflow-hidden rounded-lg grid grid-cols-[minmax(0,1fr)_360px] ${s.shell}`}>
+    <FluentProvider theme={australianTheme} className="h-full min-h-0 !bg-transparent">
+    <section className="h-full min-h-[560px] min-w-0 grid grid-cols-[minmax(0,1fr)_360px] gap-[18px]">
       <div className="min-h-0 min-w-0 grid grid-rows-[auto_auto_minmax(0,1fr)_auto]">
-        <div className={`min-w-0 px-4 py-3 flex items-center justify-between gap-3 ${s.toolbar}`}>
+        <div className={`min-w-0 px-4 py-3 flex items-center gap-3 ${s.toolbar}`}>
           <div className="min-w-0">
             <Text as="h1" size={500} weight="semibold" className="!m-0 block">{t("dashboard.nav.playground")}</Text>
             <Text size={200} className="text-fui-fg2 block truncate">{selectedModel?.id ?? t("dashboard.playground.noModel")}</Text>
           </div>
-          <Button appearance="subtle" disabled={!messages.length && !sending} onClick={clearMessages}>{t("dashboard.playground.actions.clear")}</Button>
         </div>
-        <div className="px-4 py-3">
-          <Field label={t("dashboard.playground.system")}>
-            <Textarea resize="vertical" rows={2} value={system} placeholder={t("dashboard.playground.systemPlaceholder")} onChange={(_, data) => setSystem(data.value)} />
-          </Field>
+        <div className="px-4 py-2 grid gap-2">
+          <button
+            type="button"
+            aria-expanded={showSystem}
+            className={`w-fit min-h-[32px] rounded-md px-2 flex items-center gap-2 text-fui-base300 font-fui-regular ${s.systemToggle}`}
+            onClick={() => setShowSystem((value) => !value)}
+          >
+            <span>{t("dashboard.playground.system")}</span>
+            {showSystem ? <ChevronUpRegular /> : <ChevronDownRegular />}
+          </button>
+          {showSystem && (
+            <Textarea
+              aria-label={t("dashboard.playground.system")}
+              resize="vertical"
+              rows={2}
+              value={system}
+              placeholder={t("dashboard.playground.systemPlaceholder")}
+              onChange={(_, data) => setSystem(data.value)}
+            />
+          )}
         </div>
-        <div ref={scrollRef} className="min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 [scrollbar-gutter:stable]">
+        <div ref={scrollRef} className="min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 flex flex-col [scrollbar-gutter:stable]">
           {loaderData.error && <MessageBar intent="error" className="!mb-3"><MessageBarBody>{loaderData.error}</MessageBarBody></MessageBar>}
           {requestError && <MessageBar intent="error" className="!mb-3"><MessageBarBody>{requestError}</MessageBarBody></MessageBar>}
           {!selectedKey ? <EmptyState text={t("dashboard.playground.noKey")} />
             : !selectedModel ? <EmptyState text={t("dashboard.playground.noModelForApi")} />
               : messages.length === 0 && !sending ? <EmptyState text={t("dashboard.playground.empty")} /> : null}
-          <div className="grid gap-3">
+          <div className="mt-auto grid gap-3">
             {messages.map((message) => (
               <div key={message.id} className={`flex min-w-0 ${message.role === "user" ? "justify-end" : "justify-start"} ${s.messageRow}`}>
                 <div className="max-w-[78%] min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <Text size={200} weight="semibold" className="text-fui-fg2">{t(`dashboard.playground.roles.${message.role}`)}</Text>
-                    <div className={`playground-message-actions flex gap-0.5 ${s.messageActions}`}>
-                      <IconAction label={t("dashboard.playground.actions.edit")} icon={<EditRegular />} onClick={() => beginEdit(message)} />
-                      <IconAction label={t("dashboard.playground.actions.delete")} icon={<DeleteRegular />} onClick={() => removeMessage(message.id)} />
-                    </div>
-                  </div>
-                  <div className={`rounded-md px-3 py-2.5 break-words overflow-hidden ${message.role === "user" ? s.userBubble : s.assistantBubble}`}>
+                  <PlaygroundMessageCard role={message.role}>
                     {editingId === message.id ? (
                       <div className="grid gap-2">
                         <Textarea resize="vertical" rows={3} value={editText} onChange={(_, data) => setEditText(data.value)} />
@@ -305,10 +351,16 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
                       </div>
                     ) : (
                       <>
-                        {message.imageUrl && <a className="block text-fui-fg2 text-fui-base200 break-all mb-2" href={message.imageUrl} target="_blank" rel="noreferrer">{message.imageUrl}</a>}
-                        <span className="whitespace-pre-wrap break-words">{message.text}</span>
+                        {message.imageUrl && <a className={`block text-fui-base200 break-all mb-2 ${message.role === "user" ? "text-inherit" : "text-fui-fg2"}`} href={message.imageUrl} target="_blank" rel="noreferrer">{message.imageUrl}</a>}
+                        {message.role === "assistant"
+                          ? <PlaygroundMarkdown content={message.text} streaming={sending && message.id === messages.at(-1)?.id} />
+                          : <span className="whitespace-pre-wrap break-words">{message.text}</span>}
                       </>
                     )}
+                  </PlaygroundMessageCard>
+                  <div className={`playground-message-actions flex justify-end gap-0.5 mt-1 ${s.messageActions}`}>
+                    <IconAction className={s.brandIconAction} label={t("dashboard.playground.actions.edit")} icon={<EditRegular />} onClick={() => beginEdit(message)} />
+                    <IconAction className={s.brandIconAction} label={t("dashboard.playground.actions.delete")} icon={<DeleteRegular />} onClick={() => removeMessage(message.id)} />
                   </div>
                 </div>
               </div>
@@ -316,26 +368,39 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
             {sending && (!messages.length || messages[messages.length - 1]?.role === "user") && <Spinner size="tiny" label={t("dashboard.playground.generating")} />}
           </div>
         </div>
-        <div className={`p-3 ${s.composer}`}>
-          {showImage && <div className="flex gap-2 mb-2">
-            <Input className="!flex-1" type="url" value={imageUrl} placeholder={t("dashboard.playground.imagePlaceholder")} onChange={(_, data) => setImageUrl(data.value)} />
-            <IconAction label={t("common.cancel")} icon={<DismissRegular />} onClick={() => { setImageUrl(""); setShowImage(false); }} />
-          </div>}
-          <div className="flex items-end gap-2">
-            <Tooltip content={imageEnabled ? t("dashboard.playground.actions.image") : t("dashboard.playground.errors.imageUnsupported")} relationship="label">
-              <Button appearance="subtle" aria-label={t("dashboard.playground.actions.image")} disabled={!imageEnabled || sending} icon={<ImageRegular />} onClick={() => setShowImage((value) => !value)} />
-            </Tooltip>
-            <Textarea className="!flex-1" resize="vertical" rows={2} value={draft} disabled={sending} placeholder={t("dashboard.playground.messagePlaceholder")} onChange={(_, data) => setDraft(data.value)} onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); }
-            }} />
-            {sending
-              ? <Button appearance="primary" icon={<StopRegular />} onClick={stop}>{t("dashboard.playground.actions.stop")}</Button>
-              : <Button appearance="primary" icon={<SendRegular />} disabled={!canSend} onClick={() => void send()}>{t("dashboard.playground.actions.send")}</Button>}
-          </div>
+        <div className="p-3">
+          <PlaygroundComposer
+            canSend={canSend}
+            cancelLabel={t("common.cancel")}
+            draft={draft}
+            imageEnabled={imageEnabled}
+            imageLabel={t("dashboard.playground.actions.image")}
+            imagePlaceholder={t("dashboard.playground.imagePlaceholder")}
+            imageUnsupportedLabel={t("dashboard.playground.errors.imageUnsupported")}
+            imageUrl={imageUrl}
+            newTopicDisabled={!messages.length && !sending}
+            newTopicLabel={t("dashboard.playground.actions.newTopic")}
+            placeholder={t("dashboard.playground.messagePlaceholder")}
+            sendLabel={t("dashboard.playground.actions.send")}
+            sending={sending}
+            showImage={showImage}
+            stopLabel={t("dashboard.playground.actions.stop")}
+            onDraftChange={setDraft}
+            onImageUrlChange={setImageUrl}
+            onNewTopic={clearMessages}
+            onSend={() => void send()}
+            onStop={stop}
+            onToggleImage={() => {
+              if (showImage) setImageUrl("");
+              setShowImage((value) => !value);
+            }}
+          />
         </div>
       </div>
 
-      <aside className={`min-h-0 overflow-y-auto overflow-x-hidden p-4 grid content-start gap-5 [scrollbar-gutter:stable] ${s.settings}`}>
+      <Panel
+        className="min-h-0 overflow-y-auto overflow-x-hidden !p-4 grid content-start gap-5 [scrollbar-gutter:stable]"
+      >
         <SettingsSection title={t("dashboard.playground.settings.connection")}>
           <Field label={t("dashboard.playground.key")}>
             <Select value={keyId} disabled={!loaderData.keys.length} onChange={(_, data) => changeContext(() => setKeyId(data.value))}>
@@ -358,11 +423,11 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
         </SettingsSection>
 
         <SettingsSection title={t("dashboard.playground.settings.generation")}>
-          <OptionalNumber label={t("dashboard.playground.parameters.temperature")} value={settings.temperature} min={0} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, temperature: value }))} />
-          <OptionalNumber label={t("dashboard.playground.parameters.maxOutputTokens")} value={settings.maxOutputTokens} min={1} max={outputLimit} step={1} onChange={(value) => setSettings((current) => ({ ...current, maxOutputTokens: value }))} />
-          <OptionalNumber label={t("dashboard.playground.parameters.topP")} value={settings.topP} min={0} max={1} step={0.05} onChange={(value) => setSettings((current) => ({ ...current, topP: value }))} />
-          <OptionalNumber label={t("dashboard.playground.parameters.frequencyPenalty")} value={settings.frequencyPenalty} disabled={api === "messages"} min={-2} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, frequencyPenalty: value }))} />
-          <OptionalNumber label={t("dashboard.playground.parameters.presencePenalty")} value={settings.presencePenalty} disabled={api === "messages"} min={-2} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, presencePenalty: value }))} />
+          <OptionalNumber initialValue={1} label={t("dashboard.playground.parameters.temperature")} value={settings.temperature} min={0} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, temperature: value }))} />
+          <OptionalNumber initialValue={Math.min(4096, outputLimit ?? 4096)} label={t("dashboard.playground.parameters.maxOutputTokens")} value={settings.maxOutputTokens} min={1} max={outputLimit} step={1} onChange={(value) => setSettings((current) => ({ ...current, maxOutputTokens: value }))} />
+          <OptionalNumber initialValue={1} label={t("dashboard.playground.parameters.topP")} value={settings.topP} min={0} max={1} step={0.05} onChange={(value) => setSettings((current) => ({ ...current, topP: value }))} />
+          <OptionalNumber initialValue={0} label={t("dashboard.playground.parameters.frequencyPenalty")} value={settings.frequencyPenalty} disabled={api === "messages"} min={-2} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, frequencyPenalty: value }))} />
+          <OptionalNumber initialValue={0} label={t("dashboard.playground.parameters.presencePenalty")} value={settings.presencePenalty} disabled={api === "messages"} min={-2} max={2} step={0.1} onChange={(value) => setSettings((current) => ({ ...current, presencePenalty: value }))} />
           <Field label={t("dashboard.playground.parameters.stopSequences")}>
             <Input value={settings.stopSequences?.join(", ") ?? ""} placeholder={t("dashboard.playground.parameters.unset")} onChange={(_, data) => setSettings((current) => ({ ...current, stopSequences: data.value.split(",").map((value) => value.trim()).filter(Boolean) || undefined }))} />
           </Field>
@@ -382,8 +447,9 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
             }} />
           </Field>
         </SettingsSection>
-      </aside>
+      </Panel>
     </section>
+    </FluentProvider>
   );
 }
 
@@ -395,16 +461,16 @@ function EmptyState({ text }: { text: string }) {
   return <div className="h-full min-h-[180px] grid place-items-center text-center px-6"><Text className="text-fui-fg2">{text}</Text></div>;
 }
 
-function IconAction({ icon, label, onClick }: { icon: React.ReactElement; label: string; onClick: () => void }) {
-  return <Tooltip content={label} relationship="label"><Button appearance="subtle" aria-label={label} icon={icon} size="small" onClick={onClick} /></Tooltip>;
+function IconAction({ className, icon, label, onClick }: { className?: string; icon: React.ReactElement; label: string; onClick: () => void }) {
+  return <Tooltip content={label} relationship="label"><Button appearance="subtle" aria-label={label} className={className} icon={icon} size="small" onClick={onClick} /></Tooltip>;
 }
 
-function OptionalNumber({ disabled, label, max, min, onChange, step, value }: {
-  disabled?: boolean; label: string; max?: number; min: number; onChange: (value: number | undefined) => void; step: number; value?: number;
+function OptionalNumber({ disabled, initialValue, label, max, min, onChange, step, value }: {
+  disabled?: boolean; initialValue: number; label: string; max?: number; min: number; onChange: (value: number | undefined) => void; step: number; value?: number;
 }) {
   const { t } = useTranslation();
   return <div className="grid grid-cols-[minmax(0,1fr)_116px] items-end gap-2 min-w-0">
-    <Switch checked={value !== undefined} disabled={disabled} label={label} onChange={(_, data) => onChange(data.checked ? min : undefined)} />
+    <Switch checked={value !== undefined} disabled={disabled} label={label} onChange={(_, data) => onChange(data.checked ? initialValue : undefined)} />
     <SpinButton aria-label={label} disabled={disabled || value === undefined} value={value ?? null} min={min} max={max} step={step} placeholder={t("dashboard.playground.parameters.unset")} onChange={(_, data) => {
       const next = data.value ?? (data.displayValue ? Number(data.displayValue) : undefined);
       if (next !== undefined && Number.isFinite(next)) onChange(next);

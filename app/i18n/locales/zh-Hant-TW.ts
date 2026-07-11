@@ -87,7 +87,7 @@ const zhHantTW = {
             "該路由僅管理員可用，並且會對普通使用者從側邊欄隱藏。",
         },
         playground: {
-          system: "系統提示詞",
+          system: "自訂系統提示詞",
           systemPlaceholder: "可選的模型指令",
           key: "API Key",
           api: "協議",
@@ -102,10 +102,9 @@ const zhHantTW = {
           noKeyOption: "沒有 API Key",
           noModel: "未選擇模型",
           noModelForApi: "沒有可達的聊天模型支援目前協議。",
-          roles: { user: "你", assistant: "助手" },
-          apis: { responses: "Responses", chatCompletions: "Chat", messages: "Messages" },
+          apis: { responses: "Responses", chatCompletions: "Chat Completions", messages: "Messages" },
           settings: { connection: "連線", generation: "生成參數", customJson: "自定義 JSON" },
-          actions: { clear: "清空", edit: "編輯", delete: "刪除", save: "儲存", image: "新增圖片 URL", send: "傳送", stop: "停止" },
+          actions: { newTopic: "新話題", edit: "編輯", delete: "刪除", save: "儲存", image: "新增圖片 URL", send: "傳送", stop: "停止" },
           parameters: {
             temperature: "溫度",
             maxOutputTokens: "最大輸出 Token",

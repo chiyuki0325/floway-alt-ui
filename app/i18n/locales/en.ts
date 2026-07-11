@@ -96,7 +96,7 @@ const en = {
             "This route is reserved for admin users and is hidden from the sidebar for operators.",
         },
         playground: {
-          system: "System prompt",
+          system: "Custom system prompt",
           systemPlaceholder: "Optional instructions for the model",
           key: "API Key",
           api: "Protocol",
@@ -111,10 +111,9 @@ const en = {
           noKeyOption: "No API Keys",
           noModel: "No model selected",
           noModelForApi: "No reachable chat model supports this protocol.",
-          roles: { user: "You", assistant: "Assistant" },
-          apis: { responses: "Responses", chatCompletions: "Chat", messages: "Messages" },
+          apis: { responses: "Responses", chatCompletions: "Chat Completions", messages: "Messages" },
           settings: { connection: "Connection", generation: "Generation", customJson: "Custom JSON" },
-          actions: { clear: "Clear", edit: "Edit", delete: "Delete", save: "Save", image: "Add image URL", send: "Send", stop: "Stop" },
+          actions: { newTopic: "New topic", edit: "Edit", delete: "Delete", save: "Save", image: "Add image URL", send: "Send", stop: "Stop" },
           parameters: {
             temperature: "Temperature",
             maxOutputTokens: "Max output tokens",

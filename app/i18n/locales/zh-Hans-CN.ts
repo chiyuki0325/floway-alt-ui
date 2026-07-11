@@ -87,7 +87,7 @@ const zhHansCN = {
             "该路由仅管理员可用，并且会对普通用户从侧边栏隐藏。",
         },
         playground: {
-          system: "系统提示词",
+          system: "自定义系统提示词",
           systemPlaceholder: "可选的模型指令",
           key: "API Key",
           api: "协议",
@@ -102,10 +102,9 @@ const zhHansCN = {
           noKeyOption: "没有 API Key",
           noModel: "未选择模型",
           noModelForApi: "没有可达的聊天模型支持当前协议。",
-          roles: { user: "你", assistant: "助手" },
-          apis: { responses: "Responses", chatCompletions: "Chat", messages: "Messages" },
+          apis: { responses: "Responses", chatCompletions: "Chat Completions", messages: "Messages" },
           settings: { connection: "连接", generation: "生成参数", customJson: "自定义 JSON" },
-          actions: { clear: "清空", edit: "编辑", delete: "删除", save: "保存", image: "添加图片 URL", send: "发送", stop: "停止" },
+          actions: { newTopic: "新话题", edit: "编辑", delete: "删除", save: "保存", image: "添加图片 URL", send: "发送", stop: "停止" },
           parameters: {
             temperature: "温度",
             maxOutputTokens: "最大输出 Token",
