@@ -7,13 +7,13 @@ import { z } from "zod";
 
 import type { Route } from "./+types/dashboard-settings";
 import { changeOwnPassword } from "../api/auth";
+import { Input } from "../components/fluent-form-controls";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
 
 const {
   Button,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Spinner,

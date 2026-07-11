@@ -2,8 +2,9 @@ import { useTranslation } from "react-i18next";
 
 import type { AnnouncedMetadata, ModelKind } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Input, Select } from "../fluent-form-controls";
 
-const { Field, Input, Select, Switch, Text } = fluentComponents;
+const { Field, Switch, Text } = fluentComponents;
 
 const numberValue = (value: string) => value === "" ? undefined : Number(value);
 

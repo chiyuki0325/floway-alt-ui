@@ -26,6 +26,7 @@ import { getSessionToken } from "../auth/session";
 import { CodeBlock } from "../components/code-block";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { DialogShell } from "../components/dialog-shell";
+import { Dropdown, Input, Select } from "../components/fluent-form-controls";
 import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { ProviderBadge, providerLabel } from "../components/provider-badge";
@@ -38,13 +39,10 @@ const {
   Checkbox,
   DialogActions,
   DialogTitle,
-  Dropdown,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Option,
-  Select,
   Spinner,
   Switch,
   Tab,

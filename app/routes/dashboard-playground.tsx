@@ -17,6 +17,7 @@ import type { Route } from "./+types/dashboard-playground";
 import type { ApiKey, ControlPlaneModel } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
+import { Combobox, Input, Select, SpinButton, Textarea } from "../components/fluent-form-controls";
 import {
   availableModels,
   createWireFetch,
@@ -36,18 +37,13 @@ import { useDashboardOutletContext } from "./dashboard";
 
 const {
   Button,
-  Combobox,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Option,
-  Select,
-  SpinButton,
   Spinner,
   Switch,
   Text,
-  Textarea,
   Tooltip,
   makeStyles,
   tokens,
@@ -322,14 +318,14 @@ export default function DashboardPlayground({ loaderData }: Route.ComponentProps
         </div>
         <div className={`p-3 ${s.composer}`}>
           {showImage && <div className="flex gap-2 mb-2">
-            <Input className="!min-w-0 !flex-1" type="url" value={imageUrl} placeholder={t("dashboard.playground.imagePlaceholder")} onChange={(_, data) => setImageUrl(data.value)} />
+            <Input className="!flex-1" type="url" value={imageUrl} placeholder={t("dashboard.playground.imagePlaceholder")} onChange={(_, data) => setImageUrl(data.value)} />
             <IconAction label={t("common.cancel")} icon={<DismissRegular />} onClick={() => { setImageUrl(""); setShowImage(false); }} />
           </div>}
           <div className="flex items-end gap-2">
             <Tooltip content={imageEnabled ? t("dashboard.playground.actions.image") : t("dashboard.playground.errors.imageUnsupported")} relationship="label">
               <Button appearance="subtle" aria-label={t("dashboard.playground.actions.image")} disabled={!imageEnabled || sending} icon={<ImageRegular />} onClick={() => setShowImage((value) => !value)} />
             </Tooltip>
-            <Textarea className="!min-w-0 !flex-1" resize="vertical" rows={2} value={draft} disabled={sending} placeholder={t("dashboard.playground.messagePlaceholder")} onChange={(_, data) => setDraft(data.value)} onKeyDown={(event) => {
+            <Textarea className="!flex-1" resize="vertical" rows={2} value={draft} disabled={sending} placeholder={t("dashboard.playground.messagePlaceholder")} onChange={(_, data) => setDraft(data.value)} onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); }
             }} />
             {sending

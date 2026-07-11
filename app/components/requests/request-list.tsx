@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 import type { ApiKey } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Select } from "../fluent-form-controls";
 import {
   errorLabel,
   formatBytes,
@@ -25,7 +26,7 @@ import {
   totalTokens,
 } from "./format";
 
-const { MessageBar, MessageBarBody, Select, Spinner, Text, makeStyles, mergeClasses } = fluentComponents;
+const { MessageBar, MessageBarBody, Spinner, Text, makeStyles, mergeClasses } = fluentComponents;
 const ROW_HEIGHT = 74;
 
 const useStyles = makeStyles({
@@ -171,7 +172,7 @@ export function RequestListPanel(props: RequestListProps) {
     <div className="h-full min-h-0 flex flex-col">
       <div className="py-3 grid gap-1.5">
         <Text size={400} weight="semibold">{t("dashboard.requests.apiKey")}</Text>
-        <Select className="!min-w-[0px]" value={props.selectedKeyId} onChange={(event) => props.onKeyChange(event.target.value)}>
+        <Select value={props.selectedKeyId} onChange={(event) => props.onKeyChange(event.target.value)}>
           {props.apiKeys.map((key) => <option key={key.id} value={key.id}>{key.name} ({key.key.slice(-4)})</option>)}
         </Select>
       </div>

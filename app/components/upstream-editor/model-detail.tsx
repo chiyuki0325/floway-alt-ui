@@ -17,6 +17,7 @@ import type {
   UpstreamRecord,
 } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Input, Select } from "../fluent-form-controls";
 import { SegmentedControl } from "../segmented-control";
 import { publicModelId } from "./editor-data";
 import { FeatureFlagsEditor } from "./feature-flags";
@@ -29,10 +30,8 @@ const {
   Button,
   Checkbox,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
-  Select,
   Switch,
   Text,
   makeStyles,
@@ -184,19 +183,19 @@ export function ModelDetail({
 
       <EditorBlock title={t("dashboard.upstreamEditor.models.identity")}>
         <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.displayName")}>
-            <Input className="!min-w-[0px] !w-full" placeholder={t("dashboard.upstreamEditor.models.displayNamePlaceholder")} readOnly={!editable} value={row.config.display_name ?? ""} onChange={(_, data) => patch({ display_name: data.value || undefined })} />
+          <Field className="min-w-0" label={t("dashboard.upstreamEditor.models.displayName")}>
+            <Input className="!w-full" placeholder={t("dashboard.upstreamEditor.models.displayNamePlaceholder")} readOnly={!editable} value={row.config.display_name ?? ""} onChange={(_, data) => patch({ display_name: data.value || undefined })} />
           </Field>
-          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.kind")}>
+          <Field className="min-w-0" label={t("dashboard.upstreamEditor.models.kind")}>
             <Select key={row.config.kind} disabled={!editable} defaultValue={row.config.kind} onChange={(_, data) => setKind(data.value as UpstreamModelConfig["kind"])}>
               <option value="chat">Chat</option><option value="embedding">Embedding</option><option value="image">Image</option>
             </Select>
           </Field>
-          <Field className="!min-w-[0px]" label={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deployment") : t("dashboard.upstreamEditor.models.upstreamId")}>
-            <Input className="!min-w-[0px] !w-full" placeholder={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deploymentPlaceholder") : t("dashboard.upstreamEditor.models.upstreamIdPlaceholder")} readOnly={!editable || row.hasAuto} value={row.config.upstreamModelId} onChange={(_, data) => patch({ upstreamModelId: data.value })} />
+          <Field className="min-w-0" label={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deployment") : t("dashboard.upstreamEditor.models.upstreamId")}>
+            <Input className="!w-full" placeholder={record.kind === "azure" ? t("dashboard.upstreamEditor.models.deploymentPlaceholder") : t("dashboard.upstreamEditor.models.upstreamIdPlaceholder")} readOnly={!editable || row.hasAuto} value={row.config.upstreamModelId} onChange={(_, data) => patch({ upstreamModelId: data.value })} />
           </Field>
-          <Field className="!min-w-[0px]" label={t("dashboard.upstreamEditor.models.publicId")}>
-            <Input className="!min-w-[0px] !w-full" placeholder={row.config.upstreamModelId || t("dashboard.upstreamEditor.models.publicIdPlaceholder")} readOnly={!editable} value={row.config.publicModelId ?? ""} onChange={(_, data) => patch({ publicModelId: data.value || undefined })} />
+          <Field className="min-w-0" label={t("dashboard.upstreamEditor.models.publicId")}>
+            <Input className="!w-full" placeholder={row.config.upstreamModelId || t("dashboard.upstreamEditor.models.publicIdPlaceholder")} readOnly={!editable} value={row.config.publicModelId ?? ""} onChange={(_, data) => patch({ publicModelId: data.value || undefined })} />
           </Field>
         </div>
       </EditorBlock>
@@ -311,7 +310,7 @@ function EditorBlock({ children, description, title }: { children: React.ReactNo
 }
 
 function NumberField({ label, onChange, placeholder, readOnly, value }: { label: string; onChange: (raw: string) => void; placeholder: string; readOnly: boolean; value?: number }) {
-  return <Field className="!min-w-[0px]" label={label}><Input className="!min-w-[0px] !w-full" min={0} placeholder={placeholder} readOnly={readOnly} type="number" value={value === undefined ? "" : String(value)} onChange={(_, data) => onChange(data.value)} /></Field>;
+  return <Field className="min-w-0" label={label}><Input className="!w-full" min={0} placeholder={placeholder} readOnly={readOnly} type="number" value={value === undefined ? "" : String(value)} onChange={(_, data) => onChange(data.value)} /></Field>;
 }
 
 function EffortEditor({ editable, effort, onChange, t }: { editable: boolean; effort: NonNullable<UpstreamChatConfig["reasoning"]>["effort"] & {}; onChange: (effort: NonNullable<UpstreamChatConfig["reasoning"]>["effort"]) => void; t: ReturnType<typeof useTranslation>["t"] }) {
@@ -320,14 +319,14 @@ function EffortEditor({ editable, effort, onChange, t }: { editable: boolean; ef
   const add = (level: string) => { const value = level.trim(); if (value && !supported.includes(value)) onChange({ supported: [...supported, value], default: effort.default || value }); };
   return <div className="grid gap-3 border-l-2 border-l-solid border-fui-stroke1 pl-4">
     <div className="flex flex-wrap gap-2">{supported.map((level) => <Button key={level} disabled={!editable} appearance={effort.default === level ? "primary" : "secondary"} size="small" onClick={() => onChange({ ...effort, default: level })}>{level}<span onClick={(event) => { event.stopPropagation(); const next = supported.filter((item) => item !== level); onChange({ supported: next, default: effort.default === level ? next[0] ?? "" : effort.default }); }}> ×</span></Button>)}</div>
-    {editable && <div className="flex flex-wrap gap-2">{reasoningPresets.filter((level) => !supported.includes(level)).map((level) => <Button key={level} size="small" onClick={() => add(level)}>+ {level}</Button>)}<Input className="!min-w-[0px] !w-[130px]" placeholder={t("dashboard.upstreamEditor.models.customEffortPlaceholder")} size="small" value={custom} onChange={(_, data) => setCustom(data.value)} /><Button size="small" onClick={() => { add(custom); setCustom(""); }}>{t("dashboard.upstreamEditor.models.add")}</Button></div>}
+    {editable && <div className="flex flex-wrap gap-2">{reasoningPresets.filter((level) => !supported.includes(level)).map((level) => <Button key={level} size="small" onClick={() => add(level)}>+ {level}</Button>)}<Input className="!w-[130px]" placeholder={t("dashboard.upstreamEditor.models.customEffortPlaceholder")} size="small" value={custom} onChange={(_, data) => setCustom(data.value)} /><Button size="small" onClick={() => { add(custom); setCustom(""); }}>{t("dashboard.upstreamEditor.models.add")}</Button></div>}
   </div>;
 }
 
 function TierEditor({ dimensions, editable, index, onChange, onMove, onRemove, t, tier, total }: { dimensions: BillingDimension[]; editable: boolean; index: number; onChange: (tier: TierDraft) => void; onMove: (direction: -1 | 1) => void; onRemove: () => void; t: ReturnType<typeof useTranslation>["t"]; tier: TierDraft; total: number }) {
   const invalid = (tier.name.trim() === "") !== Object.values(tier.rates).some((rate) => typeof rate === "number");
   return <div className="grid gap-3 border-t border-t-solid border-fui-stroke1 pt-4 first:border-t-0 first:pt-0">
-    <div className="flex items-center gap-2 min-w-0"><Input className="!min-w-[0px] !w-full" readOnly={!editable} value={tier.name} placeholder={t("dashboard.upstreamEditor.models.tierName")} onChange={(_, data) => onChange({ ...tier, name: data.value })} />{editable && <><Button appearance="subtle" disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => onMove(-1)} /><Button appearance="subtle" disabled={index === total - 1} icon={<ArrowDownRegular />} onClick={() => onMove(1)} /><Button appearance="subtle" icon={<DeleteRegular />} onClick={onRemove} /></>}</div>
+    <div className="flex items-center gap-2 min-w-0"><Input className="!w-full" readOnly={!editable} value={tier.name} placeholder={t("dashboard.upstreamEditor.models.tierName")} onChange={(_, data) => onChange({ ...tier, name: data.value })} />{editable && <><Button appearance="subtle" disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => onMove(-1)} /><Button appearance="subtle" disabled={index === total - 1} icon={<ArrowDownRegular />} onClick={() => onMove(1)} /><Button appearance="subtle" icon={<DeleteRegular />} onClick={onRemove} /></>}</div>
     {invalid && <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.tierIncomplete")}</Text>}
     <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">{dimensions.map((dimension) => <NumberField key={dimension} label={pricingLabels[dimension]} placeholder={t("dashboard.upstreamEditor.models.inheritPricePlaceholder")} readOnly={!editable} value={tier.rates[dimension]} onChange={(raw) => { const rates = { ...tier.rates }; const value = optionalNumber(raw); if (value === undefined) delete rates[dimension]; else rates[dimension] = value; onChange({ ...tier, rates }); }} />)}</div>
   </div>;

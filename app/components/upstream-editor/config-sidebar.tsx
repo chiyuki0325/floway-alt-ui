@@ -6,11 +6,12 @@ import { useTranslation } from "react-i18next";
 import { MODEL_PREFIX_MAX_LENGTH, MODEL_PREFIX_REGEX } from "@floway-dev/provider/model-prefix";
 import type { ProxyRecord, UpstreamRecord } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Input, Select } from "../fluent-form-controls";
 import { ProviderBadge } from "../provider-badge";
 import type { RuntimeInfo, UpstreamEditorValues } from "./editor-data";
 import { ApiPathsSection, ProviderConfigSection } from "./provider-config";
 
-const { Button, Checkbox, Field, Input, Select, Switch, Text } = fluentComponents;
+const { Button, Checkbox, Field, Switch, Text } = fluentComponents;
 
 export function UpstreamConfigSidebar({
   onPatch,

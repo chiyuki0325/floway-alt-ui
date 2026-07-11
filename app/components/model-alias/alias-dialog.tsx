@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { ControlPlaneModel, ModelAlias, ModelKind } from "../../api/types";
 import { authFetch, callApi } from "../../api/auth";
 import { DialogShell } from "../dialog-shell";
+import { Input, Select } from "../fluent-form-controls";
 import { fluentComponents } from "../../fluent";
 import { SegmentedControl } from "../segmented-control";
 import { computeAnnouncedMetadata } from "./announced-metadata";
@@ -16,7 +17,7 @@ import { MetadataEditor } from "./metadata-editor";
 import { AliasTargetRow } from "./target-row";
 import { computeAliasWarnings, realModelIdsOfKind } from "./warnings";
 
-const { Accordion, AccordionHeader, AccordionItem, AccordionPanel, Button, DialogActions, DialogTitle, Field, Input, MessageBar, MessageBarBody, Select, Switch, Text } = fluentComponents;
+const { Accordion, AccordionHeader, AccordionItem, AccordionPanel, Button, DialogActions, DialogTitle, Field, MessageBar, MessageBarBody, Switch, Text } = fluentComponents;
 
 export function AliasDialog({ aliases, models, onOpenChange, onSaved, open, record }: {
   aliases: readonly ModelAlias[];

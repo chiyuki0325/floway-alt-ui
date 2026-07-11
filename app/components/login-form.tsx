@@ -6,13 +6,13 @@ import { useFetcher } from "react-router";
 import { z } from "zod";
 
 import { fluentComponents } from "../fluent";
+import { Input } from "./fluent-form-controls";
 import { FlowayLogo } from "./floway-logo";
 import { Panel } from "./panel";
 
 const {
   Button,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Spinner,

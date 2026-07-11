@@ -19,6 +19,7 @@ import type {
 } from "../../api/types";
 import { authFetch, callApi } from "../../api/auth";
 import { fluentComponents } from "../../fluent";
+import { Dropdown, Input, Textarea } from "../fluent-form-controls";
 import { ProviderIcon } from "../provider-badge";
 import type { UpstreamEditorValues } from "./editor-data";
 import { previewRecord } from "./editor-data";
@@ -27,9 +28,7 @@ import { clearPkce, generatePkce, parseCallbackPaste, recallPkce, stashPkce } fr
 const {
   Button,
   Checkbox,
-  Dropdown,
   Field,
-  Input,
   Link,
   MessageBar,
   MessageBarBody,
@@ -39,7 +38,6 @@ const {
   Tab,
   TabList,
   Text,
-  Textarea,
   Tooltip,
   makeStyles,
 } = fluentComponents;
@@ -151,7 +149,7 @@ function CustomApiPaths() {
               render={({ field }) => (
                 <Field className="min-w-0" label={{ children: path, className: styles.pathOverrideLabel }}>
                   <Input
-                    className="!min-w-0 !w-full"
+                    className="!w-full"
                     placeholder={`/v1${path}`}
                     size="small"
                     value={typeof field.value === "string" ? field.value : ""}

@@ -19,6 +19,7 @@ import type { Route } from "./+types/dashboard-monitor-performance";
 import { localeForLanguage } from "../i18n";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
+import { Select } from "../components/fluent-form-controls";
 import { PageLoadingPanel } from "../components/page-loading-panel";
 import { OutlineCard } from "../components/outline-card";
 import { Panel } from "../components/panel";
@@ -32,7 +33,6 @@ const {
   InteractionTag,
   InteractionTagPrimary,
   makeStyles,
-  Select,
   Spinner,
   Table,
   TableBody,

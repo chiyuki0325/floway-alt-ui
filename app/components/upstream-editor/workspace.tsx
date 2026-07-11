@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import type { Flag } from "@floway-dev/provider/flags";
 import type { UpstreamModelConfig, UpstreamRecord } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Input } from "../fluent-form-controls";
 import type { UpstreamEditorValues } from "./editor-data";
 import { publicModelId } from "./editor-data";
 import { FeatureFlagsEditor } from "./feature-flags";
@@ -19,7 +20,6 @@ import { ModelDetail } from "./model-detail";
 
 const {
   Button,
-  Input,
   MessageBar,
   MessageBarBody,
   Spinner,

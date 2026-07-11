@@ -17,6 +17,7 @@ import type { ControlPlaneUser, UpstreamOption } from "../api/types";
 import { getSessionToken } from "../auth/session";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { DialogShell } from "../components/dialog-shell";
+import { Input } from "../components/fluent-form-controls";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
 import { localeForLanguage } from "../i18n";
@@ -31,7 +32,6 @@ const {
   DialogActions,
   DialogTitle,
   Field,
-  Input,
   MessageBar,
   MessageBarActions,
   MessageBarBody,

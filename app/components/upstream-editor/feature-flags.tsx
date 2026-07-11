@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { fluentComponents } from "../../fluent";
+import { Dropdown } from "../fluent-form-controls";
 
-const { Dropdown, Option, Text } = fluentComponents;
+const { Option, Text } = fluentComponents;
 
 type FlagGroupId = "vendor" | "shims" | "apiCompatibility" | "sanitization" | "retry";
 

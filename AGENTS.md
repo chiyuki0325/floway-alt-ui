@@ -90,6 +90,11 @@ Floway 控制台是运维/配置型工具，界面应当紧凑、清晰、适合
 - Fluent UI 组件统一从 `app/fluent.ts` 导入：`import { fluentComponents } from "../fluent"`，
   然后在模块顶层解构所需组件（如 `const { Button, Text, makeStyles } = fluentComponents;`）。
   不要直接从 `@fluentui/react-components` 导入组件。
+- `Input`、`Select`、`Combobox`、`Dropdown`、`Textarea`、`SpinButton` 统一从
+  `app/components/fluent-form-controls.tsx` 导入。该文件提供与 Fluent UI 同名、完整透传
+  props/ref 的通用封装，并统一添加 `!min-w-[0px]`。业务组件禁止从 `fluentComponents`
+  解构这些控件，也不要在控件调用处重复添加 `!min-w-0` / `!min-w-[0px]`。隐藏的原生
+  file input 等 Fluent UI 不适用的特殊控件不受此规则限制。
 - 表单状态优先使用 React Hook Form 管理，校验 schema 优先使用 Zod，并把错误展示接到
   Fluent UI 的 Field/Message 等语义组件上。不要为普通表单手写一套分散的
   `useState` 校验状态。

@@ -27,6 +27,7 @@ import type { BackoffRow, ProxyConflictBody, ProxyRecord } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { Dropdown, Input } from "../components/fluent-form-controls";
 import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
@@ -34,9 +35,7 @@ import { useDashboardOutletContext } from "./dashboard";
 
 const {
   Button,
-  Dropdown,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Option,
@@ -762,7 +761,6 @@ export default function DashboardProvidersProxy() {
               validationState={portInvalid ? "error" : undefined}
             >
               <Input
-                className="!min-w-0"
                 inputMode="numeric"
                 onChange={(_, d) => setPort(d.value)}
                 value={String(config.port)}

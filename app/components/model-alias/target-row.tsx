@@ -4,9 +4,10 @@ import { useTranslation } from "react-i18next";
 
 import type { AliasTarget, ControlPlaneModel, ModelKind } from "../../api/types";
 import { fluentComponents } from "../../fluent";
+import { Combobox, Input, Select } from "../fluent-form-controls";
 import { computeModelWarning, computeRuleWarnings, findCatalogModel } from "./warnings";
 
-const { Button, Combobox, Field, Input, MessageBar, MessageBarBody, Option, Select, Tooltip } = fluentComponents;
+const { Button, Field, MessageBar, MessageBarBody, Option, Tooltip } = fluentComponents;
 
 const suggestions = {
   effort: ["none", "low", "medium", "high", "xhigh"],

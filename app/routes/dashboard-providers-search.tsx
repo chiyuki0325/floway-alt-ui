@@ -9,6 +9,7 @@ import { getSessionToken } from "../auth/session";
 import bingIconUrl from "../assets/bing.svg";
 import jinaIconUrl from "../assets/jina.svg";
 import tavilyIconUrl from "../assets/tavily.svg";
+import { Dropdown, Input } from "../components/fluent-form-controls";
 import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
@@ -16,9 +17,7 @@ import { useDashboardOutletContext } from "./dashboard";
 
 const {
   Button,
-  Dropdown,
   Field,
-  Input,
   Link,
   MessageBar,
   MessageBarBody,
