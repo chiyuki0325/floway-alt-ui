@@ -1251,7 +1251,7 @@ function CliSnippet({
   const contextById = useMemo(() => {
     const map = new Map<string, number>();
     for (const model of keyScopedModels) {
-      if (!claudeModelPattern.test(model.id) || model.kind !== "chat") continue;
+      if (model.kind !== "chat") continue;
       const limits = model.limits;
       const context =
         limits?.max_context_window_tokens ??
