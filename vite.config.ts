@@ -21,6 +21,45 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  environments: {
+    client: {
+      build: {
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                {
+                  name: "ai",
+                  test: /node_modules[\\/](?:\.pnpm[\\/])?(?:@ai-sdk\+|ai@|@ai-sdk[\\/]|ai[\\/])/,
+                  priority: 40,
+                },
+                {
+                  name: "fluent",
+                  test: /node_modules[\\/](?:\.pnpm[\\/])?(?:@fluentui\+|@griffel\+|tabster@|@fluentui[\\/]|@griffel[\\/]|tabster[\\/])/,
+                  priority: 30,
+                },
+                {
+                  name: "react-runtime",
+                  test: /node_modules[\\/](?:\.pnpm[\\/])?(?:react(?:-dom|-router)?@|scheduler@|react(?:-dom|-router)?[\\/]|scheduler[\\/])/,
+                  priority: 20,
+                },
+                {
+                  name: "vendor",
+                  test: /node_modules/,
+                  priority: 10,
+                },
+                {
+                  name: "app",
+                  test: /[\\/]app[\\/]/,
+                  priority: 5,
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/auth": {
