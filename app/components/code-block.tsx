@@ -43,6 +43,9 @@ const useStyles = makeStyles({
     tabSize: "2",
   },
   code: {
+    "& .token.table": {
+      display: "inline",
+    },
     fontFamily: "monospace",
     whiteSpace: "pre",
   },
