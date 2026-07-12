@@ -457,7 +457,7 @@ const jaJP = {
           "endpoint": "エンドポイント",
           "authStyle": "認証方式",
           "apiKey": "API キー",
-          "fetchModels": "アップストリームから /models を取得",
+          "fetchModels": "アップストリームからモデル一覧を取得",
           "modelsPath": "モデル一覧のパス",
           "defaultEndpoints": "デフォルト LLM API",
           "pathOverrides": "パスのオーバーライド",

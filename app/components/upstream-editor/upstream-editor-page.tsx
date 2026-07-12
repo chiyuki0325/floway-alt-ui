@@ -177,7 +177,7 @@ export function UpstreamEditorPage({ data }: { data: UpstreamEditorLoaderData })
       <div>{saveError && <MessageBar intent="error"><MessageBarBody>{saveError}</MessageBarBody></MessageBar>}</div>
       <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-[18px] min-h-0 max-[1050px]:grid-cols-1 max-[1050px]:overflow-y-auto">
         <Panel className="min-h-0 overflow-hidden !p-0">
-          <UpstreamConfigSidebar record={record} proxies={data.proxies} runtime={data.runtime} onPatch={applyProviderPatch} />
+          <UpstreamConfigSidebar record={record} proxies={data.proxies} runtime={data.runtime} onPatch={applyProviderPatch} onRefreshModels={() => void refreshModels()} />
         </Panel>
         <Panel className="min-h-0 overflow-hidden !p-0">
           <UpstreamWorkspace record={record} flags={data.flags} discovered={discovered} loadingModels={modelsLoading} modelsError={modelsError} onRefreshModels={() => void refreshModels()} />

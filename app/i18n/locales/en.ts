@@ -463,7 +463,7 @@ const en = {
             endpoint: "Endpoint",
             authStyle: "Authentication",
             apiKey: "API key",
-            fetchModels: "Fetch /models from upstream",
+            fetchModels: "Fetch upstream models",
             modelsPath: "Models path",
             defaultEndpoints: "Default LLM endpoints",
             pathOverrides: "Path overrides",

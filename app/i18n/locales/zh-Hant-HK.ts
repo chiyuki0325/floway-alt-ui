@@ -442,7 +442,7 @@ const zhHantHK = {
             endpoint: "Endpoint",
             authStyle: "認證方式",
             apiKey: "API 密鑰",
-            fetchModels: "從上游取得 /models",
+            fetchModels: "從上游取得模型列表",
             modelsPath: "模型列表路徑",
             defaultEndpoints: "預設 LLM API",
             pathOverrides: "路徑覆寫",

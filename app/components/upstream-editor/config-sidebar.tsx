@@ -15,11 +15,13 @@ const { Button, Checkbox, Field, Switch, Text } = fluentComponents;
 
 export function UpstreamConfigSidebar({
   onPatch,
+  onRefreshModels,
   proxies,
   record,
   runtime,
 }: {
   onPatch: (patch: { config?: unknown; state?: unknown }, persisted?: boolean) => void;
+  onRefreshModels: () => void;
   proxies: ProxyRecord[];
   record: UpstreamRecord;
   runtime: RuntimeInfo;
@@ -28,43 +30,51 @@ export function UpstreamConfigSidebar({
   const { control, setValue } = useFormContext<UpstreamEditorValues>();
   const disabled = useWatch({ control, name: "disabledPublicModelIds" });
   return <aside className="h-full min-h-0 overflow-y-auto [scrollbar-gutter:stable] max-[1050px]:h-auto max-[1050px]:overflow-visible">
-    <div className="grid gap-5 p-[18px_20px_28px]">
-      <Field label={t("dashboard.upstreamEditor.fields.name")} required>
-        <Controller
-          control={control}
-          name="name"
-          rules={{ required: true }}
-          render={({ field }) => (
-            <Input
-              value={field.value}
-              onBlur={field.onBlur}
-              onChange={(_, data) => field.onChange(data.value)}
-            />
-          )}
-        />
-      </Field>
-      <EditorSection title={t("dashboard.upstreamEditor.sections.connection")}>
-        <ProviderConfigSection record={record} onPatch={onPatch} />
-        <ProxyFallbackEditor proxies={proxies} runtime={runtime} />
-      </EditorSection>
-      {record.kind === "custom" && <EditorSection title={t("dashboard.upstreamEditor.sections.apiPaths")}>
-        <ApiPathsSection record={record} />
-      </EditorSection>}
-      <EditorSection
-        title={t("dashboard.upstreamEditor.sections.prefix")}
-        description={t("dashboard.upstreamEditor.prefixDescription")}
-      >
-        <ModelPrefixEditor />
-      </EditorSection>
-      <EditorSection title={t("dashboard.upstreamEditor.sections.disabledModels")} description={t("dashboard.upstreamEditor.disabledModelsHint")}>
-        <Field>
-          <Input
-            value={disabled.join(", ")}
-            onChange={(_, data) => setValue("disabledPublicModelIds", data.value.split(",").map((v) => v.trim()).filter(Boolean), { shouldDirty: true })}
-            placeholder="model-a, model-b"
+    <div className="grid gap-7 p-[18px_20px_28px]">
+      <div>
+        <Field label={t("dashboard.upstreamEditor.fields.name")} required>
+          <Controller
+            control={control}
+            name="name"
+            rules={{ required: true }}
+            render={({ field }) => (
+              <Input
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={(_, data) => field.onChange(data.value)}
+              />
+            )}
           />
         </Field>
-      </EditorSection>
+      </div>
+      <div>
+        <EditorSection title={t("dashboard.upstreamEditor.sections.connection")}>
+          <ProviderConfigSection record={record} onPatch={onPatch} />
+          <ProxyFallbackEditor proxies={proxies} runtime={runtime} />
+        </EditorSection>
+      </div>
+      {record.kind === "custom" && <div>
+        <EditorSection title={t("dashboard.upstreamEditor.sections.apiPaths")}>
+          <ApiPathsSection record={record} onRefreshModels={onRefreshModels} />
+        </EditorSection>
+      </div>}
+      <div className="grid gap-5">
+        <EditorSection
+          title={t("dashboard.upstreamEditor.sections.prefix")}
+          description={t("dashboard.upstreamEditor.prefixDescription")}
+        >
+          <ModelPrefixEditor />
+        </EditorSection>
+        <EditorSection title={t("dashboard.upstreamEditor.sections.disabledModels")} description={t("dashboard.upstreamEditor.disabledModelsHint")}>
+          <Field>
+            <Input
+              value={disabled.join(", ")}
+              onChange={(_, data) => setValue("disabledPublicModelIds", data.value.split(",").map((v) => v.trim()).filter(Boolean), { shouldDirty: true })}
+              placeholder="model-a, model-b"
+            />
+          </Field>
+        </EditorSection>
+      </div>
     </div>
   </aside>;
 }
@@ -89,7 +99,7 @@ function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; run
     className="grid gap-2"
     role="group"
   >
-    <Text id={`${idPrefix}-label`} weight="semibold">{t("dashboard.upstreamEditor.sections.proxy")}</Text>
+    <Text id={`${idPrefix}-label`}>{t("dashboard.upstreamEditor.sections.proxy")}</Text>
     {fields.length === 0 && <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.proxy.empty")}</Text>}
     {fields.map((field, index) => <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2" key={field.id}>
       <Controller control={control} name={`proxyFallbackList.${index}.id`} render={({ field: item }) => <Select aria-label={t("dashboard.upstreamEditor.sections.proxy")} key={item.value} defaultValue={item.value} onChange={(_, data) => item.onChange(data.value)}>{available.map((proxy) => <option key={proxy.id} value={proxy.id}>{proxy.name}</option>)}</Select>} />
@@ -99,7 +109,7 @@ function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; run
         <Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.remove")} icon={<DeleteRegular />} onClick={() => remove(index)} />
       </div>
     </div>)}
-    <Button appearance="secondary" onClick={() => append({ id: "direct" })}>{t("dashboard.upstreamEditor.proxy.add")}</Button>
+    <Button appearance="secondary" className="!font-fui-regular" onClick={() => append({ id: "direct" })}>{t("dashboard.upstreamEditor.proxy.add")}</Button>
     {hint && <Text id={`${idPrefix}-hint`} size={200} className="text-fui-fg2">{hint}</Text>}
   </div>;
 }

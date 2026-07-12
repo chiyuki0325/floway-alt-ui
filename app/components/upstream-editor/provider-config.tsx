@@ -69,9 +69,9 @@ export function ProviderConfigSection({
   return <OAuthConfig record={record} onPatch={onPatch} />;
 }
 
-export function ApiPathsSection({ record }: { record: UpstreamRecord }) {
+export function ApiPathsSection({ record, onRefreshModels }: { record: UpstreamRecord; onRefreshModels: () => void }) {
   if (record.kind !== "custom") return null;
-  return <CustomApiPaths />;
+  return <CustomApiPaths onRefreshModels={onRefreshModels} />;
 }
 
 function CustomConfig({ record }: { record: Extract<UpstreamRecord, { kind: "custom" }> }) {
@@ -117,7 +117,7 @@ function CustomConfig({ record }: { record: Extract<UpstreamRecord, { kind: "cus
   );
 }
 
-function CustomApiPaths() {
+function CustomApiPaths({ onRefreshModels }: { onRefreshModels: () => void }) {
   const { t } = useTranslation();
   const styles = useStyles();
   const idPrefix = useId();
@@ -126,7 +126,15 @@ function CustomApiPaths() {
     <div className="grid gap-4">
       <EndpointPicker />
       <Controller control={control} name={"config.modelsFetch.enabled" as never} render={({ field }) => (
-        <Switch checked={Boolean(field.value)} className={styles.apiControlOffset} label={t("dashboard.upstreamEditor.fields.fetchModels")} onChange={(_, data) => field.onChange(data.checked)} />
+        <Switch
+          checked={Boolean(field.value)}
+          className={styles.apiControlOffset}
+          label={t("dashboard.upstreamEditor.fields.fetchModels")}
+          onChange={(_, data) => {
+            field.onChange(data.checked);
+            if (data.checked) onRefreshModels();
+          }}
+        />
       )} />
       <Field label={t("dashboard.upstreamEditor.fields.modelsPath")}>
         <Input {...register("config.modelsFetch.endpoint" as never)} className="font-mono" placeholder="/v1/models" />
@@ -137,7 +145,7 @@ function CustomApiPaths() {
         className="grid gap-1.5"
         role="group"
       >
-        <Text id={`${idPrefix}-label`} weight="semibold">
+        <Text id={`${idPrefix}-label`}>
           {t("dashboard.upstreamEditor.fields.pathOverrides")}
         </Text>
         <div className="grid grid-cols-2 gap-x-3 gap-y-3">
@@ -254,7 +262,7 @@ function EndpointPicker() {
   const customConfig = config as Extract<UpstreamRecord, { kind: "custom" }>["config"];
   const value = customConfig.endpoints ?? {};
   return <div className="grid gap-1" role="group" aria-labelledby={`${idPrefix}-label`}>
-    <Text id={`${idPrefix}-label`} size={300} weight="semibold">
+    <Text id={`${idPrefix}-label`} size={300}>
       {t("dashboard.upstreamEditor.fields.defaultEndpoints")}
     </Text>
       <div className="grid gap-1">
