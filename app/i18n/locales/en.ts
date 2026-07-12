@@ -273,7 +273,7 @@ const en = {
             usedOn: "Used on {{date}}",
           },
           source: {
-            generate: "Generate",
+            generate: "Randomly generate",
             custom: "Custom",
           },
           dialog: {
@@ -282,7 +282,6 @@ const en = {
           },
           form: {
             name: "Name",
-            source: "New key",
             customKey: "Custom API key",
             customKeyPlaceholder: "Paste custom API key",
             retention: "Request dump retention",

@@ -4,10 +4,10 @@ import type { ApiKey } from "../../api/types";
 import { authFetch, callApi } from "../../api/auth";
 import { fluentComponents } from "../../fluent";
 import { DialogShell } from "../dialog-shell";
-import { Input, Select } from "../fluent-form-controls";
 import { keyWriteBody, type KeySource } from "./key-source";
+import { KeySourceControl } from "./key-source-control";
 import type { MutationToastController } from "./types";
-const { Button, DialogActions, DialogTitle, Field, MessageBar, MessageBarBody, Text } = fluentComponents;
+const { Button, DialogActions, DialogTitle, MessageBar, MessageBarBody, Text } = fluentComponents;
 
 export function RotateKeyDialog({
   apiKey,
@@ -85,27 +85,15 @@ export function RotateKeyDialog({
       <Text size={200} className="text-fui-fg2 leading-[1.35] !m-0">
         {t("dashboard.apiKeys.rotate.message", { name: snapName })}
       </Text>
-      <Field label={t("dashboard.apiKeys.form.source")}>
-        <Select
-          disabled={saving}
-          onChange={(_, data) => setKeySource(data.value as KeySource)}
-          value={keySource}
-        >
-          <option value="generate">{t("dashboard.apiKeys.source.generate")}</option>
-          <option value="custom">{t("dashboard.apiKeys.source.custom")}</option>
-        </Select>
-      </Field>
-      {keySource === "custom" && (
-        <Field label={t("dashboard.apiKeys.form.customKey")}>
-          <Input
-            disabled={saving}
-            onChange={(_, data) => setCustomKey(data.value)}
-            placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
-            value={customKey}
-          />
-        </Field>
-      )}
-      {error && <MessageBar intent="error"><MessageBarBody>{error}</MessageBarBody></MessageBar>}
+      <KeySourceControl
+        customKey={customKey}
+        disabled={saving}
+        error={keySource === "custom" ? error ?? undefined : undefined}
+        onCustomKeyChange={setCustomKey}
+        onSourceChange={(value) => { setKeySource(value); setError(null); }}
+        source={keySource}
+      />
+      {error && keySource !== "custom" && <MessageBar intent="error"><MessageBarBody>{error}</MessageBarBody></MessageBar>}
     </DialogShell>
   );
 }

@@ -280,7 +280,7 @@ const jaJP = {
           "usedOn": "{{date}} に使用"
         },
         "source": {
-          "generate": "生成",
+          "generate": "ランダム生成",
           "custom": "カスタム"
         },
         "dialog": {
@@ -289,7 +289,6 @@ const jaJP = {
         },
         "form": {
           "name": "名前",
-          "source": "新しいキー",
           "customKey": "カスタム API キー",
           "customKeyPlaceholder": "カスタム API キーを貼り付け",
           "retention": "リクエストダンプを記録",

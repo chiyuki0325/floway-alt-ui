@@ -16,7 +16,7 @@ interface DialogShellProps {
 export function DialogShell({ open, onOpenChange, title, actions, onSubmit, children }: DialogShellProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogSurface className="!mt-[24px] !mb-[24px] max-w-[min(760px,calc(100vw-32px))] max-h-[calc(100vh-48px)]">
+      <DialogSurface className="!m-auto max-w-[min(760px,calc(100vw-32px))] max-h-[calc(100vh-32px)]">
         <form
           onSubmit={(e) => {
             e.preventDefault();

@@ -9,6 +9,7 @@ import { DialogShell } from "../dialog-shell";
 import { Input, Select } from "../fluent-form-controls";
 import { fluentComponents } from "../../fluent";
 import { keyWriteBody, type KeySource } from "./key-source";
+import { KeySourceControl } from "./key-source-control";
 import type { MutationToastController, UpstreamOption } from "./types";
 import { UpstreamPicker } from "./upstream-picker";
 const { Button, DialogActions, DialogTitle, Field, MessageBar, MessageBarBody, Text } = fluentComponents;
@@ -220,45 +221,14 @@ export function KeyDialog({
             />
 
             {isCreate && (
-              <div className="grid gap-3 grid-cols-2 min-w-0 max-[900px]:grid-cols-1">
-                <Controller
-                  control={control}
-                  name="keySource"
-                  render={({ field }) => (
-                    <Field label={t("dashboard.apiKeys.form.source")}>
-                      <Select {...field} disabled={saving}>
-                        <option value="generate">
-                          {t("dashboard.apiKeys.source.generate")}
-                        </option>
-                        <option value="custom">
-                          {t("dashboard.apiKeys.source.custom")}
-                        </option>
-                      </Select>
-                    </Field>
-                  )}
-                />
-                {values.keySource === "custom" && (
-                  <Controller
-                    control={control}
-                    name="customKey"
-                    render={({ field }) => (
-                      <Field
-                        label={t("dashboard.apiKeys.form.customKey")}
-                        validationMessage={
-                          errors.customKey?.message ? t(errors.customKey.message) : undefined
-                        }
-                        validationState={errors.customKey ? "error" : undefined}
-                      >
-                        <Input
-                          {...field}
-                          disabled={saving}
-                          placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
-                        />
-                      </Field>
-                    )}
-                  />
-                )}
-              </div>
+              <KeySourceControl
+                customKey={values.customKey}
+                disabled={saving}
+                error={errors.customKey?.message ? t(errors.customKey.message) : undefined}
+                onCustomKeyChange={(value) => setValue("customKey", value, { shouldValidate: true })}
+                onSourceChange={(value) => setValue("keySource", value, { shouldValidate: true })}
+                source={values.keySource}
+              />
             )}
 
             <div className="grid gap-3 grid-cols-2 min-w-0 max-[900px]:grid-cols-1">
