@@ -8,6 +8,7 @@ import type { ControlPlaneModel, ModelAlias } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { AliasDialog } from "../components/model-alias/alias-dialog";
+import { mergeModelAliasesPageData } from "../components/model-alias/load-data";
 import { computeAliasWarnings } from "../components/model-alias/warnings";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { PageLoadingPanel } from "../components/page-loading-panel";
@@ -35,6 +36,7 @@ export default function DashboardProvidersModelAliases() {
   const [models, setModels] = useState<ControlPlaneModel[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modelsError, setModelsError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ModelAlias | null>(null);
   const [deleting, setDeleting] = useState<ModelAlias | null>(null);
@@ -42,16 +44,16 @@ export default function DashboardProvidersModelAliases() {
 
   const load = async () => {
     setError(null);
+    setModelsError(null);
     const [aliasResult, modelResult] = await Promise.all([
       callApi<ModelAlias[]>(() => authFetch("/api/aliases")),
       callApi<ModelsResponse>(() => authFetch("/api/models?aliases=false&include_unlisted=true")),
     ]);
-    if (aliasResult.error || modelResult.error) {
-      setError(aliasResult.error?.message ?? modelResult.error?.message ?? t("dashboard.modelAliases.errors.load"));
-    } else {
-      setAliases(aliasResult.data);
-      setModels(modelResult.data.data);
-    }
+    const next = mergeModelAliasesPageData({ aliases, models }, aliasResult, modelResult);
+    setAliases(next.aliases);
+    setModels(next.models);
+    setError(next.aliasError);
+    setModelsError(next.modelsError);
     setLoading(false);
   };
 
@@ -80,6 +82,7 @@ export default function DashboardProvidersModelAliases() {
   return <section className="grid gap-[18px] max-w-[1120px] min-w-0">
     <Header />
     {error && <MessageBar intent="error"><MessageBarBody>{t("dashboard.modelAliases.errors.message", { message: error })}</MessageBarBody></MessageBar>}
+    {modelsError && <MessageBar intent="warning"><MessageBarBody>{t("dashboard.modelAliases.errors.models", { message: modelsError })}</MessageBarBody></MessageBar>}
     {loading ? <PageLoadingPanel label={t("common.loading")} /> : <Panel className="overflow-hidden">
       <div className="flex items-center justify-between gap-3 max-[560px]:items-start">
         <div><Text size={400} weight="semibold">{t("dashboard.modelAliases.listTitle")}</Text><Text block size={200} className="text-fui-fg2 mt-1">{t("dashboard.modelAliases.count", { count: aliases.length })}</Text></div>
