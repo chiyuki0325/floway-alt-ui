@@ -726,9 +726,11 @@ const jaJP = {
         "actions": {
           "refresh": "パフォーマンスデータを更新"
         },
+        "apiKeyScopeInfo": "API キーのディメンションには、グローバルテレメトリアクセスがある場合でも、常に現在のアカウントが所有する API キーだけが含まれます。その他のディメンションはグローバル範囲のままです。",
+        "apiKeyScopeLabel": "API キーテレメトリの範囲について",
         "metric": { "label": "パフォーマンス指標", "ttft": "TTFT", "outputSpeed": "出力速度" },
-        "groupBy": { "label": "グループ化", "model": "モデル別", "upstream": "アップストリーム別", "operation": "操作別", "runtimeLocation": "地域別", "userId": "ユーザー別", "keyId": "API キー別" },
-        "filters": { "all": "すべて", "model": "モデル", "upstream": "アップストリーム", "operation": "操作", "runtimeLocation": "地域", "userId": "ユーザー", "keyId": "API キー" },
+        "groupBy": { "label": "グループ基準", "model": "モデル別", "upstream": "アップストリーム別", "operation": "操作別", "runtimeLocation": "地域別", "userId": "ユーザー別", "keyId": "API キー別" },
+        "filters": { "label": "フィルター", "all": { "model": "すべてのモデル", "upstream": "すべてのアップストリーム", "operation": "すべての操作", "runtimeLocation": "すべての地域", "userId": "すべてのユーザー", "keyId": "すべての API キー" }, "model": "モデル", "upstream": "アップストリーム", "operation": "操作", "runtimeLocation": "地域", "userId": "ユーザー", "keyId": "API キー" },
         "range": {
           "label": "パフォーマンスデータの期間",
           "today": "直近 1 日",

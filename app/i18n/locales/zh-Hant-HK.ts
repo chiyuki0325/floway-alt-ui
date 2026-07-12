@@ -721,9 +721,11 @@ const zhHantHK = {
           refreshing: "正在重新整理性能資料",
           empty: "此時間範圍內沒有性能記錄。",
           actions: { refresh: "重新整理性能資料" },
+          apiKeyScopeInfo: "API 密鑰維度始終只包含目前帳戶擁有的 API 密鑰，即使你擁有全域遙測權限。其他維度仍按全域範圍統計。",
+          apiKeyScopeLabel: "關於 API 密鑰遙測範圍",
           metric: { label: "性能指標", ttft: "首 Token 時間", outputSpeed: "輸出速度" },
-          groupBy: { label: "分組方式", model: "按模型", upstream: "按上游", operation: "按操作", runtimeLocation: "按區域", userId: "按用戶", keyId: "按 API 密鑰" },
-          filters: { all: "全部", model: "模型", upstream: "上游", operation: "操作", runtimeLocation: "區域", userId: "用戶", keyId: "API 密鑰" },
+          groupBy: { label: "分組依據", model: "按模型", upstream: "按上游", operation: "按操作", runtimeLocation: "按區域", userId: "按用戶", keyId: "按 API 密鑰" },
+          filters: { label: "篩選", all: { model: "全部模型", upstream: "全部上游", operation: "全部操作", runtimeLocation: "全部區域", userId: "全部用戶", keyId: "全部 API 密鑰" }, model: "模型", upstream: "上游", operation: "操作", runtimeLocation: "區域", userId: "用戶", keyId: "API 密鑰" },
           range: {
             label: "性能資料範圍",
             today: "最近一天",

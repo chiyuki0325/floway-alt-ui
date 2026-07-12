@@ -748,9 +748,11 @@ const en = {
           refreshing: "Refreshing performance",
           empty: "No performance records in this range.",
           actions: { refresh: "Refresh performance" },
+          apiKeyScopeInfo: "API key dimensions always include only API keys owned by your account, even when you have global telemetry access. Other dimensions remain global.",
+          apiKeyScopeLabel: "About API key telemetry scope",
           metric: { label: "Performance metric", ttft: "TTFT", outputSpeed: "Output speed" },
           groupBy: { label: "Group by", model: "By Model", upstream: "By Upstream", operation: "By Operation", runtimeLocation: "By Region", userId: "By User", keyId: "By API Key" },
-          filters: { all: "All", model: "Model", upstream: "Upstream", operation: "Operation", runtimeLocation: "Region", userId: "User", keyId: "API Key" },
+          filters: { label: "Filters", all: { model: "All models", upstream: "All upstreams", operation: "All operations", runtimeLocation: "All regions", userId: "All users", keyId: "All API keys" }, model: "Model", upstream: "Upstream", operation: "Operation", runtimeLocation: "Region", userId: "User", keyId: "API Key" },
           range: {
             label: "Performance range",
             today: "Last Day",
