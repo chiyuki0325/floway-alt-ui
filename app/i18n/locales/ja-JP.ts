@@ -723,51 +723,30 @@ const jaJP = {
       "performance": {
         "loading": "パフォーマンスを読み込んでいます...",
         "refreshing": "パフォーマンスデータを更新しています",
-        "latency": "レイテンシ性能",
         "empty": "この期間のパフォーマンス記録はありません。",
         "actions": {
           "refresh": "パフォーマンスデータを更新"
         },
-        "view": {
-          "label": "パフォーマンスビュー",
-          "allByUser": "すべてのユーザー",
-          "myKeys": "自分のキー"
-        },
+        "metric": { "label": "パフォーマンス指標", "ttft": "TTFT", "outputSpeed": "出力速度" },
+        "groupBy": { "label": "グループ化", "model": "モデル別", "upstream": "アップストリーム別", "operation": "操作別", "runtimeLocation": "地域別", "userId": "ユーザー別", "keyId": "API キー別" },
+        "filters": { "all": "すべて", "model": "モデル", "upstream": "アップストリーム", "operation": "操作", "runtimeLocation": "地域", "userId": "ユーザー", "keyId": "API キー" },
         "range": {
           "label": "パフォーマンスデータの期間",
           "today": "直近 1 日",
           "sevenDays": "7日間",
           "thirtyDays": "30日"
         },
-        "scope": {
-          "label": "レイテンシの範囲",
-          "total": "合計時間",
-          "upstream": "アップストリーム時間"
-        },
-        "chartView": {
-          "label": "グラフのグループ化",
-          "model": "モデル別",
-          "percentile": "パーセンタイル別"
-        },
         "percentile": {
-          "label": "レイテンシのパーセンタイル"
-        },
-        "model": {
-          "label": "パフォーマンスモデル",
-          "all": "全モデル"
+          "label": "パーセンタイル"
         },
         "summary": {
-          "successful": "成功リクエスト",
+          "requests": "リクエスト数",
           "errors": "エラー",
-          "average": "平均時間",
-          "p50": "p50",
-          "p95": "p95",
-          "p99": "p99"
+          "ttftP50": "TTFT p50", "speedP50": "速度 p50",
+          "ttftP95": "TTFT p95", "speedP95": "下位 5% の速度",
+          "ttftP99": "TTFT p99", "speedP99": "下位 1% の速度"
         },
-        "chartTitle": {
-          "byModel": "モデル別の {{percentile}} レイテンシ",
-          "byPercentile": "{{model}} のパーセンタイル別レイテンシ"
-        },
+        "chartTitle": "{{metric}} {{percentile}}・{{group}}",
         "series": {
           "label": "パフォーマンスシリーズの選択",
           "all": "すべてのシリーズを表示",
@@ -776,12 +755,10 @@ const jaJP = {
           "toggleHint": "クリックで表示を切り替えます。Shift キーを押しながらクリックするかダブルクリックすると、その系列だけを表示します。"
         },
         "tables": {
-          "byModel": "モデル別",
-          "byRegion": "地域別",
-          "model": "モデル",
-          "region": "地域",
           "requests": "リクエスト数",
-          "average": "平均時間"
+          "errors": "エラー",
+          "ttftP95": "TTFT p95",
+          "speedP95": "下位 5% の速度"
         }
       },
       "backupRestore": {

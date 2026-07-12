@@ -164,7 +164,7 @@ function parseBackupFile(
   }
 
   const record = parsed as Record<string, unknown>;
-  if (record.version !== 7) {
+  if (record.version !== 8) {
     return { ok: false, error: "The selected file is not a valid Floway backup file." };
   }
 
@@ -345,7 +345,7 @@ export default function DashboardAdminBackupRestore() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          version: 7,
+          version: 8,
           mode: importMode,
           data: importParsedData.data,
         }),

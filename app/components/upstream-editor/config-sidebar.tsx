@@ -82,7 +82,7 @@ function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; run
   const { control } = useFormContext<UpstreamEditorValues>();
   const { fields, append, move, remove } = useFieldArray({ control, name: "proxyFallbackList" });
   const available = [{ id: "direct", name: t("dashboard.upstreamEditor.proxy.direct") }, ...proxies];
-  const hint = runtime.kind === "cloudflare" ? t("dashboard.upstreamEditor.proxy.colo", { colo: runtime.colo }) : null;
+  const hint = runtime.kind === "cloudflare" ? t("dashboard.upstreamEditor.proxy.colo", { colo: runtime.runtimeLocation }) : null;
   return <div
     aria-describedby={hint ? `${idPrefix}-hint` : undefined}
     aria-labelledby={`${idPrefix}-label`}

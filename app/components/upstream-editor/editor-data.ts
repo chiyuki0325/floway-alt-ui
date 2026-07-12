@@ -14,7 +14,7 @@ import { authFetch, callApi, getCurrentSession } from "../../api/auth";
 
 export interface RuntimeInfo {
   kind: "node" | "cloudflare";
-  colo: string;
+  runtimeLocation: string;
 }
 
 export interface EditorAuxData {
