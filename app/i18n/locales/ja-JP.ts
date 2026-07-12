@@ -279,8 +279,8 @@ const jaJP = {
           "never": "未使用",
           "usedOn": "{{date}} に使用"
         },
-        "format": {
-          "openai": "OpenAI",
+        "source": {
+          "generate": "生成",
           "custom": "カスタム"
         },
         "dialog": {
@@ -289,7 +289,7 @@ const jaJP = {
         },
         "form": {
           "name": "名前",
-          "format": "API キー形式",
+          "source": "新しいキー",
           "customKey": "カスタム API キー",
           "customKeyPlaceholder": "カスタム API キーを貼り付け",
           "retention": "リクエストダンプを記録",
@@ -342,10 +342,8 @@ const jaJP = {
           "codexAuthHint": "シェルで実行して ~/.codex/auth.json を書き込みます。"
         },
         "rotate": {
-          "generatedTitle": "API キーをローテーション",
-          "generatedMessage": "キー {{name}} をローテーションしますか？古いキーはすぐに使用できなくなります。",
-          "title": "カスタム API キーをローテーション",
-          "message": "{{name}} の新しいキーを入力してください。ローテーション後、古いキーはすぐに使用できなくなります。"
+          "title": "API キーをローテーション",
+          "message": "{{name}} の新しいキーを選択してください。ローテーション後、古いキーはすぐに使用できなくなります。"
         },
         "delete": {
           "title": "API キーを削除",

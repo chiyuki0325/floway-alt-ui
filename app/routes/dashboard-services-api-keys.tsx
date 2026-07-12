@@ -10,7 +10,7 @@ import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { CliConfiguration } from "../components/api-keys/cli-configuration";
 import { KeyDialog } from "../components/api-keys/key-editor";
-import { RotateCustomKeyDialog } from "../components/api-keys/rotate-key-dialog";
+import { RotateKeyDialog } from "../components/api-keys/rotate-key-dialog";
 import { KeysTable } from "../components/api-keys/keys-table";
 import type { ApiKeysPageData, MutationToastController, UpstreamOption } from "../components/api-keys/types";
 import { ConfirmDialog } from "../components/confirm-dialog";
@@ -47,11 +47,9 @@ export default function DashboardServicesApiKeys() {
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ApiKey | null>(null);
-  const [rotateGeneratedTarget, setRotateGeneratedTarget] = useState<ApiKey | null>(null);
   const [rotateTarget, setRotateTarget] = useState<ApiKey | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ApiKey | null>(null);
   const [deleteSnapName, setDeleteSnapName] = useState("");
-  const [rotateGenSnapName, setRotateGenSnapName] = useState("");
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
   const [copyFailedTag, setCopyFailedTag] = useState<string | null>(null);
 
@@ -176,23 +174,6 @@ export default function DashboardServicesApiKeys() {
     }
   };
 
-  const rotateGeneratedKey = async (key: ApiKey) => {
-    setPageError(null);
-    const toastId = mutationToasts.start("rotate", key.name);
-    const result = await callApi<ApiKey>(() =>
-      authFetch(`/api/keys/${encodeURIComponent(key.id)}/rotate`, {
-        method: "POST",
-      }),
-    );
-    if (result.error) {
-      mutationToasts.fail(toastId, "rotate", key.name, result.error.message);
-      setPageError(result.error.message);
-      return;
-    }
-    mutationToasts.succeed(toastId, "rotate", key.name);
-    await reload();
-  };
-
   const deleteKey = async (key: ApiKey) => {
     setPageError(null);
     const toastId = mutationToasts.start("delete", key.name);
@@ -266,11 +247,7 @@ export default function DashboardServicesApiKeys() {
           onCopy={copyToClipboard}
           onDelete={(key) => { setDeleteSnapName(key.name); setDeleteTarget(key); }}
           onEdit={setEditTarget}
-          onRotate={(key) =>
-            key.api_key_format === "custom"
-              ? setRotateTarget(key)
-              : (setRotateGenSnapName(key.name), setRotateGeneratedTarget(key))
-          }
+          onRotate={setRotateTarget}
           onSelect={setSelectedKeyId}
           selectedKeyId={selectedKey?.id ?? ""}
           upstreams={data.upstreams}
@@ -325,7 +302,7 @@ export default function DashboardServicesApiKeys() {
         upstreams={data.upstreams}
         userUpstreamIds={user.upstreamIds}
       />
-      <RotateCustomKeyDialog
+      <RotateKeyDialog
         apiKey={rotateTarget}
         onOpenChange={(open) => {
           if (!open) setRotateTarget(null);
@@ -333,24 +310,6 @@ export default function DashboardServicesApiKeys() {
         onSaved={reload}
         mutationToasts={mutationToasts}
         open={rotateTarget !== null}
-      />
-      <ConfirmDialog
-        actionLabel={t("dashboard.apiKeys.actions.rotate")}
-        message={t("dashboard.apiKeys.rotate.generatedMessage", {
-          name: rotateGenSnapName,
-        })}
-        onConfirm={() => {
-          if (rotateGeneratedTarget) {
-            const target = rotateGeneratedTarget;
-            setRotateGeneratedTarget(null);
-            void rotateGeneratedKey(target);
-          }
-        }}
-        onOpenChange={(open) => {
-          if (!open) setRotateGeneratedTarget(null);
-        }}
-        open={rotateGeneratedTarget !== null}
-        title={t("dashboard.apiKeys.rotate.generatedTitle")}
       />
       <ConfirmDialog
         actionLabel={t("dashboard.apiKeys.actions.delete")}

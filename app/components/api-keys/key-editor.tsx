@@ -8,13 +8,13 @@ import { authFetch, callApi } from "../../api/auth";
 import { DialogShell } from "../dialog-shell";
 import { Input, Select } from "../fluent-form-controls";
 import { fluentComponents } from "../../fluent";
+import { keyWriteBody, type KeySource } from "./key-source";
 import type { MutationToastController, UpstreamOption } from "./types";
 import { UpstreamPicker } from "./upstream-picker";
 const { Button, DialogActions, DialogTitle, Field, MessageBar, MessageBarBody, Text } = fluentComponents;
-type ApiKeyFormat = ApiKey["api_key_format"];
 type RetentionPreset = "off" | "1h" | "6h" | "24h" | "7d" | "custom";
-interface KeyFormValues { name: string; keyFormat: ApiKeyFormat; customKey: string; upstreamOverride: boolean; upstreamIds: string[]; retentionPreset: RetentionPreset; retentionCustom: string; }
-interface CreateKeyBody { name: string; upstream_ids: string[] | null; dump_retention_seconds: number | null; key_format: ApiKeyFormat; custom_key?: string; }
+interface KeyFormValues { name: string; keySource: KeySource; customKey: string; upstreamOverride: boolean; upstreamIds: string[]; retentionPreset: RetentionPreset; retentionCustom: string; }
+interface CreateKeyBody { name: string; upstream_ids: string[] | null; dump_retention_seconds: number | null; key_source: KeySource; custom_key?: string; }
 interface UpdateKeyBody { name: string; upstream_ids: string[] | null; dump_retention_seconds: number | null; }
 const retentionPresetSeconds = { "1h": 3600, "6h": 21600, "24h": 86400, "7d": 604800 } as const;
 const dumpRetentionMaxSeconds = 10 * 365 * 24 * 60 * 60;
@@ -55,7 +55,7 @@ export function KeyDialog({
       z
         .object({
           name: z.string().trim().min(1, "dashboard.apiKeys.validation.nameRequired"),
-          keyFormat: z.enum(["openai", "custom"]),
+          keySource: z.enum(["generate", "custom"]),
           customKey: z.string(),
           upstreamOverride: z.boolean(),
           upstreamIds: z.array(z.string()),
@@ -70,7 +70,7 @@ export function KeyDialog({
               path: ["upstreamIds"],
             });
           }
-          if (isCreate && value.keyFormat === "custom" && !value.customKey.trim()) {
+          if (isCreate && value.keySource === "custom" && !value.customKey.trim()) {
             ctx.addIssue({
               code: "custom",
               message: "dashboard.apiKeys.validation.customKeyRequired",
@@ -142,10 +142,7 @@ export function KeyDialog({
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
               ...common,
-              key_format: values.keyFormat,
-              ...(values.keyFormat === "custom"
-                ? { custom_key: values.customKey.trim() }
-                : {}),
+              ...keyWriteBody(values.keySource, values.customKey),
             } satisfies CreateKeyBody),
           }),
         )
@@ -226,21 +223,21 @@ export function KeyDialog({
               <div className="grid gap-3 grid-cols-2 min-w-0 max-[900px]:grid-cols-1">
                 <Controller
                   control={control}
-                  name="keyFormat"
+                  name="keySource"
                   render={({ field }) => (
-                    <Field label={t("dashboard.apiKeys.form.format")}>
+                    <Field label={t("dashboard.apiKeys.form.source")}>
                       <Select {...field} disabled={saving}>
-                        <option value="openai">
-                          {t("dashboard.apiKeys.format.openai")}
+                        <option value="generate">
+                          {t("dashboard.apiKeys.source.generate")}
                         </option>
                         <option value="custom">
-                          {t("dashboard.apiKeys.format.custom")}
+                          {t("dashboard.apiKeys.source.custom")}
                         </option>
                       </Select>
                     </Field>
                   )}
                 />
-                {values.keyFormat === "custom" && (
+                {values.keySource === "custom" && (
                   <Controller
                     control={control}
                     name="customKey"
@@ -331,7 +328,7 @@ const keyFormDefaults = (apiKey: ApiKey | null): KeyFormValues => {
   const retention = retentionPresetFromValue(apiKey?.dump_retention_seconds ?? null);
   return {
     name: apiKey?.name ?? "",
-    keyFormat: apiKey?.api_key_format ?? "openai",
+    keySource: "generate",
     customKey: "",
     upstreamOverride: apiKey?.upstream_ids !== null && apiKey?.upstream_ids !== undefined,
     upstreamIds: apiKey?.upstream_ids ?? [],

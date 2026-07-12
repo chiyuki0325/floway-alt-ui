@@ -272,8 +272,8 @@ const en = {
             never: "Never",
             usedOn: "Used on {{date}}",
           },
-          format: {
-            openai: "OpenAI",
+          source: {
+            generate: "Generate",
             custom: "Custom",
           },
           dialog: {
@@ -282,7 +282,7 @@ const en = {
           },
           form: {
             name: "Name",
-            format: "API key format",
+            source: "New key",
             customKey: "Custom API key",
             customKeyPlaceholder: "Paste custom API key",
             retention: "Request dump retention",
@@ -341,12 +341,9 @@ const en = {
             codexAuthHint: "Run in a shell to write ~/.codex/auth.json.",
           },
           rotate: {
-            generatedTitle: "Rotate API Key",
-            generatedMessage:
-              "Rotate key {{name}}? The old key stops working immediately.",
-            title: "Rotate Custom API Key",
+            title: "Rotate API Key",
             message:
-              "Enter the replacement key for {{name}}. The old key stops working immediately.",
+              "Choose a replacement for {{name}}. The old key stops working immediately.",
           },
           delete: {
             title: "Delete API Key",

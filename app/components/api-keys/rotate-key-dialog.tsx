@@ -4,11 +4,12 @@ import type { ApiKey } from "../../api/types";
 import { authFetch, callApi } from "../../api/auth";
 import { fluentComponents } from "../../fluent";
 import { DialogShell } from "../dialog-shell";
-import { Input } from "../fluent-form-controls";
+import { Input, Select } from "../fluent-form-controls";
+import { keyWriteBody, type KeySource } from "./key-source";
 import type { MutationToastController } from "./types";
-const { Button, DialogActions, DialogTitle, Field, Text } = fluentComponents;
+const { Button, DialogActions, DialogTitle, Field, MessageBar, MessageBarBody, Text } = fluentComponents;
 
-export function RotateCustomKeyDialog({
+export function RotateKeyDialog({
   apiKey,
   mutationToasts,
   onOpenChange,
@@ -22,6 +23,7 @@ export function RotateCustomKeyDialog({
   open: boolean;
 }) {
   const { t } = useTranslation();
+  const [keySource, setKeySource] = useState<KeySource>("generate");
   const [customKey, setCustomKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export function RotateCustomKeyDialog({
 
   useEffect(() => {
     if (open) {
+      setKeySource("generate");
       setCustomKey("");
       setError(null);
       if (apiKey) setSnapName(apiKey.name);
@@ -38,7 +41,7 @@ export function RotateCustomKeyDialog({
   const rotate = async () => {
     if (!apiKey) return;
     const trimmed = customKey.trim();
-    if (!trimmed) {
+    if (keySource === "custom" && !trimmed) {
       setError(t("dashboard.apiKeys.validation.customKeyRequired"));
       return;
     }
@@ -49,7 +52,7 @@ export function RotateCustomKeyDialog({
       authFetch(`/api/keys/${encodeURIComponent(apiKey.id)}/rotate`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ custom_key: trimmed }),
+        body: JSON.stringify(keyWriteBody(keySource, trimmed)),
       }),
     );
     setSaving(false);
@@ -82,18 +85,27 @@ export function RotateCustomKeyDialog({
       <Text size={200} className="text-fui-fg2 leading-[1.35] !m-0">
         {t("dashboard.apiKeys.rotate.message", { name: snapName })}
       </Text>
-      <Field
-        label={t("dashboard.apiKeys.form.customKey")}
-        validationMessage={error ?? undefined}
-        validationState={error ? "error" : undefined}
-      >
-        <Input
+      <Field label={t("dashboard.apiKeys.form.source")}>
+        <Select
           disabled={saving}
-          onChange={(_, data) => setCustomKey(data.value)}
-          placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
-          value={customKey}
-        />
+          onChange={(_, data) => setKeySource(data.value as KeySource)}
+          value={keySource}
+        >
+          <option value="generate">{t("dashboard.apiKeys.source.generate")}</option>
+          <option value="custom">{t("dashboard.apiKeys.source.custom")}</option>
+        </Select>
       </Field>
+      {keySource === "custom" && (
+        <Field label={t("dashboard.apiKeys.form.customKey")}>
+          <Input
+            disabled={saving}
+            onChange={(_, data) => setCustomKey(data.value)}
+            placeholder={t("dashboard.apiKeys.form.customKeyPlaceholder")}
+            value={customKey}
+          />
+        </Field>
+      )}
+      {error && <MessageBar intent="error"><MessageBarBody>{error}</MessageBarBody></MessageBar>}
     </DialogShell>
   );
 }

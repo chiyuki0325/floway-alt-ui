@@ -261,8 +261,8 @@ const zhHantHK = {
             never: "從未使用",
             usedOn: "使用於 {{date}}",
           },
-          format: {
-            openai: "OpenAI",
+          source: {
+            generate: "生成",
             custom: "自定義",
           },
           dialog: {
@@ -271,7 +271,7 @@ const zhHantHK = {
           },
           form: {
             name: "名稱",
-            format: "API key 格式",
+            source: "新 key",
             customKey: "自定義 API key",
             customKeyPlaceholder: "粘貼自定義 API key",
             retention: "記錄請求轉儲",
@@ -325,10 +325,8 @@ const zhHantHK = {
             codexAuthHint: "在 shell 中運行以寫入 ~/.codex/auth.json。",
           },
           rotate: {
-            generatedTitle: "輪換 API Key",
-            generatedMessage: "輪換 key {{name}}？舊 key 會立即停止工作。",
-            title: "輪換自定義 API Key",
-            message: "輸入 {{name}} 的替換 key。輪換後舊 key 會立即停止工作。",
+            title: "輪換 API Key",
+            message: "為 {{name}} 選擇替換 key。輪換後舊 key 會立即停止工作。",
           },
           delete: {
             title: "刪除 API Key",
