@@ -60,7 +60,7 @@ const zhHantHK = {
           usage: "使用量",
           performance: "性能",
           users: "用戶",
-          backupRestore: "備份/還原",
+          backupRestore: "備份 / 還原",
           settings: "設定",
         },
         logout: {

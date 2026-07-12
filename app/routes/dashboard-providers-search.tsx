@@ -287,21 +287,21 @@ export default function DashboardProvidersSearch() {
         {/* Provider selector */}
         <Field label={t("dashboard.searchConfig.providerLabel")}>
           <Dropdown
+            button={{
+              children: (
+                <ProviderOptionLabel
+                  iconUrl={activeOption.iconUrl}
+                  label={t(activeOption.labelKey)}
+                />
+              ),
+            }}
             onOptionSelect={handleProviderChange}
             selectedOptions={[draft.provider]}
             value={t(activeOption.labelKey)}
           >
             {PROVIDER_OPTIONS.map((opt) => (
               <Option key={opt.value} value={opt.value} text={t(opt.labelKey)}>
-                {opt.iconUrl && (
-                  <img
-                    alt=""
-                    src={opt.iconUrl}
-                    className="block flex-none h-[16px] w-[16px]"
-                    style={{ filter: "light-dark(none, invert(1))" }}
-                  />
-                )}
-                <span>{t(opt.labelKey)}</span>
+                <ProviderOptionLabel iconUrl={opt.iconUrl} label={t(opt.labelKey)} />
               </Option>
             ))}
           </Dropdown>
@@ -487,5 +487,22 @@ export default function DashboardProvidersSearch() {
         </Panel>
       )}
     </section>
+  );
+}
+
+function ProviderOptionLabel({ iconUrl, label }: { iconUrl?: string; label: string }) {
+  return (
+    <span className="flex items-center gap-2 min-w-0">
+      {iconUrl && (
+        <img
+          alt=""
+          aria-hidden="true"
+          className="block flex-none h-[16px] w-[16px]"
+          src={iconUrl}
+          style={{ filter: "light-dark(none, invert(1))" }}
+        />
+      )}
+      <span className="truncate">{label}</span>
+    </span>
   );
 }

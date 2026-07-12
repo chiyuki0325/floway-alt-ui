@@ -60,7 +60,7 @@ const zhHantTW = {
           usage: "使用量",
           performance: "效能",
           users: "使用者",
-          backupRestore: "備份/復原",
+          backupRestore: "備份 / 復原",
           settings: "設定",
         },
         logout: {

@@ -60,7 +60,7 @@ const zhHansCN = {
           usage: "使用量",
           performance: "性能",
           users: "用户",
-          backupRestore: "备份/恢复",
+          backupRestore: "备份 / 恢复",
           settings: "设置",
         },
         logout: {
