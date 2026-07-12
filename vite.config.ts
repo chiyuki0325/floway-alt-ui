@@ -1,9 +1,23 @@
 import { reactRouter } from "@react-router/dev/vite";
 import UnoCSS from "unocss/vite";
 import { defineConfig } from "vite";
+import type { Plugin } from "vite";
+
+function prismComponentsEsm(): Plugin {
+  return {
+    name: "prism-components-esm",
+    enforce: "pre",
+    transform(code, id) {
+      const path = id.split("?", 1)[0]?.replaceAll("\\", "/");
+      if (!path || !/\/prismjs\/components\/prism-[^/]+\.js$/.test(path)) return;
+
+      return `import Prism from "prismjs";\n${code}`;
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [UnoCSS({ mode: "per-module" }), reactRouter()],
+  plugins: [prismComponentsEsm(), UnoCSS({ mode: "per-module" }), reactRouter()],
   resolve: {
     tsconfigPaths: true,
   },
