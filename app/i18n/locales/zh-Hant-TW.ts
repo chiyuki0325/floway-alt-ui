@@ -778,7 +778,7 @@ const zhHantTW = {
           export: {
             heading: "匯出",
             description:
-              "下載控制平面資料的完整快照，包括使用者、API 金鑰、上游、代理、使用記錄和搜尋提供方設定。",
+              "下載 API 金鑰、伺服器密鑰、上游、代理、搜尋設定和用量資料。請像資料庫備份一樣妥善保管。",
             includePerformance: "包含效能遙測資料",
             includePerformanceHint:
               "啟用後，匯出檔案將包含已記錄的效能指標以及設定資料。效能資料可能會顯著增加檔案大小。",

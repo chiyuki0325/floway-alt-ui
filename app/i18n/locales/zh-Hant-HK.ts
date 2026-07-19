@@ -778,7 +778,7 @@ const zhHantHK = {
           export: {
             heading: "匯出",
             description:
-              "下載控制平面資料的完整快照，包括用戶、API 密鑰、上游、代理、使用記錄和搜尋提供方設定。",
+              "下載 API 密鑰、伺服器密鑰、上游、代理、搜尋設定和用量資料。請像資料庫備份一樣妥善保管。",
             includePerformance: "包含性能遙測資料",
             includePerformanceHint:
               "啟用後，匯出檔案將包含已記錄的性能指標以及設定資料。性能資料可能會顯著增加檔案大小。",

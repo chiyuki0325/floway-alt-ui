@@ -819,7 +819,7 @@ const en = {
           export: {
             heading: "Export",
             description:
-              "Download a complete snapshot of control plane data, including users, API keys, upstreams, proxies, usage records, and search provider configuration.",
+              "Download API keys, server secrets, upstreams, proxies, search configuration, and usage data. Treat the file like a database backup.",
             includePerformance: "Include Performance Telemetry",
             includePerformanceHint:
               "When enabled, the export will include recorded performance metrics alongside configuration data. Performance data can significantly increase file size.",

@@ -778,7 +778,7 @@ const zhHansCN = {
           export: {
             heading: "导出",
             description:
-              "下载控制平面数据的完整快照，包括用户、API 密钥、上游、代理、使用记录和搜索提供方配置。",
+              "下载 API 密钥、服务端密钥、上游、代理、搜索配置和用量数据。请像数据库备份一样妥善保管。",
             includePerformance: "包含性能遥测数据",
             includePerformanceHint:
               "启用后，导出文件将包含已记录的性能指标以及配置数据。性能数据可能会显著增加文件大小。",
