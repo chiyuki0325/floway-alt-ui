@@ -57,7 +57,7 @@ export function AliasDialog({ aliases, models, onOpenChange, onSaved, open, reco
   const values = useWatch({ control }) as AliasFormValues;
   const targets = values.targets ?? [];
   const kind = values.kind ?? "chat";
-  const { append, fields, move, remove, replace, update } = useFieldArray({ control, name: "targets" });
+  const { append, fields, move, remove, replace } = useFieldArray({ control, name: "targets" });
   const automaticMetadata = useMemo(() => computeAnnouncedMetadata(targets, kind, models), [kind, models, targets]);
   const targetIds = useMemo(() => realModelIdsOfKind(models, kind), [kind, models]);
   const aliasWarnings = computeAliasWarnings({ name: values.name?.trim() ?? "", targets }, models);
@@ -98,7 +98,7 @@ export function AliasDialog({ aliases, models, onOpenChange, onSaved, open, reco
     </div>
     <section className="grid gap-2" role="group" aria-labelledby="alias-targets-heading">
       <div className="flex items-center justify-between gap-3"><div><Text id="alias-targets-heading" size={400} weight="semibold">{t("dashboard.modelAliases.target.heading")}</Text><Text block size={200} className="text-fui-fg2">{t("dashboard.modelAliases.target.description")}</Text></div><Button icon={<AddRegular />} onClick={() => append(blankTarget())}>{t("dashboard.modelAliases.actions.addTarget")}</Button></div>
-      {fields.map((field, index) => <AliasTargetRow key={field.id} disabled={saving} index={index} isFirst={index === 0} isLast={index === fields.length - 1} isSole={fields.length === 1} kind={kind} models={models} target={targets[index] ?? blankTarget()} targetIds={targetIds} onChange={(target) => update(index, target)} onMove={(direction) => move(index, index + direction)} onRemove={() => remove(index)} />)}
+      {fields.map((field, index) => <AliasTargetRow key={field.id} disabled={saving} index={index} isFirst={index === 0} isLast={index === fields.length - 1} isSole={fields.length === 1} kind={kind} models={models} target={targets[index] ?? blankTarget()} targetIds={targetIds} onChange={(target) => setValue(`targets.${index}`, target, { shouldDirty: true, shouldValidate: true })} onMove={(direction) => move(index, index + direction)} onRemove={() => remove(index)} />)}
       {errors.targets?.message && <Text role="alert" className="text-fui-fg2">{t(errors.targets.message)}</Text>}
     </section>
     {kind !== "image" && <Accordion collapsible><AccordionItem value="metadata"><AccordionHeader as="h3"><div><Text weight="semibold">{t("dashboard.modelAliases.metadata.heading")}</Text><Text block size={200} className="text-fui-fg2">{t("dashboard.modelAliases.metadata.description")}</Text></div></AccordionHeader><AccordionPanel><div className="grid gap-4 pt-2"><Switch checked={values.manualMetadata ?? false} disabled={saving} label={t("dashboard.modelAliases.metadata.manual")} onChange={(_, data) => setManual(data.checked)} /><MetadataEditor disabled={saving || !values.manualMetadata} kind={kind} value={values.manualMetadata ? values.announcedMetadata ?? {} : automaticMetadata} onChange={(value) => setValue("announcedMetadata", value, { shouldValidate: true })} /></div></AccordionPanel></AccordionItem></Accordion>}
