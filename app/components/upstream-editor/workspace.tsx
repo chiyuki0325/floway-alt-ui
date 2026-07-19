@@ -1,6 +1,7 @@
 import {
   AddRegular,
   ArrowSyncRegular,
+  CheckmarkCircleRegular,
   CopyRegular,
   EditRegular,
   WarningRegular,
@@ -17,6 +18,7 @@ import type { UpstreamEditorValues } from "./editor-data";
 import { publicModelId } from "./editor-data";
 import { FeatureFlagsEditor } from "./feature-flags";
 import { ModelDetail } from "./model-detail";
+import { formatFullTime, formatRelativeTime } from "../requests/format";
 
 const {
   Button,
@@ -156,7 +158,10 @@ function ModelsWorkspace({ discovered, error, flags, loading, onRefresh, record 
       <div className="grid gap-0.5"><Text size={500} weight="semibold">{t("dashboard.upstreamEditor.models.title")}</Text><Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.summary", { total: rows.length, manual: manual.length, auto: rows.length - manual.length })}</Text></div>
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {!readOnly && <Button icon={<AddRegular />} onClick={() => append({ upstreamModelId: "", kind: "chat", endpoints: { chatCompletions: {} } })}>{t("dashboard.upstreamEditor.models.add")}</Button>}
-        {record.kind !== "azure" && <Button disabled={loading} icon={loading ? <Spinner size="tiny" /> : <ArrowSyncRegular />} onClick={onRefresh}>{t("dashboard.upstreamEditor.models.refresh")}</Button>}
+        {record.kind !== "azure" && <>
+          <ModelsCacheStatus cache={record.modelsCache} />
+          <Button disabled={loading} icon={loading ? <Spinner size="tiny" /> : <ArrowSyncRegular />} onClick={onRefresh}>{t("dashboard.upstreamEditor.models.refresh")}</Button>
+        </>}
       </div>
     </div>
     {error && <MessageBar
@@ -193,4 +198,20 @@ function ModelsWorkspace({ discovered, error, flags, loading, onRefresh, record 
         </Table>
     </div>
   </div>;
+}
+
+function ModelsCacheStatus({ cache }: { cache: UpstreamRecord["modelsCache"] }) {
+  const { t } = useTranslation();
+  const label = cache.fetchedAt === null
+    ? t("dashboard.upstreamEditor.models.cacheNever")
+    : t("dashboard.upstreamEditor.models.cacheFetched", { time: formatRelativeTime(cache.fetchedAt) });
+  const detail = cache.lastError
+    ? t("dashboard.upstreamEditor.models.cacheErrorDetail", { message: cache.lastError.message, time: formatFullTime(cache.lastError.at) })
+    : cache.fetchedAt === null ? label : formatFullTime(cache.fetchedAt);
+  return <Tooltip content={detail} relationship="description">
+    <span className="inline-flex items-center gap-1 text-fui-fg2" tabIndex={0}>
+      {cache.lastError ? <WarningRegular /> : <CheckmarkCircleRegular />}
+      <Text size={200}>{cache.lastError ? t("dashboard.upstreamEditor.models.cacheFailed") : label}</Text>
+    </span>
+  </Tooltip>;
 }

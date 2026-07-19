@@ -588,6 +588,10 @@ const en = {
             manual: "Manual",
             add: "Add",
             refresh: "Refresh models",
+            cacheNever: "Never fetched",
+            cacheFetched: "Fetched {{time}} ago",
+            cacheFailed: "Last fetch failed",
+            cacheErrorDetail: "{{time}} — {{message}}",
             listingFailed: "Could not fetch the model list from the upstream.",
             listingFailedWithDetail:
               "Could not fetch the model list from the upstream: {{message}}",
