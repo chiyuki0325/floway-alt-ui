@@ -10,7 +10,7 @@ const { Checkbox, Option, Tab, TabList, Text } = fluentComponents;
 const apiKeyPlaceholder = "<your-api-key>";
 const claudeModelPattern = /(^|\/)claude-/;
 const codexModelPattern = /(^|\/)gpt-5/;
-const claudeTier: Record<string, number> = { opus: 0, sonnet: 1, haiku: 2 };
+const claudeTier: Record<string, number> = { fable: 0, opus: 1, sonnet: 2, haiku: 3 };
 export function CliConfiguration({
   apiKey,
   copiedTag,
@@ -57,27 +57,30 @@ export function CliConfiguration({
       ),
     [chatIds, onlyGpt5Models],
   );
-  const claudeBig = useMemo(() => [...claudeIds].sort(sortClaudeBig), [claudeIds]);
-  const claudeSonnet = useMemo(() => [...claudeIds].sort(sortClaudeSonnet), [claudeIds]);
-  const claudeSmall = useMemo(() => [...claudeIds].sort(sortClaudeSmall), [claudeIds]);
+  const claudeFable = useMemo(() => [...claudeIds].sort(sortClaudeFor("fable")), [claudeIds]);
+  const claudeOpus = useMemo(() => [...claudeIds].sort(sortClaudeFor("opus")), [claudeIds]);
+  const claudeSonnet = useMemo(() => [...claudeIds].sort(sortClaudeFor("sonnet")), [claudeIds]);
+  const claudeHaiku = useMemo(() => [...claudeIds].sort(sortClaudeFor("haiku")), [claudeIds]);
   const codexModels = useMemo(() => [...codexIds].sort(sortCodex), [codexIds]);
-  const [claudeModel, setClaudeModel] = useState("");
+  const [fableModel, setFableModel] = useState("");
+  const [opusModel, setOpusModel] = useState("");
   const [sonnetModel, setSonnetModel] = useState("");
   const [haikuModel, setHaikuModel] = useState("");
   const [codexModel, setCodexModel] = useState("");
 
   useEffect(() => {
-    setClaudeModel((current) => (claudeBig.includes(current) ? current : claudeBig[0] ?? ""));
+    setFableModel((current) => (claudeFable.includes(current) ? current : claudeFable[0] ?? ""));
+    setOpusModel((current) => (claudeOpus.includes(current) ? current : claudeOpus[0] ?? ""));
     setSonnetModel((current) =>
       claudeSonnet.includes(current) ? current : claudeSonnet[0] ?? "",
     );
     setHaikuModel((current) =>
-      claudeSmall.includes(current) ? current : defaultClaudeSmallModel(claudeSmall),
+      claudeHaiku.includes(current) ? current : claudeHaiku[0] ?? "",
     );
     setCodexModel((current) =>
       codexModels.includes(current) ? current : codexModels[0] ?? "",
     );
-  }, [claudeBig, claudeSmall, claudeSonnet, codexModels]);
+  }, [claudeFable, claudeHaiku, claudeOpus, claudeSonnet, codexModels]);
 
   const contextById = useMemo(() => {
     const map = new Map<string, number>();
@@ -93,13 +96,12 @@ export function CliConfiguration({
   }, [keyScopedModels]);
   const addContext = (id: string) => ((contextById.get(id) ?? 0) >= 1_000_000 ? `${id}[1m]` : id);
 
-  const claudeSnippet = [
-    `export ANTHROPIC_BASE_URL=${baseUrl}`,
-    `export ANTHROPIC_AUTH_TOKEN=${apiKey}`,
-    claudeModel ? `export ANTHROPIC_MODEL=${addContext(claudeModel)}` : null,
-    sonnetModel ? `export ANTHROPIC_DEFAULT_SONNET_MODEL=${addContext(sonnetModel)}` : null,
-    haikuModel ? `export ANTHROPIC_DEFAULT_HAIKU_MODEL=${haikuModel}` : null,
-  ].filter((line): line is string => line !== null).join("\n");
+  const claudeSnippet = buildClaudeSettingsSnippet(baseUrl, apiKey, {
+    fable: addContext(fableModel),
+    opus: addContext(opusModel),
+    sonnet: addContext(sonnetModel),
+    haiku: haikuModel,
+  });
 
   const codexBaseUrl = `${baseUrl}/azure-api.codex`;
   const codexSnippet = [
@@ -139,10 +141,16 @@ export function CliConfiguration({
           />
           <div className="flex items-end flex-wrap gap-[10px] min-w-0">
             <SnippetSelect
-              label={t("dashboard.apiKeys.configuration.model")}
-              onChange={setClaudeModel}
-              options={claudeBig}
-              value={claudeModel}
+              label={t("dashboard.apiKeys.configuration.fable")}
+              onChange={setFableModel}
+              options={claudeFable}
+              value={fableModel}
+            />
+            <SnippetSelect
+              label={t("dashboard.apiKeys.configuration.opus")}
+              onChange={setOpusModel}
+              options={claudeOpus}
+              value={opusModel}
             />
             <SnippetSelect
               label={t("dashboard.apiKeys.configuration.sonnet")}
@@ -153,7 +161,7 @@ export function CliConfiguration({
             <SnippetSelect
               label={t("dashboard.apiKeys.configuration.haiku")}
               onChange={setHaikuModel}
-              options={claudeSmall}
+              options={claudeHaiku}
               value={haikuModel}
             />
           </div>
@@ -161,7 +169,7 @@ export function CliConfiguration({
           <CodeBlock
             code={claudeSnippet}
             copied={copiedTag === "snippet-claude"}
-            language="bash"
+            language="json"
             onCopy={() => onCopy(claudeSnippet, "snippet-claude")}
           />
         </div>
@@ -264,36 +272,26 @@ const tierOfClaude = (id: string) => {
   return 99;
 };
 
-const knownClaudeFamilyRank = (id: string) =>
-  tierOfClaude(id) === 99 ? 1 : 0;
-
-const sortClaudeBig = (a: string, b: string) => {
-  const knownDiff = knownClaudeFamilyRank(a) - knownClaudeFamilyRank(b);
-  if (knownDiff !== 0) return knownDiff;
-  const tierDiff = tierOfClaude(a) - tierOfClaude(b);
-  return tierDiff !== 0 ? tierDiff : b.localeCompare(a);
-};
-
-const sortClaudeSmall = (a: string, b: string) => {
-  const knownDiff = knownClaudeFamilyRank(a) - knownClaudeFamilyRank(b);
-  if (knownDiff !== 0) return knownDiff;
-  const tierDiff = tierOfClaude(b) - tierOfClaude(a);
-  return tierDiff !== 0 ? tierDiff : b.localeCompare(a);
-};
-
-const sortClaudeSonnet = (a: string, b: string) => {
-  const knownDiff = knownClaudeFamilyRank(a) - knownClaudeFamilyRank(b);
-  if (knownDiff !== 0) return knownDiff;
-  const diffA = Math.abs(tierOfClaude(a) - claudeTier.sonnet!);
-  const diffB = Math.abs(tierOfClaude(b) - claudeTier.sonnet!);
+const sortClaudeFor = (tier: keyof typeof claudeTier) => (a: string, b: string) => {
+  const diffA = Math.abs(tierOfClaude(a) - claudeTier[tier]);
+  const diffB = Math.abs(tierOfClaude(b) - claudeTier[tier]);
   return diffA !== diffB ? diffA - diffB : b.localeCompare(a);
 };
 
-const defaultClaudeSmallModel = (models: string[]) =>
-  models.find((id) => id.includes("haiku")) ??
-  models.find((id) => id.includes("sonnet")) ??
-  models[0] ??
-  "";
+export const buildClaudeSettingsSnippet = (
+  baseUrl: string,
+  apiKey: string,
+  models: { fable: string; opus: string; sonnet: string; haiku: string },
+) => JSON.stringify({
+  env: {
+    ANTHROPIC_BASE_URL: baseUrl,
+    ANTHROPIC_AUTH_TOKEN: apiKey,
+    ANTHROPIC_DEFAULT_FABLE_MODEL: models.fable,
+    ANTHROPIC_DEFAULT_OPUS_MODEL: models.opus,
+    ANTHROPIC_DEFAULT_SONNET_MODEL: models.sonnet,
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: models.haiku,
+  },
+}, null, 2);
 
 const sortCodex = (a: string, b: string) => {
   const miniA = a.includes("mini") ? 1 : 0;
