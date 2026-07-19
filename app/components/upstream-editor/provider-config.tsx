@@ -249,6 +249,7 @@ const pathOverrideKeys = [
   "/responses",
   "/messages",
   "/embeddings",
+  "/alpha/search",
   "/images/generations",
   "/images/edits",
 ] as const;

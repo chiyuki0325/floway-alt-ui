@@ -831,6 +831,7 @@ const zhHansCN = {
             microsoftGrounding: "Microsoft Grounding",
             jina: "Jina",
           },
+          passthrough: { title: "透传 OpenAI 搜索", description: "将 /alpha/search 和 Responses 托管搜索转发到指定的 Codex 或 OpenAI 兼容上游。", upstream: "搜索上游", model: "搜索模型", empty: "请添加一个已启用且包含聊天模型的 Codex 或自定义上游。" },
           providerDescTavily: "Tavily 是专为 LLM 和 RAG 工作流优化的搜索引擎。",
           providerDescMicrosoftGrounding:
             "Microsoft Grounding 利用 Bing Search API 为 LLM 提供答案依据。",

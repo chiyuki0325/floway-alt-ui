@@ -72,6 +72,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      "/alpha/search": {
+        target: "http://aperturius.chyk.ink:8788",
+        changeOrigin: true,
+        secure: true,
+      },
       "/v1": {
         target: "http://aperturius.chyk.ink:8788",
         changeOrigin: true,

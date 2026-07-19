@@ -875,6 +875,13 @@ const en = {
             microsoftGrounding: "Microsoft Grounding",
             jina: "Jina",
           },
+          passthrough: {
+            title: "Passthrough OpenAI search",
+            description: "Route /alpha/search and Responses hosted search through a selected Codex or OpenAI-compatible upstream.",
+            upstream: "Search upstream",
+            model: "Search model",
+            empty: "Add an enabled Codex or Custom upstream with a chat model to use passthrough search.",
+          },
           providerDescTavily:
             "Tavily is a search engine optimized for LLMs and RAG workflows.",
           providerDescMicrosoftGrounding:

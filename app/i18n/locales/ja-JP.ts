@@ -832,6 +832,7 @@ const jaJP = {
           "microsoftGrounding": "Microsoft Grounding",
           "jina": "Jina"
         },
+        "passthrough": { "title": "OpenAI 検索をパススルー", "description": "/alpha/search と Responses のホスト検索を選択した Codex または OpenAI 互換アップストリームへ転送します。", "upstream": "検索アップストリーム", "model": "検索モデル", "empty": "チャットモデルを持つ有効な Codex または Custom アップストリームを追加してください。" },
         "providerDescTavily": "Tavily は、LLM および RAG ワークフロー用に最適化された検索エンジンです。",
         "providerDescMicrosoftGrounding": "Microsoft Grounding は、LLM 応答をグラウンディングするために Bing Search API を活用します。",
         "providerDescJina": "Jina AI は、Web 検索 API とコンテンツ抽出 API を提供します。",

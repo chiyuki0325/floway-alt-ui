@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { redirect } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import type { Route } from "./+types/dashboard-providers-search";
-import type { SearchConfig, SearchConfigTestResult } from "../api/types";
+import type { ControlPlaneModel, SearchConfig, SearchConfigTestResult, UpstreamRecord } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import bingIconUrl from "../assets/bing.svg";
 import jinaIconUrl from "../assets/jina.svg";
 import tavilyIconUrl from "../assets/tavily.svg";
-import { Dropdown, Input } from "../components/fluent-form-controls";
+import { Dropdown, Input, Select } from "../components/fluent-form-controls";
 import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
@@ -23,12 +23,30 @@ const {
   MessageBarBody,
   Option,
   Spinner,
+  Switch,
   Text,
 } = fluentComponents;
 
-export async function clientLoader() {
+interface SearchPageLoaderData {
+  config: SearchConfig;
+  upstreams: UpstreamRecord[];
+  models: ControlPlaneModel[];
+  error: string | null;
+}
+
+export async function clientLoader(): Promise<SearchPageLoaderData> {
   if (!getSessionToken()) throw redirect("/");
-  return null;
+  const [configResult, upstreamsResult, modelsResult] = await Promise.all([
+    callApi<SearchConfig>(() => authFetch("/api/search-config")),
+    callApi<UpstreamRecord[]>(() => authFetch("/api/upstreams")),
+    callApi<ModelsResponse>(() => authFetch("/api/models?aliases=false&include_unlisted=true")),
+  ]);
+  return {
+    config: configResult.data ?? DEFAULT_CONFIG,
+    upstreams: upstreamsResult.data ?? [],
+    models: modelsResult.data?.data ?? [],
+    error: configResult.error?.message ?? upstreamsResult.error?.message ?? modelsResult.error?.message ?? null,
+  };
 }
 
 export function meta({}: Route.MetaArgs) {
@@ -44,7 +62,15 @@ const DEFAULT_CONFIG: SearchConfig = {
   tavily: { apiKey: "" },
   microsoftGrounding: { apiKey: "" },
   jina: { apiKey: "" },
+  passthroughOpenAiSearch: { enabled: false, upstreamId: "", model: "" },
 };
+
+interface ModelsResponse { object: string; data: ControlPlaneModel[] }
+
+export const eligibleSearchUpstreams = (upstreams: readonly UpstreamRecord[], models: readonly ControlPlaneModel[]) =>
+  upstreams.filter((upstream) => upstream.enabled
+    && (upstream.kind === "codex" || upstream.kind === "custom")
+    && models.some((model) => model.kind === "chat" && model.upstreams.some((binding) => binding.id === upstream.id)));
 
 interface ProviderOption {
   value: SearchConfig["provider"];
@@ -126,14 +152,20 @@ function SearchPageHeader() {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function DashboardProvidersSearch() {
+export function HydrateFallback() {
+  const { t } = useTranslation();
+  return <PageLoadingPanel label={t("common.loading")} />;
+}
+
+export default function DashboardProvidersSearch({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation();
   const { user } = useDashboardOutletContext();
 
   // Draft state
-  const [draft, setDraft] = useState<SearchConfig>(DEFAULT_CONFIG);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<SearchConfig>(loaderData.config);
+  const upstreams = loaderData.upstreams;
+  const models = loaderData.models;
+  const loadError = loaderData.error;
 
   // Save state
   const [saving, setSaving] = useState(false);
@@ -147,27 +179,30 @@ export default function DashboardProvidersSearch() {
   );
 
   const activeOption = findProviderOption(draft.provider);
+  const eligibleUpstreams = useMemo(() => eligibleSearchUpstreams(upstreams, models), [models, upstreams]);
+  const modelsForSelectedUpstream = useMemo(() => models.filter((model) =>
+    model.kind === "chat" && model.upstreams.some((binding) => binding.id === draft.passthroughOpenAiSearch.upstreamId)), [draft.passthroughOpenAiSearch.upstreamId, models]);
 
-  // Load config on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const result = await callApi<SearchConfig>(() =>
-        authFetch("/api/search-config"),
-      );
-      if (cancelled) return;
-      if (result.error) {
-        setLoadError(result.error.message);
-      } else if (result.data) {
-        setDraft(result.data);
-      }
-      setLoading(false);
+  const setPassthroughUpstream = useCallback((upstreamId: string, preferredModel?: string) => {
+    const candidates = models.filter((model) => model.kind === "chat"
+      && model.upstreams.some((binding) => binding.id === upstreamId));
+    const model = candidates.find((candidate) => candidate.id === preferredModel) ?? candidates[0];
+    setDraft((current) => ({
+      ...current,
+      passthroughOpenAiSearch: { enabled: true, upstreamId, model: model?.id ?? "" },
+    }));
+    setSaveSuccess(false);
+  }, [models]);
+
+  const togglePassthrough = useCallback((enabled: boolean) => {
+    if (!enabled) {
+      setDraft((current) => ({ ...current, passthroughOpenAiSearch: { ...current.passthroughOpenAiSearch, enabled: false } }));
+      return;
     }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const selected = eligibleUpstreams.find((upstream) => upstream.id === draft.passthroughOpenAiSearch.upstreamId)
+      ?? eligibleUpstreams[0];
+    if (selected) setPassthroughUpstream(selected.id, draft.passthroughOpenAiSearch.model);
+  }, [draft.passthroughOpenAiSearch, eligibleUpstreams, setPassthroughUpstream]);
 
   // Handlers
   const handleProviderChange = useCallback(
@@ -260,16 +295,6 @@ export default function DashboardProvidersSearch() {
     );
   }
 
-  // ---- loading ----
-  if (loading) {
-    return (
-      <section className="grid gap-[18px] max-w-[960px] min-w-0">
-        <SearchPageHeader />
-        <PageLoadingPanel label={t("common.loading")} />
-      </section>
-    );
-  }
-
   // ---- main render ----
   return (
     <section className="grid gap-[18px] max-w-[960px] min-w-0">
@@ -339,6 +364,34 @@ export default function DashboardProvidersSearch() {
             />
           </Field>
         )}
+
+        <section className="grid gap-3 border-t border-t-solid border-fui-stroke1 pt-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="grid gap-1 min-w-0">
+              <Text weight="semibold">{t("dashboard.searchConfig.passthrough.title")}</Text>
+              <Text size={200} className="text-fui-fg2">{t("dashboard.searchConfig.passthrough.description")}</Text>
+            </div>
+            <Switch
+              aria-label={t("dashboard.searchConfig.passthrough.title")}
+              checked={draft.passthroughOpenAiSearch.enabled}
+              disabled={eligibleUpstreams.length === 0}
+              onChange={(_, data) => togglePassthrough(data.checked)}
+            />
+          </div>
+          {draft.passthroughOpenAiSearch.enabled && <div className="grid grid-cols-2 gap-3 max-[620px]:grid-cols-1">
+            <Field label={t("dashboard.searchConfig.passthrough.upstream")}>
+              <Select value={draft.passthroughOpenAiSearch.upstreamId} onChange={(_, data) => setPassthroughUpstream(data.value)}>
+                {eligibleUpstreams.map((upstream) => <option key={upstream.id} value={upstream.id}>{upstream.name}</option>)}
+              </Select>
+            </Field>
+            <Field label={t("dashboard.searchConfig.passthrough.model")}>
+              <Select value={draft.passthroughOpenAiSearch.model} onChange={(_, data) => setDraft((current) => ({ ...current, passthroughOpenAiSearch: { ...current.passthroughOpenAiSearch, model: data.value } }))}>
+                {modelsForSelectedUpstream.map((model) => <option key={model.id} value={model.id}>{model.display_name ?? model.id}</option>)}
+              </Select>
+            </Field>
+          </div>}
+          {eligibleUpstreams.length === 0 && <Text size={200} className="text-fui-fg3">{t("dashboard.searchConfig.passthrough.empty")}</Text>}
+        </section>
 
         {/* Actions */}
         <div className="flex flex-col gap-[10px] sm:flex-row sm:items-center">
