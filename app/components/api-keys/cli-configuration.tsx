@@ -107,18 +107,21 @@ export function CliConfiguration({
   const codexSnippet = [
     codexModel ? `model = "${codexModel}"` : null,
     codexModel ? 'model_provider = "floway"' : null,
-    `chatgpt_base_url = "${codexBaseUrl}"`,
-    "",
     "[model_providers.floway]",
     'name = "Floway"',
     `base_url = "${codexBaseUrl}"`,
+    'auth = { command = "sh", args = ["-c", "cat \\"${CODEX_HOME:-$HOME/.codex}/floway-token\\""] } # Linux & macOS',
+    '# auth = { command = "powershell", args = ["-NoProfile", "-Command", "$h = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME \'.codex\' }; [IO.File]::ReadAllText((Join-Path $h \'floway-token\'))"] } # Windows',
     'wire_api = "responses"',
     "supports_websockets = true",
+    'http_headers = { "x-openai-actor-authorization" = "1" }',
     "",
     "[features]",
     "apps = false",
+    "standalone_web_search = true",
   ].filter((line): line is string => line !== null).join("\n");
-  const codexAuthCommand = codexAuthSnippet(baseUrl, apiKey);
+  const codexUnixCredential = codexUnixCredentialSnippet(apiKey);
+  const codexWindowsCredential = codexWindowsCredentialSnippet(apiKey);
 
   return (
     <div className="grid gap-[14px] min-w-0">
@@ -198,10 +201,17 @@ export function CliConfiguration({
           />
           <HintText>{t("dashboard.apiKeys.configuration.codexAuthHint")}</HintText>
           <CodeBlock
-            code={codexAuthCommand}
+            code={codexUnixCredential}
             copied={copiedTag === "snippet-codex-auth"}
             language="bash"
-            onCopy={() => onCopy(codexAuthCommand, "snippet-codex-auth")}
+            onCopy={() => onCopy(codexUnixCredential, "snippet-codex-auth")}
+          />
+          <HintText>{t("dashboard.apiKeys.configuration.codexWindowsAuthHint")}</HintText>
+          <CodeBlock
+            code={codexWindowsCredential}
+            copied={copiedTag === "snippet-codex-auth-windows"}
+            language="powershell"
+            onCopy={() => onCopy(codexWindowsCredential, "snippet-codex-auth-windows")}
           />
         </div>
       )}
@@ -301,46 +311,21 @@ const sortCodex = (a: string, b: string) => {
 
 const dedupe = (items: string[]) => [...new Set(items)];
 
-const codexAuthSnippet = (baseUrl: string, apiKey: string) => {
-  const host = (() => {
-    try {
-      return new URL(baseUrl).host;
-    } catch {
-      return "local";
-    }
-  })();
-  const b64url = (value: string) =>
-    btoa(value).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-  const header = b64url('{"alg":"none","typ":"JWT"}');
-  const payload = b64url(
-    JSON.stringify({
-      email: `floway@${host}`,
-      "https://api.openai.com/auth": {
-        chatgpt_plan_type: "pro_plus",
-        chatgpt_user_id: "user-floway",
-        chatgpt_account_id: "acct-floway",
-      },
-    }),
-  );
-  const auth = {
-    auth_mode: "chatgpt",
-    openai_api_key: null,
-    tokens: {
-      id_token: `${header}.${payload}.c2ln`,
-      access_token: apiKey,
-      refresh_token: "noop",
-    },
-    last_refresh: "__LAST_REFRESH__",
-  };
-  const json = JSON.stringify(auth).replace(
-    '"__LAST_REFRESH__"',
-    '"$(date -u +%Y-%m-%dT%H:%M:%SZ)"',
-  );
+export const codexUnixCredentialSnippet = (apiKey: string) => {
+  const quoted = `'${apiKey.replaceAll("'", `'"'"'`)}'`;
   return [
-    "mkdir -p ~/.codex && \\",
-    "  { [ -f ~/.codex/auth.json ] && cp ~/.codex/auth.json ~/.codex/auth.json.bak.$(date +%s); :; } && \\",
-    "  cat > ~/.codex/auth.json <<EOF",
-    json,
-    "EOF",
+    'codex_home="${CODEX_HOME:-$HOME/.codex}"',
+    'mkdir -p "$codex_home" && \\',
+    `  printf '%s' ${quoted} > "$codex_home/floway-token" && \\`,
+    '  chmod 600 "$codex_home/floway-token"',
+  ].join("\n");
+};
+
+export const codexWindowsCredentialSnippet = (apiKey: string) => {
+  const quoted = `'${apiKey.replaceAll("'", "''")}'`;
+  return [
+    '$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }',
+    'New-Item -ItemType Directory -Force -Path $codexHome | Out-Null',
+    `[IO.File]::WriteAllText((Join-Path $codexHome "floway-token"), ${quoted}, (New-Object Text.UTF8Encoding($false)))`,
   ].join("\n");
 };

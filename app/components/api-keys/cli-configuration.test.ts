@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildClaudeSettingsSnippet } from "./cli-configuration";
+import { buildClaudeSettingsSnippet, codexUnixCredentialSnippet, codexWindowsCredentialSnippet } from "./cli-configuration";
 
 describe("Claude Code settings snippet", () => {
   it("writes every model tier into the settings env block", () => {
@@ -19,5 +19,19 @@ describe("Claude Code settings snippet", () => {
         ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-haiku",
       },
     });
+  });
+});
+
+describe("Codex provider credentials", () => {
+  it("stores a provider-scoped token without replacing auth.json", () => {
+    const unix = codexUnixCredentialSnippet("floway-'key");
+    expect(unix).toContain('floway-token');
+    expect(unix).toContain("'floway-'\"'\"'key'");
+    expect(unix).not.toContain("auth.json");
+
+    const windows = codexWindowsCredentialSnippet("floway-'key");
+    expect(windows).toContain('floway-token');
+    expect(windows).toContain("'floway-''key'");
+    expect(windows).not.toContain("auth.json");
   });
 });

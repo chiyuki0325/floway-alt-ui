@@ -340,7 +340,8 @@ const jaJP = {
           "onlyGpt5Models": "GPT-5 シリーズのモデルのみ表示",
           "claudeHint": "env ブロックを ~/.claude/settings.json または .claude/settings.json にマージします。",
           "codexConfigHint": "~/.codex/config.toml にマージします。",
-          "codexAuthHint": "シェルで実行して ~/.codex/auth.json を書き込みます。"
+          "codexAuthHint": "Linux / macOS：CODEX_HOME 配下に Floway プロバイダートークンのみを保存します。",
+          "codexWindowsAuthHint": "Windows PowerShell：公式アカウントのログインを変更せず同じトークンを保存します。"
         },
         "rotate": {
           "title": "API キーをローテーション",

@@ -323,7 +323,8 @@ const zhHantHK = {
             onlyGpt5Models: "只顯示 GPT-5 系列模型",
             claudeHint: "將 env 區塊合併到 ~/.claude/settings.json 或 .claude/settings.json。",
             codexConfigHint: "合併到 ~/.codex/config.toml。",
-            codexAuthHint: "在 shell 中運行以寫入 ~/.codex/auth.json。",
+            codexAuthHint: "Linux 和 macOS：只在 CODEX_HOME 下儲存 Floway provider token。",
+            codexWindowsAuthHint: "Windows PowerShell：儲存相同 token，不修改官方帳戶登入。",
           },
           rotate: {
             title: "輪換 API 密鑰",

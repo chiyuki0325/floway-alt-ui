@@ -339,7 +339,8 @@ const en = {
             onlyGpt5Models: "Only show GPT-5 models",
             claudeHint: "Merge the env block into ~/.claude/settings.json or .claude/settings.json.",
             codexConfigHint: "Merge into ~/.codex/config.toml.",
-            codexAuthHint: "Run in a shell to write ~/.codex/auth.json.",
+            codexAuthHint: "Linux and macOS: store only the Floway provider token under CODEX_HOME.",
+            codexWindowsAuthHint: "Windows PowerShell: store the same provider token without changing the official account login.",
           },
           rotate: {
             title: "Rotate API Key",
