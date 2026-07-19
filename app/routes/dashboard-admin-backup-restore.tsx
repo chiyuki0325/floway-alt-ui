@@ -127,6 +127,7 @@ const PREVIEW_LABEL_KEYS = [
   "searchUsage",
   "performance",
 ] as const;
+const EXPORT_VERSION = 9;
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -164,7 +165,7 @@ function parseBackupFile(
   }
 
   const record = parsed as Record<string, unknown>;
-  if (record.version !== 8) {
+  if (record.version !== EXPORT_VERSION) {
     return { ok: false, error: "The selected file is not a valid Floway backup file." };
   }
 
@@ -345,7 +346,7 @@ export default function DashboardAdminBackupRestore() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          version: 8,
+          version: EXPORT_VERSION,
           mode: importMode,
           data: importParsedData.data,
         }),

@@ -600,6 +600,8 @@ const zhHantTW = {
             pricing: "定價",
             pricingHint:
               "僅用於 Floway 的用量統計和費用估算，並展示在 Usage 頁面；不會修改上游計費或請求參數。價格單位為美元/百萬 Token。",
+            pricingBase: "基礎價格", serviceTier: "服務層級", serviceTierHint: "留空表示基礎價格。", operator: "運算子", inputTokens: "輸入 Token 閾值", inputTokensHint: "留空表示適用於所有輸入大小。", addPricingEntry: "新增價格項", removePricingEntry: "移除價格項", noPricingEntries: "尚未設定價格。", addPricingEntryHint: "請先新增基礎價格項。", pricingErrors: "價格驗證錯誤", invalidPricing: "價格項含有驗證錯誤。",
+            pricingDimensions: { input: "輸入（美元/百萬 Token）", input_cache_read: "快取讀取", input_cache_write: "快取寫入", input_cache_write_1h: "快取寫入 1 小時", input_image: "圖片輸入", output: "輸出", output_image: "圖片輸出" },
             tierPricing: "按 Service Tier 覆蓋定價（{{count}}）",
             addTier: "新增 Tier",
             tierName: "Service Tier 名稱，例如 fast",

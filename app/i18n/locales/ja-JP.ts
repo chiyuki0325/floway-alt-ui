@@ -605,6 +605,8 @@ const jaJP = {
           "maximum": "最大値",
           "pricing": "料金設定",
           "pricingHint": "Floway の使用量集計とコスト見積もりにのみ使用し、使用量ページに表示します。アップストリームの請求やリクエストパラメーターには影響しません。料金の単位は 100 万 Token あたりの米ドルです。",
+          "pricingBase": "基本料金", "serviceTier": "サービス階層", "serviceTierHint": "空欄は基本料金です。", "operator": "演算子", "inputTokens": "入力 Token しきい値", "inputTokensHint": "空欄はすべての入力サイズに適用します。", "addPricingEntry": "料金項目を追加", "removePricingEntry": "料金項目を削除", "noPricingEntries": "料金は未設定です。", "addPricingEntryHint": "基本料金項目を追加してください。", "pricingErrors": "料金検証エラー", "invalidPricing": "料金項目に検証エラーがあります。",
+          "pricingDimensions": { "input": "入力（$/MTok）", "input_cache_read": "キャッシュ読取", "input_cache_write": "キャッシュ書込", "input_cache_write_1h": "キャッシュ書込 1h", "input_image": "画像入力", "output": "出力", "output_image": "画像出力" },
           "tierPricing": "Service Tier 別の料金上書き（{{count}}）",
           "addTier": "Tier を追加",
           "tierName": "Service Tier 名（例：fast）",

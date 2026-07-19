@@ -600,6 +600,8 @@ const zhHansCN = {
             pricing: "定价",
             pricingHint:
               "仅用于 Floway 的用量统计和费用估算，并展示在 Usage 页面；不会修改上游计费或请求参数。价格单位为美元/百万 Token。",
+            pricingBase: "基础价格", serviceTier: "服务层级", serviceTierHint: "留空表示基础价格。", operator: "运算符", inputTokens: "输入 Token 阈值", inputTokensHint: "留空表示适用于所有输入大小。", addPricingEntry: "添加价格项", removePricingEntry: "移除价格项", noPricingEntries: "尚未配置价格。", addPricingEntryHint: "请先添加基础价格项。", pricingErrors: "价格校验错误", invalidPricing: "价格项存在校验错误。",
+            pricingDimensions: { input: "输入（美元/百万 Token）", input_cache_read: "缓存读取", input_cache_write: "缓存写入", input_cache_write_1h: "缓存写入 1 小时", input_image: "图片输入", output: "输出", output_image: "图片输出" },
             tierPricing: "按 Service Tier 覆盖定价（{{count}}）",
             addTier: "添加 Tier",
             tierName: "Service Tier 名称，例如 fast",

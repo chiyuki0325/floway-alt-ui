@@ -1,17 +1,9 @@
-import {
-  AddRegular,
-  ArrowDownRegular,
-  ArrowLeftRegular,
-  ArrowUpRegular,
-  DeleteRegular,
-} from "@fluentui/react-icons";
+import { ArrowLeftRegular, DeleteRegular } from "@fluentui/react-icons";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Flag } from "@floway-dev/provider/flags";
 import type {
-  BillingDimension,
-  ModelPricing,
   UpstreamChatConfig,
   UpstreamModelConfig,
   UpstreamRecord,
@@ -21,12 +13,9 @@ import { Input, Select } from "../fluent-form-controls";
 import { SegmentedControl } from "../segmented-control";
 import { publicModelId } from "./editor-data";
 import { FeatureFlagsEditor } from "./feature-flags";
+import { PricingEditor, pricingIsValid } from "./pricing-editor";
 
 const {
-  Accordion,
-  AccordionHeader,
-  AccordionItem,
-  AccordionPanel,
   Button,
   Checkbox,
   Field,
@@ -51,29 +40,7 @@ export interface ModelDetailRow {
   hasAuto: boolean;
 }
 
-type TierDraft = {
-  id: number;
-  name: string;
-  rates: Partial<Record<BillingDimension, number>>;
-};
-
 const reasoningPresets = ["none", "minimal", "low", "medium", "high", "xhigh", "max"];
-const pricingLabels: Record<BillingDimension, string> = {
-  input: "Input ($/MTok)",
-  input_cache_read: "Cache Read ($/MTok)",
-  input_cache_write: "Cache Write ($/MTok)",
-  input_cache_write_1h: "Cache Write (1h) ($/MTok)",
-  input_image: "Image Input ($/MTok)",
-  output: "Output ($/MTok)",
-  output_image: "Image Output ($/MTok)",
-};
-const pricingByKind: Record<UpstreamModelConfig["kind"], BillingDimension[]> = {
-  chat: ["input", "input_cache_read", "input_cache_write", "input_cache_write_1h", "output"],
-  embedding: ["input"],
-  image: ["input", "input_image", "output", "output_image"],
-};
-
-let tierId = 0;
 
 export function ModelDetail({
   flags,
@@ -107,9 +74,7 @@ export function ModelDetail({
     }
     onUpdate(updated);
   };
-  const [tiers, setTiers] = useState<TierDraft[]>(() => tiersFromPricing(row.config.cost));
   const [savedFlagOverrides, setSavedFlagOverrides] = useState(row.config.flagOverrides ?? {});
-  useEffect(() => setTiers(tiersFromPricing(row.config.cost)), [row.key]);
   useEffect(() => setSavedFlagOverrides(row.config.flagOverrides ?? {}), [row.key]);
 
   const setKind = (kind: UpstreamModelConfig["kind"]) => patch({
@@ -129,26 +94,6 @@ export function ModelDetail({
     const reasoning = cleanObject({ ...(row.config.chat?.reasoning ?? {}), ...update });
     const chat = cleanChat({ ...(row.config.chat ?? {}), reasoning: Object.keys(reasoning).length ? reasoning : undefined });
     patch({ chat });
-  };
-
-  const updatePrice = (dimension: BillingDimension, raw: string) => {
-    const cost = { ...(row.config.cost ?? {}) };
-    const value = optionalNumber(raw);
-    if (value === undefined) delete cost[dimension]; else cost[dimension] = value;
-    patch({ cost: pricingOrUndefined(cost) });
-  };
-
-  const writeTiers = (next: TierDraft[]) => {
-    setTiers(next);
-    const cost = { ...(row.config.cost ?? {}) };
-    delete cost.tiers;
-    const stored: NonNullable<ModelPricing["tiers"]> = {};
-    for (const draft of next) {
-      const name = draft.name.trim();
-      if (name && Object.values(draft.rates).some((rate) => typeof rate === "number")) stored[name] = draft.rates;
-    }
-    if (Object.keys(stored).length) cost.tiers = stored;
-    patch({ cost: pricingOrUndefined(cost) });
   };
 
   const validationError = modelValidationError(row.config, t);
@@ -247,33 +192,12 @@ export function ModelDetail({
       </EditorBlock>}
 
       <EditorBlock title={t("dashboard.upstreamEditor.models.pricing")} description={t("dashboard.upstreamEditor.models.pricingHint")}>
-        <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-          {pricingByKind[row.config.kind].map((dimension) => <NumberField key={dimension} label={pricingLabels[dimension]} placeholder="$/MTok" readOnly={!editable} value={row.config.cost?.[dimension]} onChange={(raw) => updatePrice(dimension, raw)} />)}
-        </div>
-        <Accordion collapsible defaultOpenItems={tiers.length ? "tiers" : undefined}>
-          <AccordionItem value="tiers">
-            <AccordionHeader>{t("dashboard.upstreamEditor.models.tierPricing", { count: tiers.length })}</AccordionHeader>
-            <AccordionPanel>
-              <div className="grid gap-5 pt-2">
-                {tiers.map((tier, index) => <TierEditor
-                  dimensions={pricingByKind[row.config.kind]}
-                  editable={editable}
-                  index={index}
-                  key={tier.id}
-                  onChange={(next) => writeTiers(tiers.map((item, itemIndex) => itemIndex === index ? next : item))}
-                  onMove={(direction) => writeTiers(moveItem(tiers, index, direction))}
-                  onRemove={() => writeTiers(tiers.filter((_, itemIndex) => itemIndex !== index))}
-                  tier={tier}
-                  t={t}
-                  total={tiers.length}
-                />)}
-                {editable && <Button appearance="secondary" icon={<AddRegular />} onClick={() => writeTiers([...tiers, { id: ++tierId, name: "", rates: {} }])}>
-                  {t("dashboard.upstreamEditor.models.addTier")}
-                </Button>}
-              </div>
-            </AccordionPanel>
-          </AccordionItem>
-        </Accordion>
+        <PricingEditor
+          editable={editable}
+          kind={row.config.kind}
+          onChange={(pricing) => patch({ pricing })}
+          value={row.config.pricing}
+        />
       </EditorBlock>
 
       <EditorBlock title={t("dashboard.upstreamEditor.models.flags")} description={t("dashboard.upstreamEditor.models.flagsHint")}>
@@ -323,20 +247,12 @@ function EffortEditor({ editable, effort, onChange, t }: { editable: boolean; ef
   </div>;
 }
 
-function TierEditor({ dimensions, editable, index, onChange, onMove, onRemove, t, tier, total }: { dimensions: BillingDimension[]; editable: boolean; index: number; onChange: (tier: TierDraft) => void; onMove: (direction: -1 | 1) => void; onRemove: () => void; t: ReturnType<typeof useTranslation>["t"]; tier: TierDraft; total: number }) {
-  const invalid = (tier.name.trim() === "") !== Object.values(tier.rates).some((rate) => typeof rate === "number");
-  return <div className="grid gap-3 border-t border-t-solid border-fui-stroke1 pt-4 first:border-t-0 first:pt-0">
-    <div className="flex items-center gap-2 min-w-0"><Input className="!w-full" readOnly={!editable} value={tier.name} placeholder={t("dashboard.upstreamEditor.models.tierName")} onChange={(_, data) => onChange({ ...tier, name: data.value })} />{editable && <><Button appearance="subtle" disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => onMove(-1)} /><Button appearance="subtle" disabled={index === total - 1} icon={<ArrowDownRegular />} onClick={() => onMove(1)} /><Button appearance="subtle" icon={<DeleteRegular />} onClick={onRemove} /></>}</div>
-    {invalid && <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.tierIncomplete")}</Text>}
-    <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">{dimensions.map((dimension) => <NumberField key={dimension} label={pricingLabels[dimension]} placeholder={t("dashboard.upstreamEditor.models.inheritPricePlaceholder")} readOnly={!editable} value={tier.rates[dimension]} onChange={(raw) => { const rates = { ...tier.rates }; const value = optionalNumber(raw); if (value === undefined) delete rates[dimension]; else rates[dimension] = value; onChange({ ...tier, rates }); }} />)}</div>
-  </div>;
-}
-
 export function modelValidationError(model: UpstreamModelConfig, t: ReturnType<typeof useTranslation>["t"]): string | null {
   const effort = model.chat?.reasoning?.effort;
   if (effort && (effort.supported.length === 0 || !effort.default || !effort.supported.includes(effort.default))) return t("dashboard.upstreamEditor.models.invalidEffort");
   const budget = model.chat?.reasoning?.budget_tokens;
   if (budget?.min !== undefined && budget.max !== undefined && budget.max < budget.min) return t("dashboard.upstreamEditor.models.invalidBudget");
+  if (!pricingIsValid(model.pricing)) return t("dashboard.upstreamEditor.models.invalidPricing");
   return null;
 }
 
@@ -344,16 +260,14 @@ export const modelsAreValid = (models: readonly UpstreamModelConfig[]) => models
   const effort = model.chat?.reasoning?.effort;
   if (effort && (effort.supported.length === 0 || !effort.default || !effort.supported.includes(effort.default))) return false;
   const budget = model.chat?.reasoning?.budget_tokens;
-  return !(budget?.min !== undefined && budget.max !== undefined && budget.max < budget.min);
+  return !(budget?.min !== undefined && budget.max !== undefined && budget.max < budget.min)
+    && pricingIsValid(model.pricing);
 });
 
 const optionalNumber = (raw: string): number | undefined => raw === "" ? undefined : Number.isFinite(Number(raw)) && Number(raw) >= 0 ? Number(raw) : undefined;
 const cleanObject = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as T;
 const cleanChat = (chat: UpstreamChatConfig): UpstreamChatConfig | undefined => chat.modalities || chat.reasoning ? chat : undefined;
 const numberRange = (range: { min?: number; max?: number }, key: "min" | "max", raw: string) => { const next = { ...range }; const value = optionalNumber(raw); if (value === undefined) delete next[key]; else next[key] = value; return next; };
-const pricingOrUndefined = (cost: ModelPricing): ModelPricing | undefined => Object.keys(cost).length ? cost : undefined;
-const tiersFromPricing = (cost?: ModelPricing): TierDraft[] => Object.entries(cost?.tiers ?? {}).map(([name, rates]) => ({ id: ++tierId, name, rates: { ...rates } }));
-const moveItem = <T,>(items: T[], index: number, direction: -1 | 1) => { const target = index + direction; if (target < 0 || target >= items.length) return items; const next = [...items]; [next[index], next[target]] = [next[target]!, next[index]!]; return next; };
 
 const defaultEndpointsForKind = (kind: UpstreamModelConfig["kind"], current: UpstreamModelConfig["endpoints"]) => {
   if (kind === "embedding") return { embeddings: {} };

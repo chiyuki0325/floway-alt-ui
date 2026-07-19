@@ -207,7 +207,7 @@ export function discoveredModelsFromResponse(
       endpoints: modelEndpoints,
       ...(model.display_name ?? model.name ? { display_name: model.display_name ?? model.name } : {}),
       ...(model.limits ? { limits: model.limits } : {}),
-      ...(model.cost ? { cost: model.cost } : {}),
+      ...(model.pricing ? { pricing: model.pricing } : {}),
     };
   });
 }
