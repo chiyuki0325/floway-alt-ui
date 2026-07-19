@@ -1,7 +1,7 @@
 import { ServerRegular } from "@fluentui/react-icons";
 import { useTranslation } from "react-i18next";
 
-import type { UpstreamProviderKind } from "../api/types";
+import type { UpstreamColor, UpstreamColorPreset, UpstreamProviderKind } from "../api/types";
 import azureIconUrl from "../assets/azure-color.svg";
 import claudeIconUrl from "../assets/claude-color.svg";
 import codexIconUrl from "../assets/codex.svg";
@@ -13,7 +13,7 @@ import { fluentComponents } from "../fluent";
 const { makeStyles, Text } = fluentComponents;
 
 type ProviderBadgeKind = UpstreamProviderKind | null;
-type ProviderTone = "amber" | "emerald" | "cyan" | "violet" | "rose" | "orange" | "zinc";
+type ProviderTone = UpstreamColorPreset | "zinc";
 
 const providerMeta: Record<UpstreamProviderKind, { label: string; tone: ProviderTone }> = {
   custom: { label: "Custom", tone: "amber" },
@@ -91,15 +91,27 @@ const useStyles = makeStyles({
 export const providerLabel = (kind: ProviderBadgeKind) =>
   kind === null ? "Unknown" : providerMeta[kind].label;
 
-export function ProviderBadge({ kind }: { kind: ProviderBadgeKind }) {
+const customColorStyle = (color: `#${string}`) => ({
+  "--provider-color": color,
+  backgroundColor: "color-mix(in srgb, var(--provider-color) 10%, transparent)",
+  borderColor: "color-mix(in srgb, var(--provider-color) 35%, transparent)",
+  color: "var(--provider-color)",
+} as React.CSSProperties);
+
+const isHexColor = (color: UpstreamColor | null): color is `#${string}` =>
+  color?.startsWith("#") === true;
+
+export function ProviderBadge({ color = null, kind }: { color?: UpstreamColor | null; kind: ProviderBadgeKind }) {
   const { t } = useTranslation();
   const styles = useStyles();
   const meta = kind === null ? { label: "Unknown", tone: "zinc" as const } : providerMeta[kind];
+  const tone: ProviderTone = color && !isHexColor(color) ? color : meta.tone;
   const label = t(`provider.${kind ?? "unknown"}`, meta.label);
 
   return (
     <span
-      className={`${styles[meta.tone]} inline-flex items-center gap-[5px] rounded-full border border-solid max-w-full min-h-[22px] py-0.5 px-2 whitespace-nowrap leading-[1.2]`}
+      className={`${styles[tone]} inline-flex items-center gap-[5px] rounded-full border border-solid max-w-full min-h-[22px] py-0.5 px-2 whitespace-nowrap leading-[1.2]`}
+      style={isHexColor(color) ? customColorStyle(color) : undefined}
       title={label}
     >
       <ProviderIcon kind={kind} className="h-[14px] w-[14px]" />

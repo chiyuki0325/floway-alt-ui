@@ -430,10 +430,20 @@ const zhHansCN = {
           },
           sections: {
             connection: "连接与认证",
+            color: "徽标颜色",
             proxy: "代理路由",
             apiPaths: "API 路径",
             prefix: "模型名称前缀",
             disabledModels: "禁用的模型",
+          },
+          color: {
+            description: "选择在控制台中区分此上游的颜色。",
+            mode: "颜色",
+            inherit: "提供商默认值",
+            custom: "自定义十六进制",
+            hex: "十六进制颜色",
+            invalid: "请输入 #RRGGBB 格式的颜色。",
+            preset: { amber: "琥珀", emerald: "翠绿", cyan: "青色", violet: "紫罗兰", rose: "玫红", orange: "橙色" },
           },
           fields: {
             name: "上游名称",

@@ -445,10 +445,20 @@ const jaJP = {
         },
         "sections": {
           "connection": "接続と認証",
+          "color": "バッジの色",
           "proxy": "プロキシルーティング",
           "apiPaths": "API パス",
           "prefix": "モデル名のプレフィックス",
           "disabledModels": "無効モデル"
+        },
+        "color": {
+          "description": "コンソールでこのアップストリームを識別する色を選択します。",
+          "mode": "色",
+          "inherit": "プロバイダーの既定値",
+          "custom": "カスタム 16 進数",
+          "hex": "16 進数カラー",
+          "invalid": "#RRGGBB 形式で入力してください。",
+          "preset": { "amber": "アンバー", "emerald": "エメラルド", "cyan": "シアン", "violet": "バイオレット", "rose": "ローズ", "orange": "オレンジ" }
         },
         "fields": {
           "name": "アップストリーム名",

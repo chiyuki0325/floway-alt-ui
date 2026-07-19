@@ -4,7 +4,8 @@ import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-
 import { useTranslation } from "react-i18next";
 
 import { MODEL_PREFIX_MAX_LENGTH, MODEL_PREFIX_REGEX } from "@floway-dev/provider/model-prefix";
-import type { ProxyRecord, UpstreamRecord } from "../../api/types";
+import type { ProxyRecord, UpstreamColor, UpstreamColorPreset, UpstreamRecord } from "../../api/types";
+import { UPSTREAM_COLOR_HEX_REGEX, UPSTREAM_COLOR_PRESETS } from "@floway-dev/provider/model";
 import { fluentComponents } from "../../fluent";
 import { Input, Select } from "../fluent-form-controls";
 import { ProviderBadge } from "../provider-badge";
@@ -48,6 +49,14 @@ export function UpstreamConfigSidebar({
         </Field>
       </div>
       <div>
+        <EditorSection
+          title={t("dashboard.upstreamEditor.sections.color")}
+          description={t("dashboard.upstreamEditor.color.description")}
+        >
+          <UpstreamColorEditor kind={record.kind} />
+        </EditorSection>
+      </div>
+      <div>
         <EditorSection title={t("dashboard.upstreamEditor.sections.connection")}>
           <ProviderConfigSection record={record} onPatch={onPatch} />
           <ProxyFallbackEditor proxies={proxies} runtime={runtime} />
@@ -77,6 +86,50 @@ export function UpstreamConfigSidebar({
       </div>
     </div>
   </aside>;
+}
+
+function UpstreamColorEditor({ kind }: { kind: UpstreamRecord["kind"] }) {
+  const { t } = useTranslation();
+  const { control } = useFormContext<UpstreamEditorValues>();
+  return <Controller control={control} name="color" render={({ field }) => {
+    const custom = field.value?.startsWith("#") ? field.value : "";
+    const selection = custom ? "custom" : field.value ?? "inherit";
+    const invalid = custom !== "" && !UPSTREAM_COLOR_HEX_REGEX.test(custom);
+    return <div className="grid gap-3">
+      <div className="flex items-end gap-3 min-w-0 max-[520px]:items-stretch max-[520px]:flex-col">
+        <Field className="flex-1 min-w-0" label={t("dashboard.upstreamEditor.color.mode")}>
+          <Select
+            value={selection}
+            onChange={(_, data) => {
+              if (data.value === "inherit") field.onChange(null);
+              else if (data.value === "custom") field.onChange("#0F6CBD" satisfies UpstreamColor);
+              else field.onChange(data.value as UpstreamColorPreset);
+            }}
+          >
+            <option value="inherit">{t("dashboard.upstreamEditor.color.inherit")}</option>
+            {UPSTREAM_COLOR_PRESETS.map((preset) => <option key={preset} value={preset}>{t(`dashboard.upstreamEditor.color.preset.${preset}`)}</option>)}
+            <option value="custom">{t("dashboard.upstreamEditor.color.custom")}</option>
+          </Select>
+        </Field>
+        <ProviderBadge color={field.value} kind={kind} />
+      </div>
+      {selection === "custom" && <Field
+        label={t("dashboard.upstreamEditor.color.hex")}
+        validationMessage={invalid ? t("dashboard.upstreamEditor.color.invalid") : undefined}
+        validationState={invalid ? "error" : undefined}
+      >
+        <Input
+          maxLength={7}
+          value={custom}
+          onBlur={() => {
+            if (UPSTREAM_COLOR_HEX_REGEX.test(custom)) field.onChange(custom.toUpperCase() as UpstreamColor);
+          }}
+          onChange={(_, data) => field.onChange(data.value as UpstreamColor)}
+          placeholder="#0F6CBD"
+        />
+      </Field>}
+    </div>;
+  }} />;
 }
 
 function EditorSection({ children, description, title }: { children: React.ReactNode; description?: string; title: string }) {

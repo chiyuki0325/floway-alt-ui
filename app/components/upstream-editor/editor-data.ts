@@ -34,6 +34,7 @@ export interface UpstreamEditorLoaderData extends EditorAuxData {
 export interface UpstreamEditorValues {
   name: string;
   enabled: boolean;
+  color: UpstreamRecord["color"];
   proxyFallbackList: UpstreamRecord["proxy_fallback_list"];
   modelPrefix: UpstreamRecord["model_prefix"];
   disabledPublicModelIds: string[];
@@ -100,6 +101,7 @@ export function valuesFromRecord(record: UpstreamRecord): UpstreamEditorValues {
   return {
     name: record.name,
     enabled: record.enabled,
+    color: record.color,
     proxyFallbackList: structuredClone(record.proxy_fallback_list),
     modelPrefix: structuredClone(record.model_prefix),
     disabledPublicModelIds: [...record.disabled_public_model_ids],
@@ -143,6 +145,7 @@ export function previewRecord(record: UpstreamRecord, values: UpstreamEditorValu
     ...record,
     name: values.name.trim(),
     enabled: values.enabled,
+    color: values.color,
     config: configFromValues(record, values, { preserveStoredSecret: true }),
     state: values.state,
     proxy_fallback_list: values.proxyFallbackList,
@@ -157,6 +160,7 @@ export function createBody(record: UpstreamRecord, values: UpstreamEditorValues,
     kind: record.kind,
     name: values.name.trim(),
     enabled: values.enabled,
+    color: values.color,
     sort_order: sortOrder,
     flag_overrides: values.flagOverrides,
     disabled_public_model_ids: values.disabledPublicModelIds,
@@ -173,6 +177,7 @@ export function updateBody(record: UpstreamRecord, values: UpstreamEditorValues)
   return {
     name: values.name.trim(),
     enabled: values.enabled,
+    color: values.color,
     flag_overrides: values.flagOverrides,
     disabled_public_model_ids: values.disabledPublicModelIds,
     proxy_fallback_list: values.proxyFallbackList,

@@ -1,11 +1,6 @@
-import type { ApiKey, ControlPlaneModel, UpstreamProviderKind } from "../../api/types";
+import type { ApiKey, ControlPlaneModel, UpstreamOption } from "../../api/types";
 
-export interface UpstreamOption {
-  id: string;
-  name: string;
-  kind: UpstreamProviderKind;
-  enabled: boolean;
-}
+export type { UpstreamOption } from "../../api/types";
 
 export interface ApiKeysPageData {
   keys: ApiKey[];

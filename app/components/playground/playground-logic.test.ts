@@ -14,7 +14,7 @@ import {
 const model = (id: string, upstreams: string[], extra: Partial<ControlPlaneModel> = {}): ControlPlaneModel => ({
   id, object: "model", type: "model", display_name: id, kind: "chat", limits: {},
   endpoints: { responses: {}, chatCompletions: {}, messages: {} },
-  upstreams: upstreams.map((upstream) => ({ id: upstream, name: upstream, kind: "custom" })),
+  upstreams: upstreams.map((upstream) => ({ id: upstream, name: upstream, kind: "custom", color: null })),
   ...extra,
 });
 const key = (upstream_ids: string[] | null): ApiKey => ({

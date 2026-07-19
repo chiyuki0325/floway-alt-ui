@@ -451,10 +451,20 @@ const en = {
           },
           sections: {
             connection: "Connection and authentication",
+            color: "Badge color",
             proxy: "Proxy routing",
             apiPaths: "API paths",
             prefix: "Model name prefix",
             disabledModels: "Disabled models",
+          },
+          color: {
+            description: "Choose how this upstream is distinguished across the console.",
+            mode: "Color",
+            inherit: "Provider default",
+            custom: "Custom hex",
+            hex: "Hex color",
+            invalid: "Enter a color in #RRGGBB format.",
+            preset: { amber: "Amber", emerald: "Emerald", cyan: "Cyan", violet: "Violet", rose: "Rose", orange: "Orange" },
           },
           fields: {
             name: "Upstream name",

@@ -448,7 +448,7 @@ function UpstreamsTable({
                   </Text>
                 </div>
               </TableCell>
-              <TableCell><ProviderBadge kind={record.kind} /></TableCell>
+              <TableCell><ProviderBadge color={record.color} kind={record.kind} /></TableCell>
               <TableCell>
                 <ModelStatus count={modelCounts.get(record.id) ?? null} modelsAvailable={data.models !== null} record={record} />
               </TableCell>

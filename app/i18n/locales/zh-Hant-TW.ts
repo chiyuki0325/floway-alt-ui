@@ -430,10 +430,20 @@ const zhHantTW = {
           },
           sections: {
             connection: "連線與認證",
+            color: "徽章顏色",
             proxy: "代理路由",
             apiPaths: "API 路徑",
             prefix: "模型名稱前綴",
             disabledModels: "停用的模型",
+          },
+          color: {
+            description: "選擇在控制台中區分此上游的顏色。",
+            mode: "顏色",
+            inherit: "供應商預設值",
+            custom: "自訂十六進位",
+            hex: "十六進位顏色",
+            invalid: "請輸入 #RRGGBB 格式的顏色。",
+            preset: { amber: "琥珀", emerald: "翠綠", cyan: "青色", violet: "紫羅蘭", rose: "玫紅", orange: "橙色" },
           },
           fields: {
             name: "上游名稱",
