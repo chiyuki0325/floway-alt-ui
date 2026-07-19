@@ -482,7 +482,9 @@ const en = {
           auth: { none: "None" },
           proxy: {
             direct: "Direct",
-            empty: "No fallback entries. Traffic goes direct by default.",
+            directFetch: "Direct (Fetch)",
+            directConnect: "Direct (TCP connect)",
+            empty: "No fallback entries. Traffic uses direct Fetch by default.",
             add: "Add fallback entry",
             colo: "Current Cloudflare colo: {{colo}}",
           },

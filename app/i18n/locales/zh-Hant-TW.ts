@@ -461,7 +461,9 @@ const zhHantTW = {
           auth: { none: "無認證" },
           proxy: {
             direct: "直連",
-            empty: "未設定備援出口，預設直接連線。",
+            directFetch: "直連（Fetch）",
+            directConnect: "直連（TCP connect）",
+            empty: "未設定備援出口，預設使用直連 Fetch。",
             add: "新增備援出口",
             colo: "目前 Cloudflare colo：{{colo}}",
           },

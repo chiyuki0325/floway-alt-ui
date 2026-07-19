@@ -461,7 +461,9 @@ const zhHansCN = {
           auth: { none: "无认证" },
           proxy: {
             direct: "直连",
-            empty: "未配置回退出口，默认直接连接。",
+            directFetch: "直连（Fetch）",
+            directConnect: "直连（TCP connect）",
+            empty: "未配置回退出口，默认使用直连 Fetch。",
             add: "添加回退出口",
             colo: "当前 Cloudflare colo：{{colo}}",
           },

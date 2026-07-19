@@ -478,7 +478,9 @@ const jaJP = {
         },
         "proxy": {
           "direct": "直接接続",
-          "empty": "フォールバック出口は設定されていません。デフォルトでは直接接続します。",
+          "directFetch": "直接接続（Fetch）",
+          "directConnect": "直接接続（TCP connect）",
+          "empty": "フォールバック出口は未設定です。既定では直接 Fetch を使用します。",
           "add": "フォールバック出口を追加",
           "colo": "現在の Cloudflare colo：{{colo}}"
         },

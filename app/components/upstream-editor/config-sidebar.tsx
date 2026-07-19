@@ -144,7 +144,11 @@ function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; run
   const idPrefix = useId();
   const { control } = useFormContext<UpstreamEditorValues>();
   const { fields, append, move, remove } = useFieldArray({ control, name: "proxyFallbackList" });
-  const available = [{ id: "direct", name: t("dashboard.upstreamEditor.proxy.direct") }, ...proxies];
+  const available = [
+    { id: "direct_fetch", name: t("dashboard.upstreamEditor.proxy.directFetch") },
+    { id: "direct_connect", name: t("dashboard.upstreamEditor.proxy.directConnect") },
+    ...proxies,
+  ];
   const hint = runtime.kind === "cloudflare" ? t("dashboard.upstreamEditor.proxy.colo", { colo: runtime.runtimeLocation }) : null;
   return <div
     aria-describedby={hint ? `${idPrefix}-hint` : undefined}
@@ -162,7 +166,7 @@ function ProxyFallbackEditor({ proxies, runtime }: { proxies: ProxyRecord[]; run
         <Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.remove")} icon={<DeleteRegular />} onClick={() => remove(index)} />
       </div>
     </div>)}
-    <Button appearance="secondary" className="!font-fui-regular" onClick={() => append({ id: "direct" })}>{t("dashboard.upstreamEditor.proxy.add")}</Button>
+    <Button appearance="secondary" className="!font-fui-regular" onClick={() => append({ id: "direct_fetch" })}>{t("dashboard.upstreamEditor.proxy.add")}</Button>
     {hint && <Text id={`${idPrefix}-hint`} size={200} className="text-fui-fg2">{hint}</Text>}
   </div>;
 }
