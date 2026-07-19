@@ -62,6 +62,15 @@ export default function DashboardProvidersProxy() {
     error?: string;
   } | null>(null);
 
+  // Save/Test diagnostics describe one exact draft. Once the operator edits
+  // any field, remove stale failures (and the saved confirmation) so the form
+  // no longer presents feedback for values that are not on screen anymore.
+  useEffect(() => {
+    setSaveError(null);
+    setSaveSuccess(false);
+    setTestResult((current) => current?.ok ? current : null);
+  }, [config, dialTimeoutInput, formName]);
+
   // ---- delete ----
   const [deleteTarget, setDeleteTarget] = useState<ProxyRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
