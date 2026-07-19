@@ -16,7 +16,7 @@ const zhHantHK = {
       },
       auth: {
         adminKeyHint:
-          "用戶名稱留空即可以管理員身份登入（使用 <adminKey>ADMIN_KEY</adminKey>）。",
+          "用戶名稱留空可登入預設管理員。本機開發未設定 <adminKey>ADMIN_KEY</adminKey> 時密碼亦可留空，否則請輸入 ADMIN_KEY。",
         login: {
           title: "登入",
           subtitle: "登入到 Floway。",

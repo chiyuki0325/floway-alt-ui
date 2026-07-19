@@ -15,7 +15,7 @@ const jaJP = {
       "japanese": "日本語"
     },
     "auth": {
-      "adminKeyHint": "ユーザー名を空欄にすると、<adminKey>ADMIN_KEY</adminKey> を使用して管理者としてサインインできます。",
+      "adminKeyHint": "ユーザー名を空欄にすると既定の管理者としてサインインできます。ローカル開発で <adminKey>ADMIN_KEY</adminKey> が未設定の場合はパスワードも空欄にし、それ以外では ADMIN_KEY を入力してください。",
       "login": {
         "title": "サインイン",
         "subtitle": "Floway にサインインします。",

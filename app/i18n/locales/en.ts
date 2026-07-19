@@ -16,7 +16,7 @@ const en = {
       },
       auth: {
         adminKeyHint:
-          "Leave username blank to sign in as admin (using <adminKey>ADMIN_KEY</adminKey>).",
+          "Leave the username blank for the default administrator. In local development without <adminKey>ADMIN_KEY</adminKey>, leave the password blank too; otherwise enter ADMIN_KEY.",
         login: {
           title: "Sign in",
           subtitle: "Sign in to Floway.",

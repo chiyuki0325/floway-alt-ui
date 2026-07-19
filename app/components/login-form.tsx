@@ -18,14 +18,17 @@ const {
   Spinner,
 } = fluentComponents;
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   username: z
     .string()
     .regex(/^[a-zA-Z0-9_.-]{0,64}$/, "validation.usernamePattern"),
   password: z
     .string()
-    .min(1, "validation.passwordRequired")
     .max(1024, "validation.passwordMax"),
+}).superRefine((value, context) => {
+  if (value.username.trim() && !value.password) {
+    context.addIssue({ code: "custom", message: "validation.passwordRequired", path: ["password"] });
+  }
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
