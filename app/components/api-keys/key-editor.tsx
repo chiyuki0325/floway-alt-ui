@@ -34,7 +34,7 @@ export function KeyDialog({
   mode: "create" | "edit";
   mutationToasts: MutationToastController;
   onOpenChange: (open: boolean) => void;
-  onSaved: () => Promise<void>;
+  onSaved: (key: ApiKey) => Promise<void>;
   open: boolean;
   upstreams: UpstreamOption[];
   userUpstreamIds: string[] | null;
@@ -163,7 +163,7 @@ export function KeyDialog({
     }
     onOpenChange(false);
     mutationToasts.succeed(toastId, mutationKind, common.name);
-    await onSaved();
+    await onSaved(result.data);
   };
 
   return (

@@ -10,7 +10,6 @@ import bingIconUrl from "../assets/bing.svg";
 import jinaIconUrl from "../assets/jina.svg";
 import tavilyIconUrl from "../assets/tavily.svg";
 import { Dropdown, Input, Select } from "../components/fluent-form-controls";
-import { PageLoadingPanel } from "../components/page-loading-panel";
 import { Panel } from "../components/panel";
 import { fluentComponents } from "../fluent";
 import { useDashboardOutletContext } from "./dashboard";
@@ -151,11 +150,6 @@ function SearchPageHeader() {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-
-export function HydrateFallback() {
-  const { t } = useTranslation();
-  return <PageLoadingPanel label={t("common.loading")} />;
-}
 
 export default function DashboardProvidersSearch({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation();

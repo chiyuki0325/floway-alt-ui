@@ -8,7 +8,7 @@ import { redirect, useOutletContext } from "react-router";
 import type { ApiKey, ControlPlaneModel } from "../api/types";
 import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
-import { CliConfiguration } from "../components/api-keys/cli-configuration";
+import { AgentSetupCard } from "../components/api-keys/agent-setup-card";
 import { KeyDialog } from "../components/api-keys/key-editor";
 import { RotateKeyDialog } from "../components/api-keys/rotate-key-dialog";
 import { KeysTable } from "../components/api-keys/keys-table";
@@ -22,7 +22,7 @@ import type { DashboardOutletContext } from "./dashboard";
 
 const { Button, MessageBar, MessageBarBody, Spinner, Text, Toast, Toaster, ToastTitle, useToastController } = fluentComponents;
 interface ModelsResponse { object: string; data: ControlPlaneModel[] }
-const apiKeyPlaceholder = "<your-api-key>";
+const selectedKeyStorageKey = "floway-agent-setup-selected-key";
 
 export async function clientLoader() { if (!getSessionToken()) throw redirect("/"); return null; }
 export function meta({}: Route.MetaArgs) { return [{ title: "API Keys | Floway" }]; }
@@ -41,7 +41,7 @@ export default function DashboardServicesApiKeys() {
     models: [],
     error: null,
   });
-  const [selectedKeyId, setSelectedKeyId] = useState("");
+  const [selectedKeyId, setSelectedKeyId] = useState(() => typeof localStorage === "undefined" ? "" : localStorage.getItem(selectedKeyStorageKey) ?? "");
   const [initialLoading, setInitialLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,10 @@ export default function DashboardServicesApiKeys() {
 
   const selectedKey =
     data.keys.find((key) => key.id === selectedKeyId) ?? data.keys[0] ?? null;
-  const configurationKey = selectedKey?.key ?? apiKeyPlaceholder;
+  useEffect(() => {
+    if (selectedKeyId) localStorage.setItem(selectedKeyStorageKey, selectedKeyId);
+    else localStorage.removeItem(selectedKeyStorageKey);
+  }, [selectedKeyId]);
 
   const mutationToasts: MutationToastController = {
     start: (kind, name) => {
@@ -104,7 +107,7 @@ export default function DashboardServicesApiKeys() {
     const [keysRes, upstreamsRes, modelsRes] = await Promise.all([
       callApi<ApiKey[]>(() => authFetch("/api/keys")),
       callApi<UpstreamOption[]>(() => authFetch("/api/upstream-options")),
-      callApi<ModelsResponse>(() => authFetch("/api/models")),
+      callApi<ModelsResponse>(() => authFetch("/api/models?include_unlisted=true")),
     ]);
     setLoading(false);
 
@@ -134,7 +137,7 @@ export default function DashboardServicesApiKeys() {
       const [keysRes, upstreamsRes, modelsRes] = await Promise.all([
         callApi<ApiKey[]>(() => authFetch("/api/keys")),
         callApi<UpstreamOption[]>(() => authFetch("/api/upstream-options")),
-        callApi<ModelsResponse>(() => authFetch("/api/models")),
+        callApi<ModelsResponse>(() => authFetch("/api/models?include_unlisted=true")),
       ]);
       if (cancelled) return;
 
@@ -150,7 +153,7 @@ export default function DashboardServicesApiKeys() {
         error,
       };
       setData(next);
-      setSelectedKeyId(next.keys[0]?.id ?? "");
+      setSelectedKeyId((current) => next.keys.some((key) => key.id === current) ? current : next.keys[0]?.id ?? "");
       setPageError(error);
       setInitialLoading(false);
     })();
@@ -271,12 +274,11 @@ export default function DashboardServicesApiKeys() {
             )}
           </div>
         </div>
-        <CliConfiguration
-          apiKey={configurationKey}
+        <AgentSetupCard
           copiedTag={copiedTag}
-          selectedKey={selectedKey}
           models={data.models}
           onCopy={copyToClipboard}
+          selectedKey={selectedKey}
         />
       </Panel>
 
@@ -284,7 +286,7 @@ export default function DashboardServicesApiKeys() {
         apiKey={null}
         mode="create"
         onOpenChange={setCreateOpen}
-        onSaved={reload}
+        onSaved={async (key) => { await reload(); setSelectedKeyId(key.id); }}
         mutationToasts={mutationToasts}
         open={createOpen}
         upstreams={data.upstreams}
@@ -296,7 +298,7 @@ export default function DashboardServicesApiKeys() {
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}
-        onSaved={reload}
+        onSaved={async () => { await reload(); }}
         mutationToasts={mutationToasts}
         open={editTarget !== null}
         upstreams={data.upstreams}

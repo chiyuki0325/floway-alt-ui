@@ -1,0 +1,45 @@
+import { describe, expect, it } from "vitest";
+
+import type { ControlPlaneModel } from "../../api/types";
+import { buildAgentCodexSnippet, modelOptions } from "./agent-setup-card";
+import { agentSetupCommand } from "./use-agent-setup";
+
+const model = (id: string, context: number): ControlPlaneModel => ({
+  id,
+  object: "model",
+  type: "model",
+  display_name: id,
+  kind: "chat",
+  limits: { max_context_window_tokens: context },
+  endpoints: { responses: {} },
+  upstreams: [],
+});
+
+describe("Agent Setup", () => {
+  it("builds origin-scoped Unix and Windows commands", () => {
+    expect(agentSetupCommand("https://floway.example", "/api/setup/token/claude.sh", "unix"))
+      .toBe("export SETUP_ENDPOINT='https://floway.example'; curl -fsSL \"$SETUP_ENDPOINT/api/setup/token/claude.sh\" | bash");
+    expect(agentSetupCommand("https://floway.example", "/api/setup/token/codex.ps1", "windows"))
+      .toBe("$SetupEndpoint = 'https://floway.example'; irm \"$SetupEndpoint/api/setup/token/codex.ps1\" | iex");
+  });
+
+  it("offers the full chat catalog while ranking the requested family", () => {
+    const options = modelOptions([
+      model("gpt-5.6", 400_000),
+      model("claude-opus-4.6", 1_000_000),
+      model("other-chat", 100_000),
+    ], "claude", "opus", null);
+    expect(options.map((option) => option.value)).toEqual([
+      "claude-opus-4.6[1m]",
+      "gpt-5.6",
+      "other-chat",
+    ]);
+  });
+
+  it("renders selected Codex model and reasoning effort", () => {
+    const snippet = buildAgentCodexSnippet("https://floway.example", { model: "gpt-5.6", reasoningEffort: "xhigh" });
+    expect(snippet).toContain('model = "gpt-5.6"');
+    expect(snippet).toContain('model_reasoning_effort = "xhigh"');
+    expect(snippet).toContain('base_url = "https://floway.example/azure-api.codex"');
+  });
+});
