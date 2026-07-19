@@ -143,7 +143,6 @@ function LegendTag({
           />
         }
         onClick={(event) => onToggle(event.shiftKey)}
-        onDoubleClick={() => onToggle(true)}
         title={toggleHint}
       >
         {entry.label}
@@ -159,4 +158,3 @@ function ChartCard({ children }: { children: React.ReactNode }) {
     </OutlineCard>
   );
 }
-
