@@ -10,6 +10,7 @@ import { authFetch, callApi } from "../api/auth";
 import { getSessionToken } from "../auth/session";
 import { AgentSetupCard } from "../components/api-keys/agent-setup-card";
 import { KeyDialog } from "../components/api-keys/key-editor";
+import { modelsForAgentSetup } from "../components/api-keys/model-reachability";
 import { RotateKeyDialog } from "../components/api-keys/rotate-key-dialog";
 import { KeysTable } from "../components/api-keys/keys-table";
 import type { ApiKeysPageData, MutationToastController, UpstreamOption } from "../components/api-keys/types";
@@ -55,6 +56,9 @@ export default function DashboardServicesApiKeys() {
 
   const selectedKey =
     data.keys.find((key) => key.id === selectedKeyId) ?? data.keys[0] ?? null;
+  const agentSetupModels = selectedKey
+    ? modelsForAgentSetup(data.models, selectedKey.upstream_ids, user.upstreamIds)
+    : [];
   useEffect(() => {
     if (selectedKeyId) localStorage.setItem(selectedKeyStorageKey, selectedKeyId);
     else localStorage.removeItem(selectedKeyStorageKey);
@@ -276,7 +280,7 @@ export default function DashboardServicesApiKeys() {
         </div>
         <AgentSetupCard
           copiedTag={copiedTag}
-          models={data.models}
+          models={agentSetupModels}
           onCopy={copyToClipboard}
           selectedKey={selectedKey}
         />
