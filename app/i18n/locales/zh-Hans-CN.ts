@@ -326,7 +326,7 @@ const zhHansCN = {
             codexAuthHint: "Linux 和 macOS：仅在 CODEX_HOME 下保存 Floway provider token。",
             codexWindowsAuthHint: "Windows PowerShell：保存相同 token，不修改官方账号登录。",
           },
-          agentSetup: { setupTab: "Agent Setup", snippetsTab: "配置片段", saving: "正在保存…", selectKey: "请先在上方选择 API 密钥。", preparing: "正在准备安装配置…", noKey: "请先创建 API 密钥。", expired: "此安装链接已过期，请重试生成新链接。", retry: "重试", commandPending: "# 正在准备安装命令…", expires: "页面可见时链接会自动续期，离开后数分钟过期。", defaultModel: "默认模型", opusModel: "Opus 模型", sonnetModel: "Sonnet 模型", haikuModel: "Haiku 模型", reasoningEffort: "推理强度", modelDefault: "模型默认值", modelDiscovery: "Gateway 模型发现", cleanupRetention: "清理保留期", cleanupDays: "{{count}} 天", optOutAiAttribution: "停用 Claude Code AI 归属标记", unavailable: "{{id}}（不可用）" },
+          agentSetup: { setupTab: "Agent Setup", snippetsTab: "配置片段", saving: "正在保存…", selectKey: "请先在上方选择 API 密钥。", preparing: "正在准备安装配置…", noKey: "请先创建 API 密钥。", expired: "此安装链接已过期，请重试生成新链接。", retry: "重试", commandPending: "# 正在准备安装命令…", expires: "页面可见时链接会自动续期，离开后数分钟过期。", defaultModel: "默认模型", opusModel: "Opus 模型", sonnetModel: "Sonnet 模型", haikuModel: "Haiku 模型", reasoningEffort: "推理强度", modelDefault: "模型默认值", noModelMatches: "没有匹配的模型", modelDiscovery: "Gateway 模型发现", cleanupRetention: "清理保留期", cleanupDays: "{{count}} 天", optOutAiAttribution: "停用 Claude Code AI 归属标记", unavailable: "{{id}}（不可用）" },
           rotate: {
             title: "轮换 API 密钥",
             message: "为 {{name}} 选择替换 API 密钥。轮换后旧 API 密钥会立即停止工作。",

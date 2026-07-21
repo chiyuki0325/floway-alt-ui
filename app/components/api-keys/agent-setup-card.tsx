@@ -14,6 +14,10 @@ const { Button, Field, MessageBar, MessageBarBody, Option, Spinner, Switch, Tab,
 type Agent = "claude" | "codex";
 type Platform = "unix" | "windows";
 const NONE = "__floway_none__";
+// Model overrides reject NUL at the gateway boundary, so these UI-only values
+// cannot collide with an opaque model id.
+const MODEL_DEFAULT = "\u0000default";
+const NO_MODEL_MATCHES = "\u0000no-matches";
 const claudeCleanupPeriods = [180, 365, 99999] as const satisfies readonly NonNullable<AgentSetupConfiguration["claudeCode"]["cleanupPeriodDays"]>[];
 
 // Claude uses empty strings to suppress commit/PR attribution and false to
@@ -224,24 +228,61 @@ function ModelSelect({ family, label, models, onChange, picker, value }: {
   value: string | null;
 }) {
   const { t } = useTranslation();
-  const options = useMemo(() => modelOptions(models, family, picker, value), [family, models, picker, value]);
-  return <Field label={label}><Select value={value ?? NONE} onChange={(_, data) => onChange(data.value === NONE ? null : data.value)}>
-    <option value={NONE}>{t("dashboard.apiKeys.agentSetup.modelDefault")}</option>
-    {options.map((option) => <option key={option.value} value={option.value}>{option.unavailable ? t("dashboard.apiKeys.agentSetup.unavailable", { id: option.label }) : option.label}</option>)}
-  </Select></Field>;
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const options = useMemo(() => modelOptions(models, family, picker), [family, models, picker]);
+  const selected = options.find((option) => option.value === value) ?? null;
+  const defaultLabel = t("dashboard.apiKeys.agentSetup.modelDefault");
+  const filtered = useMemo(() => filterModelOptions(options, query), [options, query]);
+  const defaultVisible = query === "" || defaultLabel.toLocaleLowerCase().includes(query.toLocaleLowerCase());
+
+  return <Field label={label}>
+    <Combobox
+      open={open}
+      selectedOptions={[selected?.value ?? MODEL_DEFAULT]}
+      value={open ? query : selected?.label ?? defaultLabel}
+      onBlur={() => { setOpen(false); setQuery(""); }}
+      onChange={(event) => setQuery(event.target.value)}
+      onOpenChange={(_, data) => { setOpen(data.open); setQuery(""); }}
+      onOptionSelect={(_, data) => {
+        if (data.optionValue === MODEL_DEFAULT) onChange(null);
+        else if (options.some((option) => option.value === data.optionValue)) onChange(data.optionValue ?? null);
+        setOpen(false);
+        setQuery("");
+      }}
+    >
+      {defaultVisible && <Option value={MODEL_DEFAULT}>{defaultLabel}</Option>}
+      {filtered.map((option) => (
+        <Option key={option.value} text={option.label} value={option.value}>
+          <span className="font-mono truncate">{option.label}</span>
+        </Option>
+      ))}
+      {!defaultVisible && filtered.length === 0 && (
+        <Option disabled value={NO_MODEL_MATCHES}>{t("dashboard.apiKeys.agentSetup.noModelMatches")}</Option>
+      )}
+    </Combobox>
+  </Field>;
 }
 
-export const modelOptions = (models: ControlPlaneModel[], family: "claude" | "codex", picker: "default" | "opus" | "sonnet" | "haiku", current: string | null) => {
+interface ModelOption { value: string; label: string }
+
+export const filterModelOptions = (options: readonly ModelOption[], query: string) => {
+  const needle = query.trim().toLocaleLowerCase();
+  if (!needle) return options;
+  return options.filter((option) =>
+    option.label.toLocaleLowerCase().includes(needle)
+    || option.value.toLocaleLowerCase().includes(needle));
+};
+
+export const modelOptions = (models: ControlPlaneModel[], family: "claude" | "codex", picker: "default" | "opus" | "sonnet" | "haiku") => {
   const target = { default: 0, opus: 1, sonnet: 2, haiku: 3 }[picker];
   const rows = [...new Map(models.filter((model) => model.kind === "chat").map((model) => [model.id, model])).values()];
   rows.sort((a, b) => rankModel(a.id, family, target) - rankModel(b.id, family, target));
-  const options = rows.map((model) => {
+  return rows.map((model) => {
     const context = model.limits.max_context_window_tokens ?? (model.limits.max_prompt_tokens ?? 0) + (model.limits.max_output_tokens ?? 0);
     const value = family === "claude" && picker !== "haiku" && context >= 1_000_000 ? `${model.id}[1m]` : model.id;
-    return { value, label: model.id, unavailable: false };
+    return { value, label: model.id };
   });
-  if (current && !options.some((option) => option.value === current)) options.push({ value: current, label: current, unavailable: true });
-  return options;
 };
 
 const rankModel = (id: string, family: "claude" | "codex", target: number) => {

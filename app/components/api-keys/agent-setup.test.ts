@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ControlPlaneModel } from "../../api/types";
-import { buildAgentClaudeSnippet, buildAgentCodexSnippet, modelOptions } from "./agent-setup-card";
+import { buildAgentClaudeSnippet, buildAgentCodexSnippet, filterModelOptions, modelOptions } from "./agent-setup-card";
 import { agentSetupCommand } from "./use-agent-setup";
 
 const model = (id: string, context: number): ControlPlaneModel => ({
@@ -28,12 +28,23 @@ describe("Agent Setup", () => {
       model("gpt-5.6", 400_000),
       model("claude-opus-4.6", 1_000_000),
       model("other-chat", 100_000),
-    ], "claude", "opus", null);
+    ], "claude", "opus");
     expect(options.map((option) => option.value)).toEqual([
       "claude-opus-4.6[1m]",
       "gpt-5.6",
       "other-chat",
     ]);
+  });
+
+  it("searches model ids without adding a delisted stored value", () => {
+    const options = modelOptions([
+      model("claude-opus-4.6", 1_000_000),
+      model("gpt-5.6", 400_000),
+    ], "codex", "default");
+
+    expect(filterModelOptions(options, "OPUS").map((option) => option.label))
+      .toEqual(["claude-opus-4.6"]);
+    expect(options.some((option) => option.value === "gpt-5-retired")).toBe(false);
   });
 
   it("renders selected Codex model and reasoning effort", () => {
