@@ -1,5 +1,5 @@
 import { AddRegular, ArrowDownRegular, ArrowUpRegular, DeleteRegular } from "@fluentui/react-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -50,6 +50,48 @@ export function writePricingEntry(
 
 export function pricingIsValid(value: ModelPricing | undefined): boolean {
   return value === undefined || collectModelPricingIssues(value).length === 0;
+}
+
+const PRICE_DRAFT_PATTERN = /^\d*(?:\.\d*)?$/;
+
+export function priceFromDraft(draft: string): number | undefined {
+  if (!draft || draft === "." || !PRICE_DRAFT_PATTERN.test(draft)) return undefined;
+  const price = Number(draft);
+  return Number.isFinite(price) && price >= 0 ? price : undefined;
+}
+
+function PriceInput({ editable, onChange, value }: {
+  editable: boolean;
+  onChange: (value: number | undefined) => void;
+  value: number | undefined;
+}) {
+  const [draft, setDraft] = useState(value === undefined ? "" : String(value));
+  const editing = useRef(false);
+
+  useEffect(() => {
+    if (!editing.current) setDraft(value === undefined ? "" : String(value));
+  }, [value]);
+
+  return <Input
+    inputMode="decimal"
+    pattern="[0-9]*(\.[0-9]*)?"
+    readOnly={!editable}
+    value={draft}
+    onBlur={() => {
+      editing.current = false;
+      setDraft(value === undefined ? "" : String(value));
+    }}
+    onChange={(_, data) => {
+      if (!PRICE_DRAFT_PATTERN.test(data.value)) return;
+      setDraft(data.value);
+      if (data.value === "") onChange(undefined);
+      else {
+        const price = priceFromDraft(data.value);
+        if (price !== undefined) onChange(price);
+      }
+    }}
+    onFocus={() => { editing.current = true; }}
+  />;
 }
 
 export function PricingEditor({ editable, kind, onChange, value }: {
@@ -172,14 +214,12 @@ export function PricingEditor({ editable, kind, onChange, value }: {
           </div>
           <div className="grid grid-cols-2 gap-3 max-[620px]:grid-cols-1">
             {visibleDimensions.map((dimension) => <Field key={dimension} label={t(dimensionKey(dimension))}>
-              <Input
-                min={0}
-                readOnly={!editable}
-                type="number"
-                value={active.rates[dimension] === undefined ? "" : String(active.rates[dimension])}
-                onChange={(_, data) => updateActive((entry) => {
+              <PriceInput
+                editable={editable}
+                value={active.rates[dimension]}
+                onChange={(value) => updateActive((entry) => {
                   const rates: PriceVector = { ...entry.rates };
-                  if (data.value === "") delete rates[dimension]; else rates[dimension] = Number(data.value);
+                  if (value === undefined) delete rates[dimension]; else rates[dimension] = value;
                   return { ...entry, rates };
                 })}
               />

@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import type { ModelPricing } from "@floway-dev/protocols/common";
-import { pricingEntries, pricingIsValid, writePricingEntry } from "./pricing-editor";
+import { priceFromDraft, pricingEntries, pricingIsValid, writePricingEntry } from "./pricing-editor";
 
 describe("pricing editor model", () => {
+  it("accepts fractional pricing drafts", () => {
+    expect(priceFromDraft("0.0028")).toBe(0.0028);
+    expect(priceFromDraft("0.")).toBe(0);
+    expect(priceFromDraft(".")).toBeUndefined();
+    expect(priceFromDraft("-1")).toBeUndefined();
+  });
+
   it("distinguishes absent pricing from an invalid empty catalog", () => {
     expect(pricingIsValid(undefined)).toBe(true);
     expect(pricingIsValid({ entries: [] })).toBe(false);
