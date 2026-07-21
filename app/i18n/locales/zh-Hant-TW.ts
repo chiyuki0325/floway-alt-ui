@@ -326,7 +326,7 @@ const zhHantTW = {
             codexAuthHint: "Linux 和 macOS：僅在 CODEX_HOME 下儲存 Floway provider token。",
             codexWindowsAuthHint: "Windows PowerShell：儲存相同 token，不修改官方帳號登入。",
           },
-          agentSetup: { setupTab: "Agent Setup", snippetsTab: "設定片段", saving: "正在儲存…", selectKey: "請先在上方選擇 API 金鑰。", preparing: "正在準備安裝設定…", noKey: "請先建立 API 金鑰。", expired: "此安裝連結已過期，請重試產生新連結。", retry: "重試", commandPending: "# 正在準備安裝命令…", expires: "頁面可見時連結會自動續期，離開後數分鐘過期。", defaultModel: "預設模型", opusModel: "Opus 模型", sonnetModel: "Sonnet 模型", haikuModel: "Haiku 模型", reasoningEffort: "推理強度", modelDefault: "模型預設值", modelDiscovery: "Gateway 模型探索", unavailable: "{{id}}（不可用）" },
+          agentSetup: { setupTab: "Agent Setup", snippetsTab: "設定片段", saving: "正在儲存…", selectKey: "請先在上方選擇 API 金鑰。", preparing: "正在準備安裝設定…", noKey: "請先建立 API 金鑰。", expired: "此安裝連結已過期，請重試產生新連結。", retry: "重試", commandPending: "# 正在準備安裝命令…", expires: "頁面可見時連結會自動續期，離開後數分鐘過期。", defaultModel: "預設模型", opusModel: "Opus 模型", sonnetModel: "Sonnet 模型", haikuModel: "Haiku 模型", reasoningEffort: "推理強度", modelDefault: "模型預設值", modelDiscovery: "Gateway 模型探索", cleanupRetention: "清理保留期", cleanupDays: "{{count}} 天", optOutAiAttribution: "停用 Claude Code AI 歸屬標記", unavailable: "{{id}}（不可用）" },
           rotate: {
             title: "輪換 API 金鑰",
             message: "為 {{name}} 選擇替換 API 金鑰。輪換後舊 API 金鑰會立即停止工作。",

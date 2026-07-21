@@ -14,6 +14,12 @@ const { Button, Field, MessageBar, MessageBarBody, Option, Spinner, Switch, Tab,
 type Agent = "claude" | "codex";
 type Platform = "unix" | "windows";
 const NONE = "__floway_none__";
+const claudeCleanupPeriods = [180, 365, 99999] as const satisfies readonly NonNullable<AgentSetupConfiguration["claudeCode"]["cleanupPeriodDays"]>[];
+
+// Claude uses empty strings to suppress commit/PR attribution and false to
+// suppress session links.
+// Ref: https://code.claude.com/docs/en/settings#attribution-settings
+const claudeAttributionOptOut = { commit: "", pr: "", sessionUrl: false } as const;
 
 export function AgentSetupCard({ copiedTag, models, onCopy, selectedKey }: {
   copiedTag: string | null;
@@ -83,19 +89,7 @@ function AgentConfigSnippets({ agent, apiKey, configuration, copiedTag, onCopy }
   const { t } = useTranslation();
   const origin = typeof window === "undefined" ? "http://localhost:5173" : window.location.origin;
   if (agent === "claude") {
-    const settings = configuration.claudeCode;
-    const snippet = JSON.stringify({
-      env: {
-        ANTHROPIC_BASE_URL: origin,
-        ANTHROPIC_AUTH_TOKEN: apiKey,
-        ...(settings.model ? { ANTHROPIC_MODEL: settings.model } : {}),
-        ...(settings.defaultOpusModel ? { ANTHROPIC_DEFAULT_OPUS_MODEL: settings.defaultOpusModel } : {}),
-        ...(settings.defaultSonnetModel ? { ANTHROPIC_DEFAULT_SONNET_MODEL: settings.defaultSonnetModel } : {}),
-        ...(settings.defaultHaikuModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: settings.defaultHaikuModel } : {}),
-        ...(settings.modelDiscovery ? { CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: "1" } : {}),
-      },
-      ...(settings.effortLevel ? { effortLevel: settings.effortLevel } : {}),
-    }, null, 2);
+    const snippet = buildAgentClaudeSnippet(origin, apiKey, configuration.claudeCode);
     return <div className="grid gap-2 border-t border-t-solid border-fui-stroke1 pt-4">
       <Text size={200} className="text-fui-fg2">{t("dashboard.apiKeys.configuration.claudeHint")}</Text>
       <CodeBlock code={snippet} copied={copiedTag === "agent-snippet-claude"} language="json" onCopy={() => onCopy(snippet, "agent-snippet-claude")} />
@@ -111,6 +105,25 @@ function AgentConfigSnippets({ agent, apiKey, configuration, copiedTag, onCopy }
     <CodeBlock code={windows} copied={copiedTag === "agent-snippet-codex-windows"} language="powershell" onCopy={() => onCopy(windows, "agent-snippet-codex-windows")} />
   </div>;
 }
+
+export const buildAgentClaudeSnippet = (
+  origin: string,
+  apiKey: string,
+  settings: AgentSetupConfiguration["claudeCode"],
+) => JSON.stringify({
+  env: {
+    ANTHROPIC_BASE_URL: origin,
+    ANTHROPIC_AUTH_TOKEN: apiKey,
+    ...(settings.model ? { ANTHROPIC_MODEL: settings.model } : {}),
+    ...(settings.defaultOpusModel ? { ANTHROPIC_DEFAULT_OPUS_MODEL: settings.defaultOpusModel } : {}),
+    ...(settings.defaultSonnetModel ? { ANTHROPIC_DEFAULT_SONNET_MODEL: settings.defaultSonnetModel } : {}),
+    ...(settings.defaultHaikuModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: settings.defaultHaikuModel } : {}),
+    ...(settings.modelDiscovery ? { CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: "1" } : {}),
+  },
+  ...(settings.effortLevel ? { effortLevel: settings.effortLevel } : {}),
+  ...(settings.cleanupPeriodDays === null ? {} : { cleanupPeriodDays: settings.cleanupPeriodDays }),
+  ...(settings.optOutAiAttribution ? { attribution: claudeAttributionOptOut } : {}),
+}, null, 2);
 
 export const buildAgentCodexSnippet = (origin: string, config: AgentSetupConfiguration["codex"]) => [
   ...(config.model ? [`model = ${JSON.stringify(config.model)}`] : []),
@@ -167,6 +180,29 @@ function AgentConfigurationFields({ agent, configuration, models, onChange }: {
       </Select>
     </Field>
     <Switch checked={configuration.claudeCode.modelDiscovery} label={t("dashboard.apiKeys.agentSetup.modelDiscovery")} onChange={(_, data) => patchClaude({ modelDiscovery: data.checked })} />
+    <Field className="col-start-1" label={t("dashboard.apiKeys.agentSetup.cleanupRetention")}>
+      <Select
+        value={configuration.claudeCode.cleanupPeriodDays?.toString() ?? NONE}
+        onChange={(_, data) => {
+          if (data.value === NONE) {
+            patchClaude({ cleanupPeriodDays: null });
+            return;
+          }
+          const period = claudeCleanupPeriods.find((candidate) => candidate.toString() === data.value);
+          if (period !== undefined) patchClaude({ cleanupPeriodDays: period });
+        }}
+      >
+        <option value={NONE}>{t("dashboard.apiKeys.agentSetup.modelDefault")}</option>
+        {claudeCleanupPeriods.map((period) => (
+          <option key={period} value={period}>{t("dashboard.apiKeys.agentSetup.cleanupDays", { count: period })}</option>
+        ))}
+      </Select>
+    </Field>
+    <Switch
+      checked={configuration.claudeCode.optOutAiAttribution}
+      label={t("dashboard.apiKeys.agentSetup.optOutAiAttribution")}
+      onChange={(_, data) => patchClaude({ optOutAiAttribution: data.checked })}
+    />
   </div>;
 
   return <div className="grid grid-cols-2 gap-3 max-[620px]:grid-cols-1">

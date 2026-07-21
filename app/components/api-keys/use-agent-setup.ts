@@ -10,6 +10,8 @@ export interface AgentSetupConfiguration {
     defaultSonnetModel: string | null;
     defaultHaikuModel: string | null;
     effortLevel: "low" | "medium" | "high" | "xhigh" | null;
+    cleanupPeriodDays: 180 | 365 | 99999 | null;
+    optOutAiAttribution: boolean;
     modelDiscovery: boolean;
   };
   codex: { model: string | null; reasoningEffort: string | null };

@@ -343,7 +343,7 @@ const jaJP = {
           "codexAuthHint": "Linux / macOS：CODEX_HOME 配下に Floway プロバイダートークンのみを保存します。",
           "codexWindowsAuthHint": "Windows PowerShell：公式アカウントのログインを変更せず同じトークンを保存します。"
         },
-        "agentSetup": { "setupTab": "Agent Setup", "snippetsTab": "設定スニペット", "saving": "保存中…", "selectKey": "上で API キーを選択してください。", "preparing": "セットアップを準備中…", "noKey": "API キーを作成してください。", "expired": "セットアップリンクの有効期限が切れました。再試行してください。", "retry": "再試行", "commandPending": "# セットアップコマンドを準備中…", "expires": "ページが表示されている間は自動更新され、離れると数分後に失効します。", "defaultModel": "既定のモデル", "opusModel": "Opus モデル", "sonnetModel": "Sonnet モデル", "haikuModel": "Haiku モデル", "reasoningEffort": "推論強度", "modelDefault": "モデルの既定値", "modelDiscovery": "Gateway モデル検出", "unavailable": "{{id}}（利用不可）" },
+        "agentSetup": { "setupTab": "Agent Setup", "snippetsTab": "設定スニペット", "saving": "保存中…", "selectKey": "上で API キーを選択してください。", "preparing": "セットアップを準備中…", "noKey": "API キーを作成してください。", "expired": "セットアップリンクの有効期限が切れました。再試行してください。", "retry": "再試行", "commandPending": "# セットアップコマンドを準備中…", "expires": "ページが表示されている間は自動更新され、離れると数分後に失効します。", "defaultModel": "既定のモデル", "opusModel": "Opus モデル", "sonnetModel": "Sonnet モデル", "haikuModel": "Haiku モデル", "reasoningEffort": "推論強度", "modelDefault": "モデルの既定値", "modelDiscovery": "Gateway モデル検出", "cleanupRetention": "クリーンアップ保持期間", "cleanupDays": "{{count}} 日", "optOutAiAttribution": "Claude Code の AI 帰属表示を無効化", "unavailable": "{{id}}（利用不可）" },
         "rotate": {
           "title": "API キーをローテーション",
           "message": "{{name}} の新しいキーを選択してください。ローテーション後、古いキーはすぐに使用できなくなります。"

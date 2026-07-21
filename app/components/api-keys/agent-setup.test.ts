@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ControlPlaneModel } from "../../api/types";
-import { buildAgentCodexSnippet, modelOptions } from "./agent-setup-card";
+import { buildAgentClaudeSnippet, buildAgentCodexSnippet, modelOptions } from "./agent-setup-card";
 import { agentSetupCommand } from "./use-agent-setup";
 
 const model = (id: string, context: number): ControlPlaneModel => ({
@@ -41,5 +41,32 @@ describe("Agent Setup", () => {
     expect(snippet).toContain('model = "gpt-5.6"');
     expect(snippet).toContain('model_reasoning_effort = "xhigh"');
     expect(snippet).toContain('base_url = "https://floway.example/azure-api.codex"');
+  });
+
+  it("renders optional Claude cleanup and attribution preferences", () => {
+    const base = {
+      model: null,
+      defaultOpusModel: null,
+      defaultSonnetModel: null,
+      defaultHaikuModel: null,
+      effortLevel: null,
+      cleanupPeriodDays: null,
+      optOutAiAttribution: false,
+      modelDiscovery: true,
+    } as const;
+
+    expect(JSON.parse(buildAgentClaudeSnippet("https://floway.example", "key", base)))
+      .not.toHaveProperty("cleanupPeriodDays");
+    expect(JSON.parse(buildAgentClaudeSnippet("https://floway.example", "key", base)))
+      .not.toHaveProperty("attribution");
+
+    expect(JSON.parse(buildAgentClaudeSnippet("https://floway.example", "key", {
+      ...base,
+      cleanupPeriodDays: 365,
+      optOutAiAttribution: true,
+    }))).toMatchObject({
+      cleanupPeriodDays: 365,
+      attribution: { commit: "", pr: "", sessionUrl: false },
+    });
   });
 });
