@@ -96,7 +96,7 @@ function UpstreamColorEditor({ kind }: { kind: UpstreamRecord["kind"] }) {
     const selection = custom ? "custom" : field.value ?? "inherit";
     const invalid = custom !== "" && !UPSTREAM_COLOR_HEX_REGEX.test(custom);
     return <div className="grid gap-3">
-      <div className="flex items-end gap-3 min-w-0 max-[520px]:items-stretch max-[520px]:flex-col">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 min-w-0">
         <Field className="flex-1 min-w-0" label={t("dashboard.upstreamEditor.color.mode")}>
           <Select
             value={selection}
@@ -111,7 +111,9 @@ function UpstreamColorEditor({ kind }: { kind: UpstreamRecord["kind"] }) {
             <option value="custom">{t("dashboard.upstreamEditor.color.custom")}</option>
           </Select>
         </Field>
-        <ProviderBadge color={field.value} kind={kind} />
+        <div className="flex h-8 items-center">
+          <ProviderBadge color={field.value} kind={kind} />
+        </div>
       </div>
       {selection === "custom" && <Field
         label={t("dashboard.upstreamEditor.color.hex")}
