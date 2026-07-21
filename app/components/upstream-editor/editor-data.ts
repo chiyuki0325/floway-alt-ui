@@ -1,4 +1,4 @@
-import type { Flag } from "@floway-dev/provider/flags";
+import type { Flag, FlagOverrides } from "@floway-dev/provider/flags";
 
 import type {
   BackoffRow,
@@ -42,6 +42,27 @@ export interface UpstreamEditorValues {
   config: UpstreamRecord["config"];
   state: UpstreamRecord["state"];
   manualModels: UpstreamModelConfig[];
+}
+
+// Compatibility for records written before Floway commit 5289ba35 (2026-06-25).
+// That backend change renamed this flag without a SQL data migration: repository
+// reads still return the old key, while PATCH validation rejects it as unknown.
+// Keep this narrow alias at the editor boundary until deployed gateways migrate
+// their stored upstream- and model-level overrides; do not turn it into a generic
+// unknown-flag filter, because silently dropping operator settings is unsafe.
+const LEGACY_FLAG_ID_ALIASES = {
+  "downgrade-developer-role": "demote-developer-to-system",
+} as const;
+
+export function migrateLegacyFlagOverrides(
+  value: FlagOverrides | Readonly<Record<string, boolean>>,
+): FlagOverrides {
+  const migrated = { ...value } as Record<string, boolean>;
+  for (const [legacyId, currentId] of Object.entries(LEGACY_FLAG_ID_ALIASES)) {
+    if (legacyId in migrated && !(currentId in migrated)) migrated[currentId] = migrated[legacyId]!;
+    delete migrated[legacyId];
+  }
+  return migrated as FlagOverrides;
 }
 
 export const providerKinds: readonly UpstreamProviderKind[] = [
@@ -96,7 +117,9 @@ export function valuesFromRecord(record: UpstreamRecord): UpstreamEditorValues {
         ? { ...structuredClone(record.config), apiKey: "" }
         : structuredClone(record.config);
   const manualModels = record.kind === "custom" || record.kind === "azure" || record.kind === "ollama"
-    ? structuredClone(record.config.models)
+    ? structuredClone(record.config.models).map((model) => model.flagOverrides
+      ? { ...model, flagOverrides: migrateLegacyFlagOverrides(model.flagOverrides) }
+      : model)
     : [];
   return {
     name: record.name,
@@ -105,7 +128,7 @@ export function valuesFromRecord(record: UpstreamRecord): UpstreamEditorValues {
     proxyFallbackList: structuredClone(record.proxy_fallback_list),
     modelPrefix: structuredClone(record.model_prefix),
     disabledPublicModelIds: [...record.disabled_public_model_ids],
-    flagOverrides: { ...record.flag_overrides },
+    flagOverrides: migrateLegacyFlagOverrides(record.flag_overrides),
     config,
     state: structuredClone(record.state),
     manualModels,
