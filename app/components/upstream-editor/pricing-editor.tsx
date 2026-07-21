@@ -1,5 +1,5 @@
-import { AddRegular, ArrowDownRegular, ArrowUpRegular, DeleteRegular } from "@fluentui/react-icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { AddRegular, DeleteRegular } from "@fluentui/react-icons";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -8,6 +8,7 @@ import {
   type BillingDimension,
   type ModelKind,
   type ModelPricing,
+  type ModelPricingIssue,
   type PriceVector,
   type PricingEntry,
   type PricingSelector,
@@ -16,8 +17,8 @@ import {
 import { fluentComponents } from "../../fluent";
 import { Input, Select } from "../fluent-form-controls";
 
-const { Button, Field, Text, Tooltip, makeStyles } = fluentComponents;
-const useStyles = makeStyles({ error: { color: "var(--colorPaletteRedForeground1)" } });
+const { Badge, Button, Field, MessageBar, MessageBarBody, MessageBarTitle, Text, Tooltip } = fluentComponents;
+const TIGHT_STACK_CLASS = "grid gap-1";
 
 const DIMENSIONS_BY_KIND: Record<ModelKind, BillingDimension[]> = {
   chat: ["input", "input_cache_read", "input_cache_write", "input_cache_write_1h", "output"],
@@ -60,9 +61,10 @@ export function priceFromDraft(draft: string): number | undefined {
   return Number.isFinite(price) && price >= 0 ? price : undefined;
 }
 
-function PriceInput({ editable, onChange, value }: {
+function PriceInput({ editable, onChange, placeholder, value }: {
   editable: boolean;
   onChange: (value: number | undefined) => void;
+  placeholder: string;
   value: number | undefined;
 }) {
   const [draft, setDraft] = useState(value === undefined ? "" : String(value));
@@ -73,9 +75,12 @@ function PriceInput({ editable, onChange, value }: {
   }, [value]);
 
   return <Input
+    className="!w-full"
     inputMode="decimal"
     pattern="[0-9]*(\.[0-9]*)?"
+    placeholder={placeholder}
     readOnly={!editable}
+    size="medium"
     value={draft}
     onBlur={() => {
       editing.current = false;
@@ -101,10 +106,12 @@ export function PricingEditor({ editable, kind, onChange, value }: {
   value: ModelPricing | undefined;
 }) {
   const { t } = useTranslation();
-  const styles = useStyles();
   const entries = pricingEntries(value);
   const [selected, setSelected] = useState(0);
   const [operatorDrafts, setOperatorDrafts] = useState<Record<number, PricingThresholdOperator>>({});
+  const conditionsHeadingId = useId();
+  const ratesHeadingId = useId();
+  const ratesHintId = useId();
 
   useEffect(() => {
     setSelected((current) => Math.min(current, Math.max(0, entries.length - 1)));
@@ -116,6 +123,10 @@ export function PricingEditor({ editable, kind, onChange, value }: {
       || entries.some((entry) => entry.rates[dimension] !== undefined)), [entries, kind]);
   const issues = value === undefined ? [] : collectModelPricingIssues(value);
   const active = entries[selected];
+  const baseIndex = entries.findIndex((entry) => !entry.selector || Object.keys(entry.selector).length === 0);
+  const displayedEntries = entries
+    .map((entry, index) => ({ entry, index }))
+    .toSorted((left, right) => comparePricingEntries(left, right, baseIndex));
 
   const replaceEntries = (next: PricingEntry[]) => onChange(next.length ? { entries: next } : undefined);
   const updateActive = (update: (entry: PricingEntry) => PricingEntry) => {
@@ -136,86 +147,146 @@ export function PricingEditor({ editable, kind, onChange, value }: {
     return labels.length ? labels.join(", ") : t("dashboard.upstreamEditor.models.pricingBase");
   };
 
-  return <div className="grid gap-4">
-    <div className="grid grid-cols-[minmax(150px,220px)_minmax(0,1fr)] border-t border-t-solid border-fui-stroke1 max-[760px]:grid-cols-1">
-      <div className="grid content-start border-r border-r-solid border-fui-stroke1 py-3 pr-3 max-[760px]:border-r-0 max-[760px]:border-b max-[760px]:border-b-solid max-[760px]:pr-0">
-        {entries.map((entry, index) => <div className="flex items-center gap-1 min-w-0" key={index}>
+  const ruleLabel = (entry: PricingEntry, index: number) => {
+    const hasCoordinates = entry.selector && Object.keys(entry.selector).length > 0;
+    if (!hasCoordinates && index !== baseIndex) return t("dashboard.upstreamEditor.models.untitledPricingOverride");
+    return coordinateLabel(entry);
+  };
+
+  const issueAffectsEntry = (issue: ModelPricingIssue, index: number) => {
+    if ("entryIndex" in issue) return issue.entryIndex === index;
+    if ("entryIndexes" in issue) return issue.entryIndexes.includes(index);
+    return true;
+  };
+  const activeIssues = issues.filter((issue) => issueAffectsEntry(issue, selected));
+  const hasIssue = (index: number) => issues.some((issue) => issueAffectsEntry(issue, index));
+
+  const removeActive = () => {
+    replaceEntries(entries.filter((_, entryIndex) => entryIndex !== selected));
+    setSelected(Math.max(0, selected - 1));
+  };
+  const addEntry = () => {
+    const base = entries.find((entry) => !entry.selector || Object.keys(entry.selector).length === 0);
+    replaceEntries([...entries, { rates: { ...(base?.rates ?? {}) } }]);
+    setSelected(entries.length);
+  };
+
+  if (entries.length === 0) return <div className="grid justify-items-start gap-3 rounded-lg bg-fui-bg2 px-4 py-5">
+    <div className={TIGHT_STACK_CLASS}>
+      <Text weight="semibold">{t("dashboard.upstreamEditor.models.noPricingEntries")}</Text>
+      <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.pricingEmptyHint")}</Text>
+    </div>
+    {editable && <Button appearance="primary" icon={<AddRegular />} onClick={addEntry}>
+      {t("dashboard.upstreamEditor.models.setupPricing")}
+    </Button>}
+  </div>;
+
+  return <div className="grid min-w-0 grid-cols-[220px_minmax(0,1fr)] items-stretch gap-5 max-[760px]:grid-cols-1">
+    <aside className="grid h-full min-w-0 content-start gap-3 rounded-lg bg-fui-bg2 p-3" aria-label={t("dashboard.upstreamEditor.models.pricingRules")}>
+      <div className="flex items-center justify-between gap-2 px-1">
+        <Text weight="semibold">{t("dashboard.upstreamEditor.models.pricingRules")}</Text>
+        <Badge appearance="tint" color="informative" size="small">{entries.length}</Badge>
+      </div>
+      <div className={TIGHT_STACK_CLASS}>
+        {displayedEntries.map(({ entry, index }) => <div className="min-w-0" key={index}>
           <Button
             appearance={selected === index ? "secondary" : "subtle"}
-            className="!justify-start flex-1 min-w-0"
+            aria-pressed={selected === index}
+            className="!h-auto !justify-start !overflow-hidden !px-2 !py-2 !w-full min-w-0"
             onClick={() => setSelected(index)}
-            size="small"
           >
-            <span className="truncate">{coordinateLabel(entry)}</span>
+            <span className="grid w-full min-w-0 max-w-full overflow-hidden gap-0.5 text-left">
+              <span className="flex w-full min-w-0 items-center gap-2 overflow-hidden">
+                <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-fui-medium" title={ruleLabel(entry, index)}>{ruleLabel(entry, index)}</span>
+                {hasIssue(index) && <Badge appearance="filled" aria-label={t("dashboard.upstreamEditor.models.pricingErrors")} color="danger" size="tiny">!</Badge>}
+              </span>
+              <span className="truncate text-fui-fg2 text-fui-base200">
+                {index === baseIndex
+                  ? t("dashboard.upstreamEditor.models.basePricingSummary")
+                  : t("dashboard.upstreamEditor.models.overridePricingSummary")}
+              </span>
+            </span>
           </Button>
-          {editable && <div className="inline-flex flex-none">
-            <Tooltip content={t("dashboard.upstreamEditor.actions.moveUp")} relationship="label"><Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.moveUp")} disabled={index === 0} icon={<ArrowUpRegular />} onClick={() => replaceEntries(moveEntry(entries, index, -1))} size="small" /></Tooltip>
-            <Tooltip content={t("dashboard.upstreamEditor.actions.moveDown")} relationship="label"><Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.actions.moveDown")} disabled={index === entries.length - 1} icon={<ArrowDownRegular />} onClick={() => replaceEntries(moveEntry(entries, index, 1))} size="small" /></Tooltip>
-            <Tooltip content={t("dashboard.upstreamEditor.models.removePricingEntry")} relationship="label"><Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.models.removePricingEntry")} icon={<DeleteRegular />} onClick={() => { replaceEntries(entries.filter((_, entryIndex) => entryIndex !== index)); setSelected(Math.max(0, index - 1)); }} size="small" /></Tooltip>
-          </div>}
         </div>)}
-        {entries.length === 0 && <Text size={200} className="text-fui-fg2 py-2">{t("dashboard.upstreamEditor.models.noPricingEntries")}</Text>}
-        {editable && <Button
-          appearance="secondary"
-          className="mt-2"
-          icon={<AddRegular />}
-          onClick={() => {
-            const base = entries.find((entry) => !entry.selector || Object.keys(entry.selector).length === 0);
-            replaceEntries([...entries, { rates: { ...(base?.rates ?? {}) } }]);
-            setSelected(entries.length);
-          }}
-          size="small"
-        >{t("dashboard.upstreamEditor.models.addPricingEntry")}</Button>}
       </div>
+      {editable && <Button appearance="subtle" className="!justify-start !px-0" icon={<AddRegular />} onClick={addEntry} size="small">
+        {t("dashboard.upstreamEditor.models.addPricingOverride")}
+      </Button>}
+    </aside>
 
-      <div className="min-w-0 py-3 pl-4 max-[760px]:pl-0">
-        {active ? <div className="grid gap-4">
-          <div className="grid grid-cols-2 gap-3 max-[620px]:grid-cols-1">
-            <Field label={t("dashboard.upstreamEditor.models.serviceTier")} hint={t("dashboard.upstreamEditor.models.serviceTierHint")}>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-3">
+      {active && <>
+        <div className="relative min-w-0">
+          <Field className="min-w-0" label={{ children: t("dashboard.upstreamEditor.models.serviceTierName"), className: "font-fui-semibold" }} hint={t("dashboard.upstreamEditor.models.serviceTierHint")}>
+            <Input
+              className="!w-full"
+              placeholder={t("dashboard.upstreamEditor.models.serviceTierPlaceholder")}
+              readOnly={!editable}
+              size="medium"
+              value={serviceTier}
+              onChange={(_, data) => updateActive((entry) => {
+                const selector = selectorFor(entry);
+                const next = data.value.trim();
+                if (next) selector.serviceTier = next; else delete selector.serviceTier;
+                return { ...(Object.keys(selector).length ? { selector: selector as PricingSelector } : {}), rates: entry.rates };
+              })}
+            />
+          </Field>
+          {editable && <Tooltip content={t("dashboard.upstreamEditor.models.removePricingEntry")} relationship="label"><Button appearance="subtle" aria-label={t("dashboard.upstreamEditor.models.removePricingEntry")} className="!absolute !right-0 !top-[-6px]" icon={<DeleteRegular />} onClick={removeActive} size="small" /></Tooltip>}
+        </div>
+
+        <section className="grid min-w-0 gap-3" aria-labelledby={conditionsHeadingId}>
+          <div className={TIGHT_STACK_CLASS}>
+            <Text as="h4" id={conditionsHeadingId} weight="semibold" className="!m-0">{t("dashboard.upstreamEditor.models.pricingConditions")}</Text>
+            <Text size={200} className="text-fui-fg2">
+              {selected === baseIndex
+                ? t("dashboard.upstreamEditor.models.basePricingDescription")
+                : t("dashboard.upstreamEditor.models.overridePricingDescription")}
+            </Text>
+          </div>
+          <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2 items-start max-w-[440px] max-[520px]:grid-cols-[80px_minmax(0,1fr)]">
+            <Field className="min-w-0" label={t("dashboard.upstreamEditor.models.operator")}>
+              <Select
+                disabled={!editable}
+                size="medium"
+                value={operator}
+                onChange={(_, data) => {
+                  const nextOperator = data.value as PricingThresholdOperator;
+                  setOperatorDrafts((current) => ({ ...current, [selected]: nextOperator }));
+                  if (threshold) updateActive((entry) => ({ ...entry, selector: { ...(entry.selector ?? {}), inputTokens: { ...threshold, operator: nextOperator } } }));
+                }}
+              ><option value="gt">&gt;</option><option value="gte">&gt;=</option></Select>
+            </Field>
+            <Field className="min-w-0" label={t("dashboard.upstreamEditor.models.inputTokens")} hint={t("dashboard.upstreamEditor.models.inputTokensHint")}>
               <Input
+                className="!w-full"
+                inputMode="numeric"
+                min={1}
                 readOnly={!editable}
-                value={serviceTier}
+                size="medium"
+                type="number"
+                value={threshold?.value === undefined ? "" : String(threshold.value)}
                 onChange={(_, data) => updateActive((entry) => {
                   const selector = selectorFor(entry);
-                  const next = data.value.trim();
-                  if (next) selector.serviceTier = next; else delete selector.serviceTier;
+                  if (data.value === "") delete selector.inputTokens;
+                  else selector.inputTokens = { operator, value: Number(data.value) };
                   return { ...(Object.keys(selector).length ? { selector: selector as PricingSelector } : {}), rates: entry.rates };
                 })}
               />
             </Field>
-            <div className="grid grid-cols-[80px_minmax(0,1fr)] gap-2 items-end">
-              <Field label={t("dashboard.upstreamEditor.models.operator")}>
-                <Select
-                  disabled={!editable}
-                  value={operator}
-                  onChange={(_, data) => {
-                    const nextOperator = data.value as PricingThresholdOperator;
-                    setOperatorDrafts((current) => ({ ...current, [selected]: nextOperator }));
-                    if (threshold) updateActive((entry) => ({ ...entry, selector: { ...(entry.selector ?? {}), inputTokens: { ...threshold, operator: nextOperator } } }));
-                  }}
-                ><option value="gt">&gt;</option><option value="gte">&gt;=</option></Select>
-              </Field>
-              <Field label={t("dashboard.upstreamEditor.models.inputTokens")} hint={t("dashboard.upstreamEditor.models.inputTokensHint")}>
-                <Input
-                  inputMode="numeric"
-                  min={1}
-                  readOnly={!editable}
-                  type="number"
-                  value={threshold?.value === undefined ? "" : String(threshold.value)}
-                  onChange={(_, data) => updateActive((entry) => {
-                    const selector = selectorFor(entry);
-                    if (data.value === "") delete selector.inputTokens;
-                    else selector.inputTokens = { operator, value: Number(data.value) };
-                    return { ...(Object.keys(selector).length ? { selector: selector as PricingSelector } : {}), rates: entry.rates };
-                  })}
-                />
-              </Field>
-            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 max-[620px]:grid-cols-1">
-            {visibleDimensions.map((dimension) => <Field key={dimension} label={t(dimensionKey(dimension))}>
+        </section>
+
+        <section className="grid min-w-0 gap-3" aria-describedby={ratesHintId} aria-labelledby={ratesHeadingId}>
+          <div className={TIGHT_STACK_CLASS}>
+            <Text as="h4" id={ratesHeadingId} weight="semibold" className="!m-0">{t("dashboard.upstreamEditor.models.pricingRates")}</Text>
+            <Text id={ratesHintId} size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.pricingRatesHint")}</Text>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] gap-3 min-w-0">
+            {visibleDimensions.map((dimension) => <Field className="min-w-0" key={dimension} label={t(dimensionKey(dimension))}>
               <PriceInput
                 editable={editable}
+                placeholder={t("dashboard.upstreamEditor.models.priceNotSet")}
                 value={active.rates[dimension]}
                 onChange={(value) => updateActive((entry) => {
                   const rates: PriceVector = { ...entry.rates };
@@ -225,19 +296,52 @@ export function PricingEditor({ editable, kind, onChange, value }: {
               />
             </Field>)}
           </div>
-        </div> : <Text size={200} className="text-fui-fg2">{t("dashboard.upstreamEditor.models.addPricingEntryHint")}</Text>}
-      </div>
+        </section>
+
+        {activeIssues.length > 0 && <MessageBar className="min-w-0 max-w-full" intent="error" shape="rounded">
+          <MessageBarBody>
+            <MessageBarTitle>{t("dashboard.upstreamEditor.models.pricingErrors")}</MessageBarTitle>
+            <ul className="!m-0 grid gap-1 pl-5">
+              {activeIssues.map((issue, index) => <li key={`${issue.code}-${index}`}>{pricingIssueMessage(issue, t)}</li>)}
+            </ul>
+          </MessageBarBody>
+        </MessageBar>}
+      </>}
     </div>
-    {issues.length > 0 && <div aria-label={t("dashboard.upstreamEditor.models.pricingErrors")} role="alert" className={`${styles.error} grid gap-1 text-fui-base200`}>
-      {issues.map((issue, index) => <span key={`${issue.code}-${index}`}>{issue.error.message}</span>)}
-    </div>}
   </div>;
 }
 
-const moveEntry = (entries: PricingEntry[], index: number, direction: -1 | 1) => {
-  const target = index + direction;
-  if (target < 0 || target >= entries.length) return entries;
-  const next = [...entries];
-  [next[index], next[target]] = [next[target]!, next[index]!];
-  return next;
-};
+function pricingIssueMessage(issue: ModelPricingIssue, t: ReturnType<typeof useTranslation>["t"]): string {
+  switch (issue.code) {
+    case "empty-catalog": return t("dashboard.upstreamEditor.models.pricingIssue.emptyCatalog");
+    case "empty-rates": return t("dashboard.upstreamEditor.models.pricingIssue.emptyRates");
+    case "invalid-rate": return t("dashboard.upstreamEditor.models.pricingIssue.invalidRate", { dimension: t(dimensionKey(issue.dimension)) });
+    case "invalid-selector": return t("dashboard.upstreamEditor.models.pricingIssue.invalidSelector");
+    case "base-count": return t("dashboard.upstreamEditor.models.pricingIssue.baseCount");
+    case "rate-dimensions": return t("dashboard.upstreamEditor.models.pricingIssue.rateDimensions");
+    case "duplicate-selector": return t("dashboard.upstreamEditor.models.pricingIssue.duplicateSelector");
+    case "threshold-operator-conflict": return t("dashboard.upstreamEditor.models.pricingIssue.thresholdConflict");
+  }
+}
+
+function comparePricingEntries(
+  left: { entry: PricingEntry; index: number },
+  right: { entry: PricingEntry; index: number },
+  baseIndex: number,
+): number {
+  if (left.index === right.index) return 0;
+  if (left.index === baseIndex) return 1;
+  if (right.index === baseIndex) return -1;
+
+  const leftCoordinates = Object.keys(left.entry.selector ?? {}).length;
+  const rightCoordinates = Object.keys(right.entry.selector ?? {}).length;
+  if (leftCoordinates !== rightCoordinates) return rightCoordinates - leftCoordinates;
+
+  const leftThreshold = left.entry.selector?.inputTokens;
+  const rightThreshold = right.entry.selector?.inputTokens;
+  const leftValue = leftThreshold && typeof leftThreshold === "object" ? leftThreshold.value : -1;
+  const rightValue = rightThreshold && typeof rightThreshold === "object" ? rightThreshold.value : -1;
+  if (leftValue !== rightValue) return rightValue - leftValue;
+
+  return left.index - right.index;
+}
