@@ -24,41 +24,6 @@
 - 两个仓库的版本应当兼容。Alt UI 依赖的 Floway 版本记录在其
   `vendor/floway` Git submodule 中。
 
-### 后端必须包含 Floway PR #160
-
-Floway Alt UI 假设
-[Menci/Floway#160](https://github.com/Menci/Floway/pull/160)
-已经合并到所使用的 Floway 后端。该变更增加 OpenAI 格式和自定义 API key
-所需的数据字段、接口与数据库迁移。后端未包含该变更时，API key 的创建、编辑、
-轮换和导入导出功能无法与本前端正常配合。
-
-请先查看 PR 页面及当前 Floway 版本。如果 PR 尚未合并，或当前分支尚未包含该
-变更，请在 **Floway 仓库根目录**下载并应用补丁：
-
-```bash
-curl -fL https://github.com/Menci/Floway/pull/160.patch -o floway-pr-160.patch
-git am floway-pr-160.patch
-rm floway-pr-160.patch
-```
-
-`git am` 会保留 PR 原提交的作者、时间和提交信息。如果应用时发生冲突，先中止
-本次操作，让仓库恢复到应用补丁之前的状态：
-
-```bash
-git am --abort
-```
-
-不要强制应用发生冲突的补丁。冲突通常表示当前 Floway 版本已经包含该变更，或
-后端代码与 PR #160 的基线不兼容。此时应先检查：
-
-```bash
-git log --oneline --all --grep='switch to OpenAI and custom key formats'
-test -f packages/gateway/migrations/0050_api_key_format.sql
-```
-
-补丁会修改后端并加入数据库迁移。首次启动新镜像时，Floway Node 服务会自动应用
-迁移；生产环境仍应在操作前备份 `floway-data` 数据卷。
-
 以下命令假设两个仓库位于同一目录：
 
 ```text

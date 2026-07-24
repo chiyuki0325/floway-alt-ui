@@ -90,13 +90,6 @@ pnpm build
 [Docker 部署替换指南](docs/docker-alt-ui.md)。仓库根目录的 `Dockerfile`
 可直接复制为 `Floway/docker/Dockerfile`。
 
-> [!IMPORTANT]
-> 本前端要求 Floway 后端包含
-> [Menci/Floway#160](https://github.com/Menci/Floway/pull/160)。如果该 PR
-> 尚未合并到所使用的 Floway 版本，请按照
-> [Docker 部署替换指南](docs/docker-alt-ui.md#后端必须包含-floway-pr-160)
-> 使用 `git am` 将 PR 补丁应用到后端后再构建镜像。
-
 ## 项目结构
 
 ```
